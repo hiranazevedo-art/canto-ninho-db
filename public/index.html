@@ -406,40 +406,66 @@ document.addEventListener('input',e=>{if(!speciesDraft)return;if(e.target.id==='
 document.addEventListener('change',e=>{if(speciesDraft&&e.target.name==='featuredSpecies'){speciesDraft.featured=e.target.value;document.getElementById('speciesPreview').innerHTML=renderSpeciesPreview()}});
 
 
-// Sincronização opcional no Cloudflare Pages + D1, sem alterar a chave do armazenamento legado.
-const cloudState={token:sessionStorage.getItem('canto_cloud_token')||'',revision:null,pending:false,busy:false,sequence:0,timer:null,conflict:false};
-const cloudButton=document.createElement('button');cloudButton.className='cloud-float';cloudButton.id='cloudButton';cloudButton.textContent='☁ Conectar à nuvem';document.body.appendChild(cloudButton);
+// Sincronização automática Cloudflare D1. Os dados legados permanecem sob a mesma chave.
+const CLOUD_META_KEY=KEY+'_cloud_meta_v2';
+function readCloudMeta(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY))||null}catch{return null}}
+const cloudState={token:sessionStorage.getItem('canto_cloud_token')||'',revision:null,ready:false,pending:false,busy:false,sequence:0,timer:null,conflict:false,meta:readCloudMeta(),retry:0,checking:false};
+const cloudButton=document.createElement('button');cloudButton.className='cloud-float';cloudButton.id='cloudButton';cloudButton.textContent='☁ Verificando nuvem…';document.body.appendChild(cloudButton);
 const cloudModal=document.createElement('div');cloudModal.id='cloudModal';document.body.appendChild(cloudModal);
+function markCloudMeta(revision,dirty=false){cloudState.meta={revision,dirty,at:new Date().toISOString()};try{localStorage.setItem(CLOUD_META_KEY,JSON.stringify(cloudState.meta))}catch(e){console.warn('Não foi possível registrar estado de sincronização',e)}}
 const realLocalSave=save;
-save=function(...args){const ok=realLocalSave(...args);if(ok && cloudState.token && cloudState.revision!==null && !cloudState.conflict){cloudState.pending=true;cloudState.sequence++;cloudSchedule()}return ok};
-function cloudStatus(t,status=''){cloudButton.textContent='☁ '+t;cloudButton.dataset.status=status}
+save=function(...args){const ok=realLocalSave(...args);if(!ok)return false;if(cloudState.meta)markCloudMeta(cloudState.meta.revision,true);if(cloudState.ready&&!cloudState.conflict){cloudState.pending=true;cloudState.sequence++;cloudSchedule()}return ok};
+function cloudStatus(t,status=''){cloudButton.textContent='☁ '+t;cloudButton.dataset.status=status;cloudButton.title='Estado da sincronização · clique para gerenciar a conta'}
 function cloudClose(){cloudModal.innerHTML=''}
 function cloudShow(mode='login',message=''){
- const isSignup=mode==='register';cloudModal.innerHTML=`<div class="cloud-overlay"><section class="cloud-panel" role="dialog" aria-modal="true" aria-label="Sincronização em nuvem"><h2>☁ Canto &amp; Ninho na nuvem</h2><p>Use uma senha de acesso para manter um único criadouro sincronizado entre computador e celular. Seus registros existentes permanecem no dispositivo até você confirmar a importação.</p><form id="cloudForm"><label>Senha do criadouro (mínimo 12 caracteres)</label><input name="password" type="password" minlength="12" maxlength="128" autocomplete="current-password" required>${isSignup?'<label>Código de ativação definido no Cloudflare</label><input name="setupCode" type="password" required autocomplete="off">':''}<div class="error" id="cloudError">${esc(message)}</div><div class="cloud-actions"><button class="btn secondary" type="button" id="cloudDismiss">Cancelar</button><button class="btn" type="submit">${isSignup?'Criar acesso':'Entrar e sincronizar'}</button></div></form><p>Primeiro acesso? <button type="button" class="btn secondary small" id="cloudSwitch">${isSignup?'Já tenho uma senha':'Criar acesso inicial'}</button></p></section></div>`;
+ const isSignup=mode==='register';cloudModal.innerHTML=`<div class="cloud-overlay"><section class="cloud-panel" role="dialog" aria-modal="true" aria-label="Conta do criadouro"><h2>☁ Acesso ao Canto &amp; Ninho</h2><p>A conexão será automática nos próximos acessos neste navegador. O primeiro acesso exige a senha do criadouro. Registros locais existentes nunca são substituídos sem conferência.</p><form id="cloudForm"><label>Senha do criadouro (mínimo 12 caracteres)</label><input name="password" type="password" minlength="12" maxlength="128" autocomplete="current-password" required>${isSignup?'<label>Código de ativação cadastrado no Cloudflare</label><input name="setupCode" type="password" required autocomplete="off">':''}<div class="error" id="cloudError">${esc(message)}</div><div class="cloud-actions"><button class="btn secondary" type="button" id="cloudDismiss">Agora não</button><button class="btn" type="submit">${isSignup?'Criar acesso':'Entrar'}</button></div></form><p>Primeiro acesso? <button type="button" class="btn secondary small" id="cloudSwitch">${isSignup?'Já tenho uma senha':'Criar conta inicial'}</button></p></section></div>`;
  document.getElementById('cloudDismiss').onclick=cloudClose;
  document.getElementById('cloudSwitch').onclick=()=>cloudShow(isSignup?'login':'register');
- document.getElementById('cloudForm').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');btn.disabled=true;try{const data=Object.fromEntries(new FormData(form));const out=await cloudAPI('/api/account','POST',{action:isSignup?'register':'login',...data},'');cloudState.token=out.token;sessionStorage.setItem('canto_cloud_token',out.token);await cloudInitialize();cloudClose()}catch(err){document.getElementById('cloudError').textContent=err.message;cloudState.token='';sessionStorage.removeItem('canto_cloud_token')}finally{btn.disabled=false}}
+ document.getElementById('cloudForm').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,btn=form.querySelector('button[type=submit]');btn.disabled=true;try{const values=Object.fromEntries(new FormData(form));await cloudAPI('/api/account','POST',{action:isSignup?'register':'login',...values},'');cloudState.token='';sessionStorage.removeItem('canto_cloud_token');await cloudInitialize();cloudClose()}catch(err){document.getElementById('cloudError').textContent=err.message}finally{btn.disabled=false}}
 }
-async function cloudAPI(path,method='GET',body=null,token=cloudState.token){const res=await fetch(path,{method,headers:{...(body?{'content-type':'application/json'}:{}),...(token?{authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});let data;try{data=await res.json()}catch{throw Error('Servidor indisponível ou rota de API não instalada no Cloudflare.')}if(!res.ok){const e=Error(data.error||'Erro HTTP '+res.status);e.status=res.status;throw e}return data}
-function hasRealRecords(data){return collections.some(c=>Array.isArray(data[c])&&data[c].length>0)||data.settings?.setupComplete===true}
-function cloudLocalSafetyCopy(){const key=KEY+'_reserva_'+new Date().toISOString().replace(/[^\d]/g,'').slice(0,14);try{localStorage.setItem(key,JSON.stringify(db))}catch{backup();alert('Foi iniciado um backup JSON porque não havia espaço no armazenamento local. Confira o download antes de continuar.');throw Error('Armazenamento cheio — faça espaço e tente novamente.')}return key}
-function cloudAdopt(data){const baseline=defaultDB();db={...baseline,...data,settings:{...baseline.settings,...data.settings}};if(!realLocalSave()){throw Error('Falha ao gravar cópia local: verifique o armazenamento')}speciesDraft=null;document.getElementById('welcomeRoot').innerHTML='';nav();render();if(!db.settings.setupComplete)startSpeciesSetup()}
-async function cloudInitialize(){const out=await cloudAPI('/api/data');cloudState.revision=out.revision;cloudState.conflict=false;cloudState.pending=false;
- if(!out.data){if(hasRealRecords(db)){if(!confirm('A nuvem está vazia. Enviar os dados DESTE dispositivo para iniciar o criadouro compartilhado?')){cloudState.revision=null;cloudStatus('Sem sincronização');return}await cloudUpload()}else{cloudStatus('Nuvem conectada · vazia','synced')}return}
- if(JSON.stringify(out.data)!==JSON.stringify(db)){
-  if(hasRealRecords(db)){if(!confirm('A nuvem contém dados diferentes deste dispositivo. Uma cópia local de segurança será mantida. Carregar os registros DA NUVEM neste aparelho?\n\nCancelar mantém os registros locais e não ativa a sincronização.')){cloudState.revision=null;cloudStatus('Somente dados locais');return}cloudLocalSafetyCopy()}
-  cloudAdopt(out.data)
+async function cloudAPI(path,method='GET',body=null,token=cloudState.token){const res=await fetch(path,{method,credentials:'same-origin',headers:{...(body?{'content-type':'application/json'}:{}),...(token?{authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});let data;try{data=await res.json()}catch{throw Error('API da Cloudflare não respondeu com JSON.')}if(!res.ok){const err=Error(data.error||'Erro HTTP '+res.status);err.status=res.status;throw err}return data}
+function hasRealRecords(data){return !!(data.settings?.setupComplete||collections.some(c=>c!=='food'&&Array.isArray(data[c])&&data[c].length))}
+function cloudLocalSafetyCopy(){const key=KEY+'_reserva_'+new Date().toISOString().replace(/[^\d]/g,'').slice(0,14);try{localStorage.setItem(key,JSON.stringify(db))}catch{backup();alert('Sem espaço para reserva local. Confirme o download do backup antes de continuar.');throw Error('Sem espaço para reserva de segurança.')}return key}
+function cloudAdopt(data){const baseline=defaultDB();db={...baseline,...data,settings:{...baseline.settings,...data.settings}};if(!realLocalSave())throw Error('Falha ao salvar registros recebidos no dispositivo.');speciesDraft=null;document.getElementById('welcomeRoot').innerHTML='';nav();render();if(!db.settings.setupComplete)startSpeciesSetup()}
+function cloudReady(revision){cloudState.revision=revision;cloudState.ready=true;cloudState.conflict=false;cloudState.pending=false;cloudState.retry=0;markCloudMeta(revision,false);cloudStatus('Sincronizado','synced')}
+async function cloudInitialize(){if(cloudState.checking)return;cloudState.checking=true;cloudStatus('Verificando nuvem…');try{
+ const out=await cloudAPI('/api/data'),meta=cloudState.meta;
+ cloudState.revision=out.revision;
+ if(!out.data){
+  if(hasRealRecords(db)){
+   if(!confirm('Esta conta na nuvem está vazia. Deseja enviar os registros existentes deste aparelho para iniciar o criadouro compartilhado? Uma cópia de segurança local será preservada.')){cloudState.ready=false;cloudStatus('Migração pendente');return}
+   cloudLocalSafetyCopy();cloudState.ready=true;cloudState.pending=true;cloudState.sequence++;await cloudUpload();return
+  }
+  cloudReady(out.revision);return
  }
- cloudStatus('Sincronizado · rev. '+cloudState.revision,'synced')
-}
-function cloudSchedule(){clearTimeout(cloudState.timer);cloudState.timer=setTimeout(()=>cloudUpload(),1100);cloudStatus('Alterações pendentes')}
-async function cloudUpload(){if(!cloudState.token||cloudState.revision===null||cloudState.conflict||cloudState.busy)return;cloudState.busy=true;const sequence=cloudState.sequence;const snapshot=JSON.parse(JSON.stringify(db));try{const result=await cloudAPI('/api/data','PUT',{revision:cloudState.revision,data:snapshot});cloudState.revision=result.revision;cloudState.pending=sequence!==cloudState.sequence;cloudStatus(cloudState.pending?'Alterações pendentes':'Sincronizado · rev. '+result.revision,'synced')}
-catch(e){if(e.status===409){cloudState.conflict=true;cloudState.pending=true;cloudStatus('Conflito — exporte backup','conflict');alert('Outro dispositivo salvou alterações. Sua versão LOCAL foi preservada. Exporte um backup JSON antes de resolver o conflito. O aplicativo não sobrescreverá os dados da nuvem automaticamente.')}else{cloudStatus('Falha de sincronização');console.warn('Sincronização pendente',e.message)}}finally{cloudState.busy=false;if(cloudState.pending&&!cloudState.conflict&&navigator.onLine)cloudSchedule()}}
-async function cloudRefresh(){if(!cloudState.token||cloudState.revision===null||cloudState.busy||cloudState.pending||cloudState.conflict)return;try{const out=await cloudAPI('/api/data');if(out.revision>cloudState.revision){cloudLocalSafetyCopy();cloudAdopt(out.data);cloudState.revision=out.revision;cloudStatus('Atualizado · rev. '+out.revision,'synced')}}catch(e){console.warn(e)}}
-cloudButton.onclick=()=>{if(cloudState.token){const choice=prompt('NUVEM: digite 1 para sincronizar, 2 para baixar backup local, 3 para sair da conta.');if(choice==='1'){if(cloudState.conflict){alert('Conflito detectado: exporte um backup primeiro e entre novamente para optar pelos dados na nuvem.');return}if(cloudState.revision===null)cloudInitialize().catch(e=>toast(e.message));else if(cloudState.pending)cloudUpload();else cloudRefresh()}else if(choice==='2')backup();else if(choice==='3'){sessionStorage.removeItem('canto_cloud_token');cloudState.token='';cloudState.revision=null;cloudStatus('Conectar à nuvem')}}else cloudShow()};
-window.addEventListener('online',()=>{if(cloudState.pending)cloudUpload();else cloudRefresh()});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudRefresh()});
-if(cloudState.token)cloudInitialize().catch(e=>{cloudStatus('Conexão não disponível');console.warn(e)});
+ const identical=JSON.stringify(out.data)===JSON.stringify(db),localDirty=!!meta?.dirty;
+ if(!identical){
+  if(localDirty){
+   if(meta.revision===out.revision){cloudState.ready=true;cloudState.pending=true;cloudState.sequence++;cloudStatus('Enviando alterações locais');await cloudUpload();return}
+   cloudState.conflict=true;cloudState.ready=false;cloudStatus('Conflito: dados preservados','conflict');alert('Existem alterações não sincronizadas neste aparelho e também alterações na nuvem. Nenhum dado foi substituído. Exporte o backup local antes de decidir qual versão conservar.');return
+  }
+  if(hasRealRecords(db)&&!meta){
+   if(!confirm('Foram encontrados dados locais e dados na nuvem. Carregar a versão DA NUVEM neste aparelho? Uma cópia local de segurança será mantida. Cancelar mantém este aparelho sem sincronização.')){cloudState.ready=false;cloudStatus('Conferência necessária');return}
+  }
+  if(hasRealRecords(db))cloudLocalSafetyCopy();cloudAdopt(out.data)
+ }
+ cloudReady(out.revision)
+ }catch(e){cloudState.ready=false;if(e.status===401){cloudStatus('Entrar para sincronizar');sessionStorage.removeItem('canto_cloud_token');cloudState.token=''}else{cloudStatus('Offline · dados locais');console.warn('Não foi possível iniciar a sincronização',e)}}finally{cloudState.checking=false}}
+function cloudSchedule(delay=1100){clearTimeout(cloudState.timer);if(!navigator.onLine){cloudStatus('Offline · alterações pendentes');return}cloudStatus('Sincronização pendente');cloudState.timer=setTimeout(()=>cloudUpload(),delay)}
+async function cloudUpload(){if(!cloudState.ready||cloudState.revision===null||cloudState.conflict||cloudState.busy||!navigator.onLine)return;cloudState.busy=true;clearTimeout(cloudState.timer);const sequence=cloudState.sequence,snapshot=JSON.parse(JSON.stringify(db));cloudStatus('Sincronizando…');try{
+ const result=await cloudAPI('/api/data','PUT',{revision:cloudState.revision,data:snapshot});cloudState.revision=result.revision;cloudState.retry=0;cloudState.pending=sequence!==cloudState.sequence;markCloudMeta(result.revision,cloudState.pending);cloudStatus(cloudState.pending?'Alterações pendentes':'Sincronizado','synced');
+ }catch(e){cloudState.pending=true;markCloudMeta(cloudState.revision,true);if(e.status===409){cloudState.conflict=true;cloudState.ready=false;cloudStatus('Conflito · backup necessário','conflict');alert('Outro dispositivo alterou os dados antes do envio. A cópia local foi preservada. Faça backup antes de resolver o conflito.')}else if(e.status===401){cloudState.ready=false;cloudStatus('Sessão expirada · entrar');}else{cloudState.retry++;cloudStatus('Falha temporária · pendente');console.warn('Sincronização pendente',e.message)}}finally{cloudState.busy=false;if(cloudState.ready&&cloudState.pending&&!cloudState.conflict&&navigator.onLine)cloudSchedule(Math.min(60000,cloudState.retry?5000*Math.pow(2,Math.min(4,cloudState.retry-1)):1200))}}
+async function cloudRefresh(){if(!cloudState.ready||cloudState.busy||cloudState.checking||cloudState.pending||cloudState.conflict||document.hidden||!navigator.onLine)return;try{const out=await cloudAPI('/api/data');if(out.revision>cloudState.revision){if(hasRealRecords(db))cloudLocalSafetyCopy();cloudAdopt(out.data);cloudReady(out.revision)}}catch(e){if(e.status===401){cloudState.ready=false;cloudStatus('Sessão expirada · entrar')}else console.warn('Atualização da nuvem adiada',e)}}
+cloudButton.onclick=async()=>{if(!cloudState.ready){if(cloudState.conflict){
+  if(!confirm('Há versões diferentes neste aparelho e na nuvem. Deseja iniciar a recuperação? Primeiro será gerado um backup JSON dos dados locais; NADA será excluído da nuvem.'))return;
+  backup();if(!confirm('Confirme que guardou o backup JSON local. Deseja carregar os registros da nuvem neste aparelho, preservando também uma reserva local?'))return;
+  try{cloudLocalSafetyCopy();const remote=await cloudAPI('/api/data');if(!remote.data){alert('O servidor não contém registros para restaurar.');return}cloudAdopt(remote.data);cloudReady(remote.revision);toast('REGISTROS DA NUVEM CARREGADOS. BACKUP LOCAL PRESERVADO.')}catch(e){alert('Não foi possível resolver o conflito: '+e.message)}return;
+ }if(cloudButton.textContent.includes('Entrar')||cloudButton.textContent.includes('Sessão expirada'))cloudShow();else if(confirm('Tentar restabelecer a conexão automática?'))await cloudInitialize();return}
+ const choice=prompt('NUVEM: digite 1 para verificar a sincronização, 2 para baixar um backup ou 3 para sair desta conta.');if(choice==='1'){if(cloudState.pending)cloudUpload();else cloudRefresh()}else if(choice==='2')backup();else if(choice==='3'){if(cloudState.pending&&!confirm('Existem alterações pendentes! Deseja sair mesmo assim?'))return;try{await cloudAPI('/api/account','POST',{action:'logout'})}catch(e){console.warn(e)}sessionStorage.removeItem('canto_cloud_token');cloudState.token='';cloudState.ready=false;cloudState.revision=null;cloudStatus('Entrar para sincronizar')}};
+window.addEventListener('online',()=>{if(cloudState.ready&&cloudState.pending)cloudUpload();else cloudInitialize()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(cloudState.ready)cloudRefresh();else cloudInitialize()}});
+setInterval(()=>{if(!document.hidden&&navigator.onLine){if(cloudState.ready)cloudRefresh();else if(!cloudState.conflict&&!cloudState.checking)cloudInitialize()}},30000);
+cloudInitialize();
 
 seedFoods();nav();render();startSpeciesSetup();if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(console.warn);
 
@@ -468,11 +494,11 @@ function showBackupImportPreview(data,filename){const current=backupSummary(db),
  <div class="backup-import-grid"><div><strong>${incoming.total}</strong>Registros no arquivo</div><div><strong>${current.total}</strong>Registros neste navegador</div><div><strong>${incoming.counts.find(x=>x.label==='Aves')?.count||0}</strong>Aves do arquivo</div></div>
  <div class="backup-import-details"><strong>Arquivo:</strong> ${esc(filename)}<br><strong>Criadouro no backup:</strong> ${esc(data.settings.name||'NÃO INFORMADO')}<br><strong>Conteúdo:</strong> ${incoming.counts.filter(x=>x.count).map(x=>esc(x.label)+': '+x.count).join(' · ')||'Sem registros cadastrados'}<br><strong>Estado da configuração:</strong> ${data.settings.setupComplete?'Concluída':'Não concluída'}</div>
  <p><strong>Proteção:</strong> antes de aplicar a substituição, será oferecido um backup JSON dos dados atuais e mantida uma cópia local de segurança. Confirme o arquivo baixado antes de prosseguir.</p>
- <div class="backup-import-actions"><button class="btn secondary" type="button" id="backupCancel">Cancelar</button><button class="btn" type="button" id="backupApplyLocal">Importar neste dispositivo</button>${cloudState.token?'<button class="btn" type="button" id="backupApplyCloud">Importar e enviar à nuvem</button>':''}</div></section></div>`;
+ <div class="backup-import-actions"><button class="btn secondary" type="button" id="backupCancel">Cancelar</button><button class="btn" type="button" id="backupApplyLocal">Importar neste dispositivo</button>${cloudState.ready?'<button class="btn" type="button" id="backupApplyCloud">Importar e enviar à nuvem</button>':''}</div></section></div>`;
  backupImportRoot.innerHTML=html;
  document.getElementById('backupCancel').onclick=closeBackupImport;
  document.getElementById('backupApplyLocal').onclick=()=>applyBackupImport(false);
- if(cloudState.token)document.getElementById('backupApplyCloud').onclick=()=>applyBackupImport(true);
+ if(cloudState.ready)document.getElementById('backupApplyCloud').onclick=()=>applyBackupImport(true);
 }
 async function applyBackupImport(toCloud){if(!backupCandidate)return;const incoming=backupCandidate.data, old=db;
  const intro='O backup selecionado substituirá os dados deste dispositivo. Essa ação não faz mesclagem. Deseja continuar?';
@@ -494,12 +520,13 @@ async function applyBackupImport(toCloud){if(!backupCandidate)return;const incom
   db=incoming;
   // gravação sem chamar o gatilho de sincronização automática
   if(!realLocalSave()){db=old;alert('Importação não concluída: o backup excede o espaço local.');return}
+  if(cloudState.meta)markCloudMeta(cloudState.meta.revision,true);
   if(toCloud){
     // compare-and-swap: impede sobrescrita se outro dispositivo mudou a nuvem.
-    try{const remoteResult=await cloudAPI('/api/data','PUT',{revision:cloudExpected,data:incoming});cloudState.revision=remoteResult.revision;cloudState.pending=false;cloudState.conflict=false;cloudStatus('Sincronizado · rev. '+remoteResult.revision,'synced');}
-    catch(e){cloudState.revision=null;cloudState.pending=false;cloudState.conflict= e.status===409;cloudStatus('Backup apenas local · nuvem não alterada',e.status===409?'conflict':'');alert('O arquivo foi importado apenas neste dispositivo. A nuvem NÃO foi alterada: '+e.message+'\nFaça uma nova cópia local antes de tentar novamente.');}
-  }else if(cloudState.token){
-    clearTimeout(cloudState.timer);cloudState.revision=null;cloudState.pending=false;cloudState.conflict=false;cloudStatus('Backup local · nuvem não sincronizada');
+    try{const remoteResult=await cloudAPI('/api/data','PUT',{revision:cloudExpected,data:incoming});cloudState.revision=remoteResult.revision;cloudState.pending=false;cloudState.conflict=false;cloudState.ready=true;markCloudMeta(remoteResult.revision,false);cloudStatus('Sincronizado','synced');}
+    catch(e){cloudState.revision=null;cloudState.ready=false;cloudState.pending=false;markCloudMeta(cloudExpected,true);cloudState.conflict= e.status===409;cloudStatus('Backup apenas local · nuvem não alterada',e.status===409?'conflict':'');alert('O arquivo foi importado apenas neste dispositivo. A nuvem NÃO foi alterada: '+e.message+'\nFaça uma nova cópia local antes de tentar novamente.');}
+  }else if(cloudState.ready){
+    clearTimeout(cloudState.timer);cloudState.revision=null;cloudState.ready=false;cloudState.pending=false;markCloudMeta(cloudState.meta?.revision??0,true);cloudState.conflict=false;cloudStatus('Backup local · nuvem não sincronizada');
   }
   closeBackupImport();speciesDraft=null;document.getElementById('welcomeRoot').innerHTML='';nav();render();if(!db.settings.setupComplete)startSpeciesSetup();toast('BACKUP IMPORTADO NESTE DISPOSITIVO.');
  }catch(e){db=old;realLocalSave();alert('Erro ao importar: '+e.message)}
