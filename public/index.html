@@ -206,36 +206,48 @@ function showDailyTasks(){
 }
 function header(title,desc,button='',cmd=''){return `<div class="section-head"><div><h2>${title}</h2><p>${desc}</p></div>${button?`<button class="btn" data-action="${cmd}">＋ ${button}</button>`:''}</div>`}
 function table(headers,rows){return `<div class="panel"><div class="table-wrap"><table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="empty">Nenhum registro encontrado. Utilize o botão de cadastro para começar.</td></tr>`}</tbody></table></div></div>`}
-const act=(type,item)=>type==='stock'&&cageProduct(item)&&Number(item.quantity)>0
+const act=(type,item)=>type==='stock'&&cageProduct(item)&&Number(item.quantity)>stockReserved(item.id)
  ?`<div class="actions"><button class="btn small" data-sale-kind="cage" data-sale-item="${esc(item.id)}">Registrar venda</button>
  <button class="btn secondary small" data-edit="stock" data-id="${esc(item.id)}">Editar</button>
  <button class="btn danger small" data-delete="stock" data-id="${esc(item.id)}">Excluir</button></div>`
- :type==='movements'&&item.saleId?'Vinculada à venda'
+ :type==='movements'&&item.saleId?`<button class="btn secondary small" data-open-sale="${esc(item.saleId)}">Ver venda</button>`
  :type==='expenses' &&item.birdAcquisitionId&&findBird(item.birdAcquisitionId)
  ?`<button class="btn secondary small" data-edit="birds" data-id="${esc(item.birdAcquisitionId)}">Editar no Plantel</button>`
  :type==='expenses'&&item.stockOrigin
  ?`<button class="btn secondary small" data-edit="${item.stockOrigin}" data-id="${esc(item.stockOriginId)}">Editar no Estoque</button>`
  :`<div class="actions"><button class="btn secondary small" data-edit="${type}" data-id="${item.id}">Editar</button><button class="btn danger small" data-delete="${type}" data-id="${item.id}">Excluir</button></div>`;
-function home(){const active=db.couples.filter(c=>!c.end).length;const pending=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)).length;const healthAlert=db.health.filter(h=>h.alert==='SIM').length;const low=db.stock.filter(s=>Number(s.quantity)<=Number(s.min||db.settings.lowStock)).length;const exp=financeTotals(today().slice(0,7)).paid/100;const nums=[['Aves no plantel',db.birds.length,'♣'],['Machos',db.birds.filter(b=>sexValue(b.sex)==='MACHO').length,'♂'],['Fêmeas',db.birds.filter(b=>sexValue(b.sex)==='FÊMEA').length,'♀'],['Sexo desconhecido',db.birds.filter(b=>sexValue(b.sex)==='NÃO IDENTIFICADO').length,'?'],['Casais ativos',active,'♡'],['Ovos registrados',db.eggs.length,'◉'],['Filhotes registrados',db.chicks.length,'✦'],['Tarefas pendentes',pending,'☷']];const due=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)&&t.date<=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),soon=db.events.filter(e=>e.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);return `<div class="hero"><div><div style="font-size:11px;letter-spacing:2px;opacity:.7">BEM-VINDO AO CANTO & NINHO</div><h2>${esc(db.settings.name)}</h2><p>Seu criadouro organizado, da genealogia ao manejo diário.</p><button style="margin-top:20px" class="btn light" data-action="new:birds">＋ Cadastrar ave</button></div><img class="hero-photo" id="speciesHeroImage" alt="Ilustração neutra de ave; fotografia da espécie indisponível" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20900%20600%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23d9e7d1%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23859d73%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22900%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M0%20520Q210%20380%20400%20480T900%20420V600H0%22%20fill%3D%22%236b8760%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M200%20530Q450%20460%20850%20340%22%20stroke%3D%22%235b6c43%22%20stroke-width%3D%2223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3Cellipse%20cx%3D%22540%22%20cy%3D%22265%22%20rx%3D%22175%22%20ry%3D%22118%22%20fill%3D%22%239b6849%22%20transform%3D%22rotate%28-13%20540%20265%29%22%2F%3E%3Cellipse%20cx%3D%22485%22%20cy%3D%22270%22%20rx%3D%2295%22%20ry%3D%2258%22%20fill%3D%22%23e1ba84%22%20transform%3D%22rotate%2817%20485%20270%29%22%2F%3E%3Ccircle%20cx%3D%22680%22%20cy%3D%22200%22%20r%3D%2267%22%20fill%3D%22%239b6849%22%2F%3E%3Ccircle%20cx%3D%22702%22%20cy%3D%22183%22%20r%3D%2210%22%20fill%3D%22%23202a21%22%2F%3E%3Cpath%20d%3D%22M735%20215l63%2015-62%2027%22%20fill%3D%22%23d5ae6b%22%2F%3E%3Cpath%20d%3D%22M398%20280L250%20220l70%20145%22%20fill%3D%22%23765238%22%2F%3E%3Cpath%20d%3D%22M563%20359l-15%20105m50-110l16%2096%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%2211%22%20fill%3D%22none%22%2F%3E%3Cpath%20d%3D%22M515%20463l42%207m38-18l41%204%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%228%22%2F%3E%3Cg%20fill%3D%22%23e7eedb%22%20opacity%3D%22.55%22%3E%3Ccircle%20cx%3D%22110%22%20cy%3D%2290%22%20r%3D%2238%22%2F%3E%3Ccircle%20cx%3D%22810%22%20cy%3D%2297%22%20r%3D%2258%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"></div><div class="quick-actions" aria-label="Ações do dia">
+function home(){const outside=new Set(db.revenues.filter(sale=>sale.kind==='bird'&&saleOutside(sale)).map(sale=>sale.itemId));
+const activeBirds=db.birds.filter(bird=>!outside.has(bird.id));const active=db.couples.filter(c=>!c.end&&!outside.has(c.male)&&!outside.has(c.female)).length;const pending=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)).length;const healthAlert=db.health.filter(h=>h.alert==='SIM').length;const low=db.stock.filter(s=>Number(s.quantity)<=Number(s.min||db.settings.lowStock)).length;const exp=financeTotals(today().slice(0,7)).paid/100;const nums=[['Aves no plantel',activeBirds.length,'♣'],['Machos',activeBirds.filter(b=>sexValue(b.sex)==='MACHO').length,'♂'],['Fêmeas',activeBirds.filter(b=>sexValue(b.sex)==='FÊMEA').length,'♀'],['Sexo desconhecido',activeBirds.filter(b=>sexValue(b.sex)==='NÃO IDENTIFICADO').length,'?'],['Casais ativos',active,'♡'],['Ovos registrados',db.eggs.length,'◉'],['Filhotes registrados',db.chicks.length,'✦'],['Tarefas pendentes',pending,'☷']];const due=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)&&t.date<=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),soon=db.events.filter(e=>e.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);return `<div class="hero"><div><div style="font-size:11px;letter-spacing:2px;opacity:.7">BEM-VINDO AO CANTO & NINHO</div><h2>${esc(db.settings.name)}</h2><p>Seu criadouro organizado, da genealogia ao manejo diário.</p><button style="margin-top:20px" class="btn light" data-action="new:birds">＋ Cadastrar ave</button></div><img class="hero-photo" id="speciesHeroImage" alt="Ilustração neutra de ave; fotografia da espécie indisponível" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20900%20600%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23d9e7d1%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23859d73%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22900%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M0%20520Q210%20380%20400%20480T900%20420V600H0%22%20fill%3D%22%236b8760%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M200%20530Q450%20460%20850%20340%22%20stroke%3D%22%235b6c43%22%20stroke-width%3D%2223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3Cellipse%20cx%3D%22540%22%20cy%3D%22265%22%20rx%3D%22175%22%20ry%3D%22118%22%20fill%3D%22%239b6849%22%20transform%3D%22rotate%28-13%20540%20265%29%22%2F%3E%3Cellipse%20cx%3D%22485%22%20cy%3D%22270%22%20rx%3D%2295%22%20ry%3D%2258%22%20fill%3D%22%23e1ba84%22%20transform%3D%22rotate%2817%20485%20270%29%22%2F%3E%3Ccircle%20cx%3D%22680%22%20cy%3D%22200%22%20r%3D%2267%22%20fill%3D%22%239b6849%22%2F%3E%3Ccircle%20cx%3D%22702%22%20cy%3D%22183%22%20r%3D%2210%22%20fill%3D%22%23202a21%22%2F%3E%3Cpath%20d%3D%22M735%20215l63%2015-62%2027%22%20fill%3D%22%23d5ae6b%22%2F%3E%3Cpath%20d%3D%22M398%20280L250%20220l70%20145%22%20fill%3D%22%23765238%22%2F%3E%3Cpath%20d%3D%22M563%20359l-15%20105m50-110l16%2096%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%2211%22%20fill%3D%22none%22%2F%3E%3Cpath%20d%3D%22M515%20463l42%207m38-18l41%204%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%228%22%2F%3E%3Cg%20fill%3D%22%23e7eedb%22%20opacity%3D%22.55%22%3E%3Ccircle%20cx%3D%22110%22%20cy%3D%2290%22%20r%3D%2238%22%2F%3E%3Ccircle%20cx%3D%22810%22%20cy%3D%2297%22%20r%3D%2258%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"></div><div class="quick-actions" aria-label="Ações do dia">
 <button class="btn secondary" data-action="dailyTasks">Tarefas de hoje</button>
 <button class="btn secondary" data-action="quickFeeding">Registrar alimentação</button>
 <button class="btn secondary" data-action="quickPurchase">Registrar compra</button>
 </div><div class="grid">${nums.map(n=>`<div class="stat"><div class="symbol">${n[2]}</div><div class="number">${n[1]}</div><div class="label">${n[0]}</div></div>`).join('')}</div><div class="panels"><div><section class="panel" id="dailyTasks" tabindex="-1"><h3>Atividades pendentes até hoje</h3>${due.length?`<ul class="mini-list">${due.map(t=>`<li><span>${esc(t.name)} <span class="muted">· ${fmtDate(t.date)}</span></span><button class="btn small secondary" data-complete="${t.id}">Concluir</button></li>`).join('')}</ul>`:'<div class="empty">Nenhuma tarefa pendente para hoje.</div>'}</section><div class="panel"><h3>Próximos compromissos</h3>${soon.length?`<ul class="mini-list">${soon.map(e=>`<li>${esc(e.title)} <span class="muted">${fmtDate(e.date)}</span></li>`).join('')}</ul>`:'<div class="empty">Nenhum compromisso cadastrado.</div>'}</div></div><div><div class="panel"><h3>Resumo operacional</h3><ul class="mini-list"><li>Alertas de saúde <strong>${healthAlert}</strong></li><li>Itens com estoque baixo <strong>${low}</strong></li><li>Itens vencidos / próximos de vencer (30 dias) <strong>${db.stock.filter(s=>s.expiry&&s.expiry<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)).length}</strong></li><li>Despesas pagas no mês <strong>${brl(exp)}</strong></li><li>Atividades agendadas hoje <strong>${db.events.filter(e=>e.date===today()).length}</strong></li></ul></div><div class="notice info">Indicadores calculados somente a partir dos dados cadastrados. O sistema não confirma situação legal perante órgãos oficiais.</div></div></div>`}
 function birdIdentity(b){
  return `<div class="plantel-photo-name">${birdPhotoImg(b,'plantel-species-photo')}<div class="bird-info"><strong>${esc(birdName(b))}</strong><div class="muted">${esc(b.scientific)}</div>
- ${activeBirdSale(b.id)?'<span class="tag">Vendida</span>':''}</div></div>`;
+ ${birdOutside(b.id)?`<span class="tag">${birdOutside(b.id).returnPending?'Aguardando devolução':'Vendida'}</span>`:activeBirdSale(b.id)?'<span class="tag">Aguardando entrega</span>':''}</div></div>`;
 }
 function birdDetails(b){
  return `<div class="helper">${birdExtraFields.map(([key,label])=>esc(label+': '+(key==='birthDate'?(b[key]?fmtDate(b[key]):'—'):(b[key]||'—')))).join(' · ')}</div>`;
 }
+function birdSaleAction(bird){
+ const sale=birdOutside(bird.id)||activeBirdSale(bird.id);
+ return sale?`<button class="btn small secondary" data-open-sale="${esc(sale.id)}">Ver venda</button>`
+  :`<button class="btn small secondary" data-sale-kind="bird" data-sale-item="${esc(bird.id)}">Registrar venda</button>`;
+}
 function birdActions(b){
- return `<div class="actions"><button class="btn small secondary" data-tree="${esc(b.id)}">Árvore</button><button class="btn small secondary" data-bird-photo="${esc(b.id)}">${photoData(b.photo)?'Trocar foto':'Adicionar foto'}</button>${activeBirdSale(b.id)?'':`<button class="btn small secondary" data-sale-kind="bird" data-sale-item="${esc(b.id)}">Registrar venda</button>`}${act('birds',b)}</div>`;
+ return `<div class="actions"><button class="btn small secondary" data-tree="${esc(b.id)}">Árvore</button><button class="btn small secondary" data-bird-photo="${esc(b.id)}">${photoData(b.photo)?'Trocar foto':'Adicionar foto'}</button>${birdSaleAction(b)}${act('birds',b)}</div>`;
 }
 function birds(){
- const found=db.birds.filter(b=>upper([b.name,b.scientific,b.ring].join(' ')).includes(upper(query)));
+ const sold=filteredMode==='birdsSold';
+ const outside=new Set(db.revenues.filter(sale=>sale.kind==='bird'&&saleOutside(sale)).map(sale=>sale.itemId));
+ const found=db.birds.filter(b=>outside.has(b.id)===sold&&upper([b.name,b.scientific,b.ring].join(' ')).includes(upper(query)));
  const rows=found.map(b=>[`${birdIdentity(b)}${birdDetails(b)}`,esc(b.ring||'—'),esc(b.sex),
   `${esc(birdName(findBird(b.father)))} / ${esc(birdName(findBird(b.mother)))}`,`<span class="tag">${esc(b.status)}</span>`,esc(b.condition),birdActions(b)]);
  return `${header('Plantel de aves','Identificação individual com parentesco validado.','Cadastrar ave','new:birds')}
+ <div class="toolbar">
+ <button class="btn ${sold?'secondary':''}" data-sub="birdsActive" aria-pressed="${!sold}">Aves ativas</button>
+ <button class="btn ${sold?'':'secondary'}" data-sub="birdsSold" aria-pressed="${sold}">Vendidas</button>
+ </div>
  <div class="toolbar"><input class="field" id="search" aria-label="Buscar por nome, espécie ou anilha" placeholder="Buscar por nome, espécie ou anilha" value="${esc(query)}"></div>
  <div class="plantel-table">${table(['Ave','Anilha','Sexo','Pai / Mãe','Situação','Manejo','Ações'],rows)}</div>
  <div class="bird-cards">${found.map(b=>`<article class="panel bird-card">${birdIdentity(b)}
@@ -259,7 +271,20 @@ function validFinanceDate(date){
 }
 function moneyCents(value){return Math.round(Number(value)*100)}
 function cageProduct(item){return upper(item?.category)===cageCategory}
+function physicalSaleDate(sale){return sale?.deliveryDate===undefined?sale?.date||'':sale.deliveryDate}
+function saleOutside(sale){return !!physicalSaleDate(sale)&&(!sale.cancelledDate||sale.returnPending===true)}
+function birdOutside(id){return db.revenues.find(sale=>sale.kind==='bird'&&sale.itemId===id&&saleOutside(sale))}
 function activeBirdSale(birdId){return db.revenues.find(r=>!r.cancelledDate&&r.kind==='bird'&&r.itemId===birdId)}
+function stockReserved(itemId,excluding=''){
+ return db.revenues.filter(s=>s.kind==='cage'&&s.itemId===itemId&&s.id!==excluding&&!s.cancelledDate&&!physicalSaleDate(s))
+  .reduce((total,s)=>total+Number(s.quantity),0);
+}
+function birdExitLinks(birdId){
+ return {
+  couples:db.couples.filter(c=>!c.end&&(c.male===birdId||c.female===birdId)).length,
+  tasks:db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)&&birdIds(t.bird).includes(birdId)).length
+ };
+}
 function saleCategory(kind){return kind==='bird'?'Venda de ave':'Venda de gaiola'}
 function expensePaymentFields(record){
  return `<fieldset class="wide bird-acquisition">
@@ -301,21 +326,25 @@ function salesPage(){
  <div class="sales-list">${list.map(sale=>{
   const active=!sale.cancelledDate;
   const difference=Number.isFinite(sale.acquisitionCost)?brl((moneyCents(sale.value)-moneyCents(sale.acquisitionCost))/100):'';
-  return `<article class="panel sale-card"><h3>${esc(sale.itemName)} <span class="tag">${esc(active?sale.paymentStatus:'CANCELADA')}</span></h3>
+  return `<article class="panel sale-card" id="sale-${esc(sale.id)}" tabindex="-1"><h3>${esc(sale.itemName)} <span class="tag">${esc(active?sale.paymentStatus:'CANCELADA')}</span></h3>
    <p>${saleCategory(sale.kind)} · ${fmtDate(sale.date)} · <strong>${brl(sale.value)}</strong>${sale.kind==='cage'?' · '+esc(sale.quantity)+' un.':''}</p>
+   ${physicalSaleDate(sale)?`<p>Entrega: ${fmtDate(physicalSaleDate(sale))}</p>`:active?'<p>Aguardando entrega</p>':''}
+   ${sale.returnPending?'<p>Devolução pendente</p>':sale.returnedDate?`<p>Devolução: ${fmtDate(sale.returnedDate)}</p>`:''}
    ${sale.receivedDate?`<p>Recebimento: ${fmtDate(sale.receivedDate)}</p>`:''}
    ${sale.cancelledDate?`<p>Cancelamento: ${fmtDate(sale.cancelledDate)}</p>`:''}
    ${difference?`<p>Diferença sobre o custo de aquisição: ${difference}</p>`:''}
    ${active?`<div class="actions"><button class="btn secondary" data-sale-edit="${esc(sale.id)}">Editar venda</button>
-    <button class="btn danger" data-sale-cancel="${esc(sale.id)}">Cancelar venda</button></div>`:''}</article>`;
+    ${!physicalSaleDate(sale)?`<button class="btn small" data-sale-deliver="${esc(sale.id)}">Registrar entrega</button>`: ''}
+    <button class="btn danger" data-sale-cancel="${esc(sale.id)}">Cancelar venda</button></div>`
+    :sale.returnPending?`<div class="actions"><button class="btn secondary" data-sale-return="${esc(sale.id)}">Registrar devolução</button></div>`:''}</article>`;
  }).join('')||'<p class="empty">Nenhuma venda encontrada.</p>'}</div>`;
 }
 function saleItems(kind,old){
  return kind==='bird'
-  ?db.birds.filter(b=>!activeBirdSale(b.id)||b.id===old?.itemId)
-  :db.stock.filter(item=>cageProduct(item)&&(Number(item.quantity)>0||item.id===old?.itemId));
+  ?db.birds.filter(b=>(!activeBirdSale(b.id)&&!birdOutside(b.id))||b.id===old?.itemId)
+  :db.stock.filter(item=>cageProduct(item)&&(Number(item.quantity)>stockReserved(item.id)||item.id===old?.itemId));
 }
-function openSale(kind,itemId='',old=null){
+function openSale(kind,itemId='',old=null,deliver=false){
  const available=saleItems(kind,old);
  if(!available.length)return toast(kind==='bird'?'Nenhuma ave cadastrada e disponível para venda.':'Cadastre uma gaiola com saldo no Estoque.');
  const cage=kind==='cage';
@@ -327,22 +356,42 @@ function openSale(kind,itemId='',old=null){
  ${input('price',cage?'Valor unitário (R$)':'Valor da venda (R$)','text',old?(cage?old.unitPrice:old.value):'',true,'inputmode="decimal" pattern="[0-9]+([,.][0-9]{1,2})?"')}
  ${select('paymentStatus','Situação do pagamento',[paymentReceived,paymentOpen],old?.paymentStatus||paymentReceived,true)}
  ${input('receivedDate','Data do recebimento','date',old?.receivedDate||'')}
+ ${physicalSaleDate(old)?`<p class="wide muted">Entrega registrada em ${fmtDate(physicalSaleDate(old))}.</p>`
+  :`<div><label><input type="checkbox" name="deliverNow" ${!old||deliver?'checked':''}> ${old?'Registrar entrega':'Entregue agora'}</label></div>
+   ${input('deliveryDate','Data da entrega','date',old?today():'')}</div><div class="form-grid">
+   <p class="wide notice" id="saleLinks" hidden></p>
+   <label class="wide" id="saleLinksConfirm" hidden><input type="checkbox" name="linksReviewed"> Conferi os vínculos antes da saída.</label>`}
  <output class="wide purchase-preview" aria-live="polite"></output></div>
  <p class="form-feedback" role="alert" hidden></p>
  <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Fechar</button><button type="submit" class="btn">Salvar venda</button></div></form>`);
  const form=document.getElementById('saleForm'), fields=form.elements;
  let customReceiptDate=Boolean(old?.receivedDate&&old.receivedDate!==old.date);
+ let customDeliveryDate=Boolean(old);
+ const warning=form.querySelector('#saleLinks'), warningConfirm=form.querySelector('#saleLinksConfirm');
  const update=()=>{
   const received=fields.paymentStatus.value===paymentReceived;
   fields.receivedDate.parentElement.hidden=!received;
   fields.receivedDate.disabled=!received;
   fields.receivedDate.required=received;
   if(received&&!customReceiptDate)fields.receivedDate.value=fields.date.value;
+  if(fields.deliveryDate){
+   fields.deliveryDate.disabled=!fields.deliverNow.checked;
+   fields.deliveryDate.required=fields.deliverNow.checked;
+   fields.deliveryDate.parentElement.hidden=fields.deliveryDate.disabled;
+   if(!customDeliveryDate)fields.deliveryDate.value=fields.date.value;
+   const links=!cage&&fields.deliverNow.checked?birdExitLinks(fields.itemId.value):null;
+   const needsReview=!!(links&&(links.couples||links.tasks));
+   warning.hidden=warningConfirm.hidden=!needsReview;
+   fields.linksReviewed.required=needsReview;
+   warning.textContent=needsReview?`Esta ave está em ${links.couples} casal(is) ativo(s) e tem ${links.tasks} tarefa(s) pendente(s). Confira em Reprodução e Manejo.`:'';
+  }
   const cents=moneyCents(stockDecimal(fields.price.value))*(cage?Number(fields.quantity.value):1);
   form.querySelector('output').textContent=Number.isSafeInteger(cents)&&cents>0?'Total da venda: '+brl(cents/100):'';
  };
  form.addEventListener('input',e=>{
   if(e.target===fields.receivedDate)customReceiptDate=Boolean(fields.receivedDate.value);
+  if(e.target===fields.deliveryDate)customDeliveryDate=Boolean(fields.deliveryDate.value);
+  if(e.target===fields.itemId&&fields.linksReviewed)fields.linksReviewed.checked=false;
   update();
  });
  form.addEventListener('change',update);
@@ -351,12 +400,13 @@ function openSale(kind,itemId='',old=null){
   e.preventDefault();
   const error=saveSale({kind,itemId:fields.itemId.value,date:fields.date.value,
    quantity:cage?Number(fields.quantity.value):1,unitPrice:stockDecimal(fields.price.value),
-   paymentStatus:fields.paymentStatus.value,receivedDate:fields.receivedDate.disabled?'':fields.receivedDate.value},old?.id);
+   paymentStatus:fields.paymentStatus.value,receivedDate:fields.receivedDate.disabled?'':fields.receivedDate.value,
+   deliveryDate:physicalSaleDate(old)||(fields.deliverNow?.checked?fields.deliveryDate.value:'')},old?.id,!!fields.linksReviewed?.checked);
   if(error)return formFeedback(form,error);
   closeModal();render();toast('Venda registrada em Receitas.');
  };
 }
-function saveSale(fields,oldId){
+function saveSale(fields,oldId,linksReviewed=false){
  const old=oldId?getRecord('revenues',oldId):null;
  if(oldId&&(!old||old.cancelledDate))return 'Esta venda já foi cancelada ou não está mais disponível.';
  const bird=fields.kind==='bird',item=getRecord(bird?'birds':'stock',fields.itemId);
@@ -366,22 +416,29 @@ function saveSale(fields,oldId){
  if(!validFinanceDate(date))return 'Informe uma data de venda válida.';
  if(![paymentReceived,paymentOpen].includes(fields.paymentStatus))return 'Informe a situação do pagamento.';
  if(received&&(!validFinanceDate(fields.receivedDate)||fields.receivedDate<date))return 'Informe o recebimento na data da venda ou em uma data posterior.';
+ const alreadyDelivered=!!physicalSaleDate(old), deliveryDate=physicalSaleDate(old)||fields.deliveryDate||'';
+ if(deliveryDate&&(!validFinanceDate(deliveryDate)||deliveryDate<date))return 'Informe a entrega na data da venda ou depois.';
+ if(bird&&deliveryDate&&!alreadyDelivered&&!linksReviewed){
+  const links=birdExitLinks(item.id);
+  if(links.couples||links.tasks)return 'Confira os vínculos antes de registrar a entrega.';
+ }
+ if(bird&&birdOutside(item.id)&&birdOutside(item.id).id!==oldId)return 'Esta ave ainda não retornou ao plantel.';
  const quantity=fields.quantity,cents=moneyCents(fields.unitPrice)*quantity;
  if(!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(cents)||cents<=0)return 'Informe uma quantidade inteira e um valor maior que zero.';
  if(bird&&quantity!==1)return 'Registre uma ave por venda.';
  if(bird&&db.revenues.some(r=>r.kind==='bird'&&r.itemId===item.id&&!r.cancelledDate&&r.id!==oldId))return 'Esta ave já tem uma venda registrada.';
- const available=bird?0:Number(item.quantity)+Number(old?.quantity||0);
- const movement=bird||!old?null:db.movements.find(m=>m.saleId===oldId&&m.stock===item.id&&m.type==='SAÍDA');
- if(!bird&&old&&!movement)return 'A saída vinculada não foi localizada. Confira o histórico de estoque.';
- if(!bird&&(!Number.isFinite(available)||quantity>available))return 'Estoque insuficiente para esta venda.';
+ const available=bird?0:Number(item.quantity)+Number(alreadyDelivered?old.quantity:0);
+ const movement=bird||!alreadyDelivered?null:db.movements.find(m=>m.saleId===oldId&&m.stock===item.id&&m.type==='SAÍDA');
+ if(!bird&&alreadyDelivered&&!movement)return 'A saída vinculada não foi localizada. Confira o histórico de estoque.';
+ if(!bird&&(!Number.isFinite(available)||quantity>available-stockReserved(item.id,oldId)))return 'Estoque insuficiente para esta venda.';
  const previous=JSON.stringify(db), stamp=new Date().toISOString();
- const record={...old,...fields,id:oldId||id(),itemName:old?.itemName||(bird?birdName(item)+(item.ring&&item.ring!==birdName(item)?' · '+item.ring:''):item.name),
+ const record={...old,...fields,deliveryDate,id:oldId||id(),itemName:old?.itemName||(bird?birdName(item)+(item.ring&&item.ring!==birdName(item)?' · '+item.ring:''):item.name),
   unitPrice:moneyCents(fields.unitPrice)/100,value:cents/100,receivedDate:received?fields.receivedDate:'',
   acquisitionCost:old?old.acquisitionCost:(bird&&Number(item.acquisitionValue)>0?Number(item.acquisitionValue):null),
   createdAt:old?.createdAt||stamp,updatedAt:stamp};
- if(!bird){
+ if(!bird&&deliveryDate){
   item.quantity=available-quantity;
-  const output={stock:item.id,type:'SAÍDA',quantity,date,notes:'VENDA DE GAIOLA',saleId:record.id,updatedAt:stamp};
+  const output={stock:item.id,type:'SAÍDA',quantity,date:deliveryDate,notes:'VENDA DE GAIOLA',saleId:record.id,updatedAt:stamp};
   if(movement)Object.assign(movement,output);
   else db.movements.push({id:id(),createdAt:stamp,...output});
  }
@@ -390,37 +447,61 @@ function saveSale(fields,oldId){
  db=JSON.parse(previous);
  return 'Não foi possível gravar a venda. O preenchimento foi preservado.';
 }
-function cancelSale(saleId,date){
- const sale=getRecord('revenues',saleId);
- if(!sale||sale.cancelledDate)return 'A venda já foi cancelada ou não está disponível.';
- if(!validFinanceDate(date)||date<(sale.receivedDate||sale.date))return 'Informe uma data de cancelamento igual ou posterior à venda e ao recebimento.';
- const previous=JSON.stringify(db);
+function returnSoldItem(sale,date){
  if(sale.kind==='cage'){
-  const item=getRecord('stock',sale.itemId), movement=db.movements.find(m=>m.saleId===saleId&&m.stock===sale.itemId&&m.type==='SAÍDA');
-  if(!item||!movement||!Number.isFinite(Number(item.quantity)))return 'A saída vinculada não foi localizada. Confira o histórico de estoque.';
-  item.quantity=Number(item.quantity)+sale.quantity;
-  db.movements=db.movements.filter(m=>m!==movement);
+  const item=getRecord('stock',sale.itemId);
+  const movement=db.movements.find(m=>m.saleId===sale.id&&m.stock===sale.itemId&&m.type==='SAÍDA');
+  if(!item||!movement||!Number.isFinite(Number(item.quantity)))return 'A saída vinculada não foi localizada. Confira o estoque.';
+  item.quantity=Number(item.quantity)+Number(sale.quantity);
+  db.movements.push({id:id(),stock:item.id,type:'ENTRADA',quantity:sale.quantity,date,
+   notes:'DEVOLUÇÃO DE VENDA',saleId:sale.id,createdAt:new Date().toISOString()});
  }
- sale.cancelledDate=date;
- if(persist('revenues','CANCELAR VENDA',sale))return '';
- db=JSON.parse(previous);
- return 'Não foi possível gravar o cancelamento.';
+ sale.returnedDate=date;
+ sale.returnPending=false;
+ return '';
 }
-function openSaleCancellation(sale){
- modal('Cancelar venda',`<form id="saleCancelForm">
+function changeSaleReturn(saleId,date,returnNow,returnOnly=false){
+ const sale=getRecord('revenues',saleId);
+ if(!sale||(returnOnly?!sale.cancelledDate||!sale.returnPending:!!sale.cancelledDate))return 'Esta ação não está mais disponível para a venda.';
+ const delivered=physicalSaleDate(sale);
+ const minDate=(returnOnly?[sale.cancelledDate,delivered]:[sale.date,sale.receivedDate,delivered]).filter(Boolean).sort().at(-1);
+ if(!validFinanceDate(date)||date<minDate)return 'Informe uma data igual ou posterior às datas já registradas nesta venda.';
+ const previous=JSON.stringify(db);
+ if(returnNow&&delivered){
+  const error=returnSoldItem(sale,date);
+  if(error)return error;
+ }else if(delivered)sale.returnPending=true;
+ if(!returnOnly)sale.cancelledDate=date;
+ if(persist('revenues',returnOnly?'REGISTRAR DEVOLUÇÃO':'CANCELAR VENDA',sale))return '';
+ db=JSON.parse(previous);
+ return 'Não foi possível gravar a alteração.';
+}
+function openSaleCancellation(sale,returnOnly=false){
+ const delivered=!!physicalSaleDate(sale);
+ modal(returnOnly?'Registrar devolução':'Cancelar venda',`<form id="saleCancelForm">
  <p>${esc(sale.itemName)} · ${brl(sale.value)}</p>
- <p>${sale.receivedDate?'O cancelamento registrará o estorno integral na data informada.':'O cancelamento retirará a venda do total a receber.'}
- ${sale.kind==='cage'?'As unidades voltarão ao estoque.':'A ave voltará a ficar disponível no Plantel.'}</p>
- ${input('cancelledDate',sale.receivedDate?'Data do estorno':'Data do cancelamento','date',today(),true)}
+ <p>${returnOnly?'A devolução repõe a quantidade no estoque ou devolve a ave ao plantel ativo.':sale.receivedDate?'O cancelamento registrará o estorno integral na data informada.':'O cancelamento retirará a venda do total a receber.'}</p>
+ ${input('cancelledDate',returnOnly?'Data da devolução':sale.receivedDate?'Data do estorno':'Data do cancelamento','date',today(),true)}
+ ${!returnOnly&&delivered?select('returnChoice','O item foi devolvido?',['SIM','NÃO'],'',true):''}
  <p class="form-feedback" role="alert" hidden></p>
- <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Voltar</button><button type="submit" class="btn danger">Confirmar cancelamento</button></div></form>`);
+ <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Voltar</button><button type="submit" class="btn ${returnOnly?'':'danger'}">${returnOnly?'Salvar devolução':'Confirmar cancelamento'}</button></div></form>`);
  const form=document.getElementById('saleCancelForm');
  form.onsubmit=e=>{
   e.preventDefault();
-  const error=cancelSale(sale.id,form.elements.cancelledDate.value);
+  const error=changeSaleReturn(sale.id,form.elements.cancelledDate.value,
+   returnOnly||form.elements.returnChoice?.value==='SIM',returnOnly);
   if(error)return formFeedback(form,error);
-  closeModal();render();toast('Venda cancelada.');
+  closeModal();render();toast(returnOnly?'Devolução registrada.':'Venda cancelada.');
  };
+}
+function revealSale(saleId){
+ if(!getRecord('revenues',saleId))return toast('A venda vinculada não foi localizada.');
+ go('revenues');
+ query='';
+ render();
+ const card=document.getElementById('sale-'+saleId);
+ card?.scrollIntoView({block:'nearest'});
+ card?.focus({preventScroll:true});
 }
 document.addEventListener('change',event=>{
  if(event.target.name!=='expenseStatus')return;
@@ -428,12 +509,14 @@ document.addEventListener('change',event=>{
  date.disabled=event.target.value===expenseOpen;
 });
 document.addEventListener('click',event=>{
- const button=event.target.closest('[data-sale-kind],[data-sale-edit],[data-sale-cancel]');
+ const button=event.target.closest('[data-sale-kind],[data-sale-edit],[data-sale-cancel],[data-sale-return],[data-open-sale],[data-sale-deliver]');
  if(!button)return;
+ if(button.dataset.openSale)return revealSale(button.dataset.openSale);
  if(button.dataset.saleKind)return openSale(button.dataset.saleKind,button.dataset.saleItem);
- const sale=getRecord('revenues',button.dataset.saleEdit||button.dataset.saleCancel);
+ const sale=getRecord('revenues',button.dataset.saleEdit||button.dataset.saleCancel||button.dataset.saleReturn||button.dataset.saleDeliver);
+ if(button.dataset.saleReturn&&sale?.returnPending)return openSaleCancellation(sale,true);
  if(!sale||sale.cancelledDate)return;
- if(button.dataset.saleEdit)openSale(sale.kind,sale.itemId,sale);
+ if(button.dataset.saleEdit||button.dataset.saleDeliver)openSale(sale.kind,sale.itemId,sale,!!button.dataset.saleDeliver);
  else openSaleCancellation(sale);
 });
 
@@ -865,6 +948,7 @@ function prepareStockSave(type,record,old,form){
   if(!old&&!stockCatalog.has(record.category))return 'SELECIONE A CATEGORIA.';
   if(cageProduct(record)){
    if(!Number.isSafeInteger(record.quantity))return 'Informe a quantidade de gaiolas em unidades inteiras.';
+   if(old&&record.quantity<stockReserved(old.id))return 'O saldo não pode ficar abaixo das unidades reservadas para entrega.';
    record.unit='UN';
   }
   if(old&&!cageProduct(record)&&db.revenues.some(r=>r.kind==='cage'&&r.itemId===old.id))return 'Mantenha a categoria Gaiolas para preservar o histórico de vendas.';
@@ -932,7 +1016,7 @@ function related(a,b){if(!a||!b)return 'ASCENDÊNCIA NÃO COMPLETAMENTE INFORMAD
 function validate(type,r,current){if(type==='birds'){if(!r.scientific.trim())return 'O NOME CIENTÍFICO É OBRIGATÓRIO.';if(r.ring&&db.birds.some(b=>b.id!==current&&upper(b.ring)===upper(r.ring)))return 'ESSA ANILHA JÁ ESTÁ CADASTRADA.';if(current&&(r.father===current||r.mother===current))return 'A AVE NÃO PODE SER SEU PRÓPRIO PAI OU MÃE.';if(r.father&&sexValue(findBird(r.father)?.sex)!=='MACHO')return parentError(r.father,'PAI','MACHO');if(r.mother&&sexValue(findBird(r.mother)?.sex)!=='FÊMEA')return parentError(r.mother,'MÃE','FÊMEA');const candidates=db.birds.map(b=>b.id===current?{...b,...r}:b);if(checkCycle(current,r.father,candidates)||checkCycle(current,r.mother,candidates))return 'VÍNCULO GENEALÓGICO CIRCULAR NÃO PERMITIDO.'}
 if(type==='couples'){if(!r.male||!r.female||r.male===r.female)return 'SELECIONE UM MACHO E UMA FÊMEA DIFERENTES.';if(findBird(r.male)?.scientific!==findBird(r.female)?.scientific)return 'NÃO É PERMITIDO FORMAR CASAL ENTRE ESPÉCIES DIFERENTES.'}
 if(type==='chicks'&&r.ring&&db.chicks.some(x=>x.id!==current&&x.ring===r.ring))return 'ANILHA JÁ UTILIZADA EM OUTRO FILHOTE.';
-if(type==='movements'){const s=db.stock.find(s=>s.id===r.stock);if(!s)return 'SELECIONE UM PRODUTO.';const previous=db.movements.find(x=>x.id===current);const reversed=previous&&previous.stock===r.stock?(previous.type==='ENTRADA'?-Number(previous.quantity):Number(previous.quantity)):0;const delta=r.type==='ENTRADA'?Number(r.quantity):-Number(r.quantity);if(Number(s.quantity)+reversed+delta<0)return 'SALDO INSUFICIENTE PARA ESTA MOVIMENTAÇÃO.';if(previous&&previous.stock!==r.stock){const p=db.stock.find(x=>x.id===previous.stock);if(p&&Number(p.quantity)+(previous.type==='ENTRADA'?-Number(previous.quantity):Number(previous.quantity))<0)return 'A TRANSFERÊNCIA DE MOVIMENTAÇÃO GERARIA SALDO NEGATIVO NO PRODUTO ANTERIOR.'}}
+if(type==='movements'){const s=db.stock.find(s=>s.id===r.stock);if(!s)return 'SELECIONE UM PRODUTO.';const previous=db.movements.find(x=>x.id===current);const reversed=previous&&previous.stock===r.stock?(previous.type==='ENTRADA'?-Number(previous.quantity):Number(previous.quantity)):0;const delta=r.type==='ENTRADA'?Number(r.quantity):-Number(r.quantity);if(Number(s.quantity)+reversed+delta<stockReserved(s.id))return 'SALDO DISPONÍVEL INSUFICIENTE PARA ESTA MOVIMENTAÇÃO.';if(previous&&previous.stock!==r.stock){const p=db.stock.find(x=>x.id===previous.stock);if(p&&Number(p.quantity)+(previous.type==='ENTRADA'?-Number(previous.quantity):Number(previous.quantity))<stockReserved(p.id))return 'A TRANSFERÊNCIA DE MOVIMENTAÇÃO GERARIA SALDO NEGATIVO NO PRODUTO ANTERIOR.'}}
 if(type==='feedings'&&!birdIds(r.bird).length&&!r.group)return 'INFORME A AVE OU O GRUPO.';
 for(const [a,b] of [['start','end']]){if(r[a]&&r[b]&&/^\d{4}-\d{2}-\d{2}$/.test(r[a])&&/^\d{4}-\d{2}-\d{2}$/.test(r[b])&&r[b]<r[a])return 'A DATA DE TÉRMINO NÃO PODE ANTECEDER O INÍCIO.'}return ''}
 function formFeedback(form,message){
@@ -1000,7 +1084,7 @@ if((type==='movements'&&obj.saleId)||(type==='birds'&&db.revenues.some(r=>r.kind
  return toast('Este registro tem histórico de venda em Receitas.');
 }
 const references={birds:[['birds','father'],['birds','mother'],['feedings','bird'],['couples','male'],['couples','female'],['health','bird'],['tasks','bird'],['trips','bird'],['events','bird'],['transfers','bird'],['documents','bird']],food:[['feedings','food']],couples:[['attempts','couple'],['chicks','couple']],seasons:[['attempts','season']],attempts:[['nests','attempt']],nests:[['eggs','nest']],eggs:[['chicks','egg']],stock:[['movements','stock']],facilities:[['transfers','facility'],['tasks','facility']]};const used=hasDependents(type,recordId)||(references[type]||[]).some(([col,key])=>db[col].some(x=>x.id!==recordId&&(Array.isArray(x[key])?x[key].includes(recordId):String(x[key]||'').toLowerCase()===String(recordId).toLowerCase())));if(used)return toast('EXCLUSÃO BLOQUEADA: REGISTRO POSSUI VÍNCULOS. PRESERVE O HISTÓRICO.');const acquisition=type==='birds'&&db.expenses.some(e=>e.birdAcquisitionId===recordId);
-if(!confirm(acquisition?'Excluir esta ave? A despesa de aquisição será mantida no histórico financeiro.':'EXCLUIR ESSE REGISTRO? ESSA AÇÃO NÃO PODE SER DESFEITA.'))return;const beforeDelete=JSON.stringify(db);if(type==='movements'){const product=db.stock.find(x=>x.id===obj.stock);if(product){const change=obj.type==='ENTRADA'?-Number(obj.quantity):Number(obj.quantity);if(Number(product.quantity)+change<0)return toast('EXCLUSÃO PRODUZIRIA ESTOQUE NEGATIVO.');product.quantity=Number(product.quantity)+change}}db[type]=db[type].filter(x=>x.id!==recordId);if(!persist(type,'EXCLUIR',obj)){db=JSON.parse(beforeDelete);return}render();toast('REGISTRO EXCLUÍDO.')}
+if(!confirm(acquisition?'Excluir esta ave? A despesa de aquisição será mantida no histórico financeiro.':'EXCLUIR ESSE REGISTRO? ESSA AÇÃO NÃO PODE SER DESFEITA.'))return;const beforeDelete=JSON.stringify(db);if(type==='movements'){const product=db.stock.find(x=>x.id===obj.stock);if(product){const change=obj.type==='ENTRADA'?-Number(obj.quantity):Number(obj.quantity);if(Number(product.quantity)+change<stockReserved(product.id))return toast('A EXCLUSÃO DEIXARIA O SALDO ABAIXO DAS UNIDADES RESERVADAS.');product.quantity=Number(product.quantity)+change}}db[type]=db[type].filter(x=>x.id!==recordId);if(!persist(type,'EXCLUIR',obj)){db=JSON.parse(beforeDelete);return}render();toast('REGISTRO EXCLUÍDO.')}
 function focusAfterClose(trigger){
  queueMicrotask(()=>{
   if(document.querySelector('#modalRoot .modal,#cloudModal .cloud-panel'))return;
@@ -1083,6 +1167,11 @@ function lineage(type,r,seen=new Set()){
 function separationDays(r){if(!r.date||!r.separatedAt)return null;return Math.round((Date.parse(r.separatedAt+'T00:00:00Z')-Date.parse(r.date+'T00:00:00Z'))/86400000)}
 function lineageText(ctx){const b=x=>x?birdName(x)+' · '+(x.ring||'SEM ANILHA')+' [ID: '+x.id+']':'NÃO INFORMADO';return `Macho: ${b(ctx.male)}\nFêmea: ${b(ctx.female)}\nTemporada: ${ctx.season?.name||'NÃO INFORMADA'}\nTentativa: ${ctx.attempt?.start||ctx.attempt?.id||'NÃO INFORMADA'}\nNinhada: ${ctx.nest?.name||'NÃO INFORMADA'}\nOvo: ${ctx.egg?.name||'NÃO INFORMADO'}`}
 function cellValue(type,r,key){
+ if(type==='movements'&&key==='type'&&r.saleId)return r.type==='ENTRADA'?'Devolução de venda':'Saída por venda';
+ if(type==='stock'&&key==='quantity'&&cageProduct(r)){
+  const reserved=stockReserved(r.id);
+  if(reserved)return `${esc(r.quantity)} <small class="muted">· ${reserved} reservadas</small>`;
+ }
  if(type==='expenses'&&key==='expenseStatus')return r.expenseStatus===expenseOpen?'Pendente':'Paga';
  if(type==='nests'&&key==='closedAt')return r.closedAt?fmtDate(r.closedAt):'—';
  if(key==='stockCost'){const value=stockExpenseValue(type,r);return value?brl(value):'—'}
