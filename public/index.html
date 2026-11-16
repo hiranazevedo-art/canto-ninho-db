@@ -95,7 +95,16 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 .finance-metrics div{padding:10px;background:var(--cream);border-radius:8px;overflow-wrap:anywhere}
 .finance-metrics dt{font-size:12px}
 .finance-metrics dd{margin:3px 0 0;font-size:16px;font-weight:750}
-.sales-list{display:grid;gap:12px}
+.sales-list,.repro-cards{display:grid;gap:12px}
+.repro-card{margin:0;overflow-wrap:anywhere}
+.repro-card .btn{min-height:44px}
+.repro-card .tag{display:inline-block}
+.repro-nest{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.repro-nest h4{margin:0;font-size:15px}
+.repro-nest summary{cursor:pointer;padding:8px 0}
+.repro-chicks{padding-left:20px}
+.repro-chicks li{margin:8px 0}
+.repro-chicks .actions{margin-top:5px}
 .sale-card{margin:0;overflow-wrap:anywhere}
 .sale-card .btn{min-height:44px}
 .purchase-preview{font-weight:650;margin:8px 0}
@@ -454,7 +463,7 @@ const configs={
  couples:{title:'Casais',subtitle:'Formação e acompanhamento de casais.',fields:[['male','Macho','male',true],['female','Fêmea','female',true],['start','Data de formação','date',true],['end','Separação','date'],['notes','Observações','textarea']],cols:[['Macho','male'],['Fêmea','female'],['Formação','start'],['Situação','end']]},
  seasons:{title:'Temporadas',subtitle:'Controle das temporadas reprodutivas.',fields:[['name','Identificação','text',true],['start','Início','date',true],['end','Encerramento','date'],['notes','Observações','textarea']],cols:[['Temporada','name'],['Início','start'],['Fim','end']]},
  attempts:{title:'Tentativas reprodutivas',subtitle:'Vincule tentativa, casal e temporada.',fields:[['season','Temporada','season',true],['couple','Casal','couple',true],['start','Data de início','date',true],['result','Resultado','text'],['notes','Observações','textarea']],cols:[['Temporada','season'],['Casal','couple'],['Início','start'],['Resultado','result']]},
- nests:{title:'Ninhadas',subtitle:'Agrupamento de ovos por tentativa.',fields:[['name','Identificação','text',true],['attempt','Tentativa','attempt',true],['date','Data','date'],['notes','Observações','textarea']],cols:[['Ninhada','name'],['Tentativa','attempt'],['Data','date']]},
+ nests:{title:'Ninhadas',subtitle:'Agrupamento de ovos por tentativa.',fields:[['name','Identificação','text',true],['attempt','Tentativa','attempt',true],['date','Data','date'],['notes','Observações','textarea']],cols:[['Ninhada','name'],['Tentativa','attempt'],['Data','date'],['Encerramento','closedAt'],['Resultado','closeResult']]},
  eggs:{title:'Ovos',subtitle:'Registro individual de ovos.',fields:[['name','Identificação','text',true],['nest','Ninhada','nest',true],['date','Postura','date'],['status','Situação','choices',['REGISTRADO','FÉRTIL','INFÉRTIL','ECLODIDO','NÃO ECLODIDO','DESCONHECIDO']],['notes','Observações','textarea']],cols:[['Ovo','name'],['Ninhada','nest'],['Postura','date'],['Situação','status']]},
  chicks:{title:'Filhotes',subtitle:'Registros provisórios sem regularização oficial automática.',fields:[['name','Identificação provisória','text',true],['egg','Ovo de origem','egg'],['couple','Casal','couple'],['date','Nascimento','date'],['ring','Anilha','text'],['status','Situação','text'],['notes','Histórico','textarea']],cols:[['Identificação','name'],['Ovo','egg'],['Nascimento','date'],['Anilha','ring']]},
  tasks:{title:'Rotinas de manejo',subtitle:'Tarefas programadas, pendentes e concluídas.',fields:[['name','Atividade','text',true],['bird','Ave relacionada','bird'],['facility','Instalação','facility'],['frequency','Frequência','choices',['ÚNICA','DIÁRIA','SEMANAL','QUINZENAL','MENSAL','OUTRA']],['owner','Responsável','text'],['date','Data prevista','date',true],['done','Data de conclusão','date'],['status','Situação','choices',['PENDENTE','EM ANDAMENTO','CONCLUÍDA']],['notes','Observações','textarea']],cols:[['Atividade','name'],['Ave','bird'],['Prevista','date'],['Situação','status']]},
@@ -479,7 +488,227 @@ const configs={
 };
 function descValue(k,val){if(!val)return '—';if(k==='bird')return birdIds(val).map(x=>esc(birdName(findBird(x)))).join(', ')||'—';if(k==='male'||k==='female')return esc(birdName(findBird(val)));const map={food:['food','name'],season:['seasons','name'],couple:['couples','male'],attempt:['attempts','id'],nest:['nests','name'],egg:['eggs','name'],stock:['stock','name'],facility:['facilities','name']};if(map[k]){const [col,field]=map[k];const obj=getRecord(col,val);if(!obj)return 'REMOVIDO';return k==='couple'?esc(birdName(findBird(obj.male)))+' + '+esc(birdName(findBird(obj.female))):k==='attempt'?'TENTATIVA '+esc(obj.start||obj.id.slice(0,6)):esc(obj[field])}if(['date','start','end','expiry','done','revised','separatedAt'].includes(k)&&/^\d{4}-\d{2}-\d{2}$/.test(val))return fmtDate(val);if(k==='value'||k==='cost')return brl(val);return esc(val)}
 function generic(type){const cfg=configs[type],found=(type==='expenses'?expenseRows():db[type]).filter(x=>Object.values(x).join(' ').includes(upper(query))||!query);return `${header(cfg.title,cfg.subtitle,'Novo registro','new:'+type)}<div class="toolbar"><input id="search" class="field" placeholder="Buscar registros..." value="${esc(query)}"></div>${table([...cfg.cols.map(c=>c[0]),'Ações'],found.map(x=>[...cfg.cols.map(c=>cellValue(type,x,c[1])),act(type,x)]))}`}
-function reproduction(){const tabs=['couples','seasons','attempts','nests','eggs','chicks'];const chosen=tabs.includes(filteredMode)?filteredMode:'couples';return `${header('Controle reprodutivo','Casal → Temporada → Tentativa → Ninhada → Ovos → Filhotes → Separação')}<div class="toolbar">${tabs.map(x=>`<button class="btn ${x===chosen?'':'secondary'} small" data-sub="${x}">${({couples:'Casais',seasons:'Temporadas',attempts:'Tentativas',nests:'Ninhadas',eggs:'Ovos',chicks:'Filhotes'})[x]}</button>`).join('')}</div>${generic(chosen)}<div class="notice">Ao formar casais, o sistema avisa sobre parentescos conhecidos ou ascendência incompleta. Não substitui conferência técnica, documental ou legal.</div>`}
+const reproTabs={couples:'Casais',seasons:'Temporadas',attempts:'Tentativas',nests:'Ninhadas',eggs:'Ovos',chicks:'Filhotes'};
+const quickReproActions={eggs:'Registrar postura',chicks:'Registrar nascimento',close:'Encerrar ninhada'};
+const reproOpenDetails=new Set();
+const nestResults=['Com filhotes','Sem nascimentos','Resultado parcial','Resultado não informado'];
+function pairLabel(couple){
+ return birdName(findBird(couple.male))+' × '+birdName(findBird(couple.female));
+}
+function pairNests(coupleId){
+ return db.nests.filter(nest=>sameId(lineage('nests',nest).couple?.id,coupleId))
+  .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+}
+function nestChicks(nestId){
+ return db.chicks.filter(chick=>sameId(chick.nest,nestId)||sameId(getRecord('eggs',chick.egg)?.nest,nestId));
+}
+function nestSummary(nest){
+ const eggs=db.eggs.filter(egg=>sameId(egg.nest,nest.id)), chicks=nestChicks(nest.id);
+ const hatched=eggs.filter(egg=>egg.status==='ECLODIDO').length;
+ const lost=eggs.filter(egg=>['INFÉRTIL','NÃO ECLODIDO'].includes(egg.status)).length;
+ const open=Math.max(0,eggs.length-Math.max(hatched,chicks.length)-lost);
+ return `${eggs.length?eggs.length+' '+(eggs.length===1?'ovo':'ovos'):'Ovos não informados'} · ${chicks.length} ${chicks.length===1?'filhote registrado':'filhotes registrados'}${!nest.closedAt&&open?' · '+open+' '+(open===1?'ovo a conferir':'ovos a conferir'):''}`;
+}
+function reproButton(action,coupleId,nestId='',primary=false){
+ return `<button type="button" class="btn ${primary?'':'secondary'} small" data-repro-action="${action}" data-repro-pair="${esc(coupleId)}" data-repro-nest="${esc(nestId)}">${quickReproActions[action]}</button>`;
+}
+function reproChickDetails(chick){
+ return `<li><div><strong>${esc(chick.name)}</strong><div class="muted">Nascimento: ${fmtDate(chick.date)} · ${chick.ring?'Anilha: '+esc(chick.ring):'Sem anilha'}${chick.separatedAt?' · Separação: '+fmtDate(chick.separatedAt):''}</div></div>
+ <div class="actions"><button type="button" class="btn secondary small" data-repro-chick="${esc(chick.id)}" data-repro-field="ring">${chick.ring?'Editar anilha':'Anilhar'}</button>
+ <button type="button" class="btn secondary small" data-repro-chick="${esc(chick.id)}" data-repro-field="separatedAt">${chick.separatedAt?'Editar separação':'Registrar separação'}</button></div></li>`;
+}
+function reproNestDetails(nest){
+ const chicks=nestChicks(nest.id);
+ return `<section class="repro-nest">
+  <h4>${esc(nest.name||'Ninhada')} <span class="tag">${nest.closedAt?'Encerrada':'Em acompanhamento'}</span></h4>
+  <p>${esc(nestSummary(nest))}</p>
+  ${nest.closedAt?`<p class="muted">Encerrada em ${fmtDate(nest.closedAt)} · ${esc(nest.closeResult||'Resultado não informado')}</p>`:''}
+  ${chicks.length?`<details data-repro-details="chicks:${esc(nest.id)}" ${reproOpenDetails.has('chicks:'+nest.id)?'open':''}><summary>Filhotes (${chicks.length})</summary><ul class="repro-chicks">${chicks.map(reproChickDetails).join('')}</ul></details>`:''}
+ </section>`;
+}
+function reproPairCard(couple){
+ const nests=pairNests(couple.id), open=nests.filter(nest=>!nest.closedAt);
+ const history=db.chicks.filter(chick=>!lineage('chicks',chick).nest&&sameId(lineage('chicks',chick).couple?.id,couple.id));
+ const suggested=open.length===1&&open[0].quickRepro?open[0].id:'';
+ return `<article class="panel repro-card">
+  <h3>${esc(pairLabel(couple))} <span class="tag">${couple.end?'Separado':'Ativo'}</span></h3>
+  <p class="muted">${nests.length} ${nests.length===1?'ninhada':'ninhadas'} · ${open.length} em acompanhamento</p>
+  <div class="actions">${couple.end?'':reproButton('eggs',couple.id,suggested,!open.length)+reproButton('chicks',couple.id,suggested,!!open.length)}
+  ${open.length?reproButton('close',couple.id,open.length===1?open[0].id:''):''}
+  <button type="button" class="btn secondary small" data-edit="couples" data-id="${esc(couple.id)}">Editar casal</button></div>
+  ${open.map(reproNestDetails).join('')}
+  ${nests.length>open.length?`<details data-repro-details="closed:${esc(couple.id)}" ${reproOpenDetails.has('closed:'+couple.id)?'open':''}><summary>Ninhadas encerradas (${nests.length-open.length})</summary>${nests.filter(nest=>nest.closedAt).map(reproNestDetails).join('')}</details>`:''}
+  ${history.length?`<details data-repro-details="legacy:${esc(couple.id)}" ${reproOpenDetails.has('legacy:'+couple.id)?'open':''}><summary>Filhotes sem ninhada vinculada (${history.length})</summary><ul class="repro-chicks">${history.map(reproChickDetails).join('')}</ul></details>`:''}
+ </article>`;
+}
+function reproduction(){
+ const history=Object.hasOwn(reproTabs,filteredMode);
+ const mode=history?filteredMode:'';
+ const couples=db.couples.filter(couple=>{
+  const parents=[findBird(couple.male),findBird(couple.female)];
+  return upper(parents.map(bird=>[birdName(bird),bird?.ring].join(' ')).join(' ')).includes(upper(query));
+ }).sort((a,b)=>Number(Boolean(a.end))-Number(Boolean(b.end)));
+ return `${header('Reprodução','Acompanhe posturas e nascimentos pelo casal.','Novo casal','new:couples')}
+  <div class="toolbar"><button class="btn ${history?'secondary':''}" data-sub="reproCards" aria-pressed="${!history}">Cartões dos casais</button>
+  <button class="btn ${history?'':'secondary'}" data-sub="couples" aria-pressed="${history}">Histórico e detalhes</button></div>
+  ${history?`<div class="toolbar">${Object.entries(reproTabs).map(([key,label])=>`<button class="btn ${key===mode?'':'secondary'} small" data-sub="${key}" aria-pressed="${key===mode}">${label}</button>`).join('')}</div>
+  ${generic(mode)}`:`<div class="toolbar"><input class="field" id="search" aria-label="Buscar casal por nome ou anilha" placeholder="Buscar casal por nome ou anilha" value="${esc(query)}"></div>
+  <div class="repro-cards">${couples.map(reproPairCard).join('')||'<p class="empty">Nenhum casal encontrado. Cadastre um casal para acompanhar a reprodução.</p>'}</div>`}`;
+}
+
+function makeQuickNest(coupleId,date,stamp){
+ const year=date.slice(0,4);
+ let season=db.seasons.filter(item=>sameId(item.couple,coupleId)&&item.start&&item.start<=date&&
+  (item.end?date<=item.end:item.start.startsWith(year))).sort((a,b)=>b.start.localeCompare(a.start))[0];
+ if(!season){
+  season={id:id(),name:'TEMPORADA '+year,couple:coupleId,start:year+'-01-01',createdAt:stamp,quickRepro:true};
+  db.seasons.push(season);
+ }
+ const attempt={id:id(),season:season.id,couple:coupleId,start:date,createdAt:stamp,quickRepro:true};
+ db.attempts.push(attempt);
+ const next={id:id(),attempt:attempt.id,name:'NINHADA '+fmtDate(date),date,createdAt:stamp,quickRepro:true};
+ db.nests.push(next);
+ return next;
+}
+function nestRecordDate(nest){
+ const dates=[nest.date,...db.eggs.filter(egg=>sameId(egg.nest,nest.id)).map(egg=>egg.date),...nestChicks(nest.id).map(chick=>chick.date)];
+ return dates.filter(validFinanceDate).sort().at(-1)||'';
+}
+function finishReproChange(type,action,record,previous){
+ if(persist(type,action,record))return '';
+ db=JSON.parse(previous);
+ return 'Não foi possível salvar. Confira o armazenamento e tente novamente.';
+}
+function saveQuickRepro(action,coupleId,nestId,date,amount,result=''){
+ if(!Object.hasOwn(quickReproActions,action)||!validFinanceDate(date))return 'Informe uma data válida.';
+ const couple=getRecord('couples',coupleId);
+ if(!couple)return 'O casal não foi encontrado.';
+ const closing=action==='close';
+ if(!closing&&((couple.start&&date<couple.start)||(couple.end&&date>couple.end)))return 'Informe uma data dentro do período do casal.';
+ if(!nestId||closing&&nestId==='new')return 'Selecione a ninhada.';
+ let nest=nestId==='new'?null:getRecord('nests',nestId);
+ if(nestId!=='new'&&(!nest||nest.closedAt||!sameId(lineage('nests',nest).couple?.id,couple.id)))return 'Selecione uma ninhada aberta deste casal.';
+ const earlierPosture=action==='eggs'&&nest?.quickRepro&&nest.date&&date<nest.date&&
+  !db.eggs.some(egg=>sameId(egg.nest,nest.id));
+ const attempt=earlierPosture?getRecord('attempts',nest.attempt):null;
+ const season=attempt?getRecord('seasons',attempt.season):null;
+ const canBackfill=!!(attempt?.quickRepro&&season?.start<=date&&(!season.end||date<=season.end));
+ if(nest?.date&&date<nest.date&&!canBackfill)return 'A data é anterior à abertura da ninhada.';
+ if(closing){
+  if(!nestResults.includes(result))return 'Escolha o resultado da ninhada.';
+  const hasChicks=nestChicks(nest.id).length>0;
+  if(hasChicks&&result==='Sem nascimentos')return 'Há filhotes registrados nesta ninhada. Confira o resultado.';
+  if(!hasChicks&&result==='Com filhotes')return 'Registre o nascimento dos filhotes antes de encerrar com esse resultado.';
+  if(date<nestRecordDate(nest))return 'A data de encerramento deve ser igual ou posterior ao último registro da ninhada.';
+ }else if(!Number.isInteger(amount)||amount<1||amount>100)return 'Informe uma quantidade inteira de 1 a 100 por lançamento.';
+ const previous=JSON.stringify(db),stamp=new Date().toISOString();
+ if(!nest)nest=makeQuickNest(couple.id,date,stamp);
+ if(canBackfill){
+  nest.date=date;
+  if(nest.name==='NINHADA '+fmtDate(attempt.start))nest.name='NINHADA '+fmtDate(date);
+  attempt.start=date;
+ }
+ if(closing){
+  Object.assign(nest,{closedAt:date,closeResult:result,updatedAt:stamp});
+  return finishReproChange('nests','ENCERRAR NINHADA',nest,previous);
+ }
+ const existing=action==='eggs'
+  ?db.eggs.filter(egg=>sameId(egg.nest,nest.id))
+  :nestChicks(nest.id);
+ const names=new Set(existing.map(row=>upper(row.name)));
+ const prefix=action==='eggs'?'OVO':'FILHOTE';
+ let number=1;
+ for(let index=0;index<amount;index++){
+  while(names.has(prefix+' '+number))number++;
+  const name=prefix+' '+number;
+  names.add(name);
+  db[action].push({id:id(),name,nest:nest.id,date,createdAt:stamp,...(action==='eggs'?{status:'REGISTRADO'}:{couple:couple.id})});
+ }
+ return finishReproChange(action,action==='eggs'?'REGISTRAR POSTURA':'REGISTRAR NASCIMENTO',nest,previous);
+}
+function openQuickRepro(action,coupleId,nestId){
+ const couple=getRecord('couples',coupleId), closing=action==='close';
+ if(!couple||!Object.hasOwn(quickReproActions,action))return;
+ const nests=pairNests(coupleId).filter(nest=>!nest.closedAt);
+ const selected=nestId||(!nests.length&&!closing?'new':'');
+ const choices=[...(closing?[]:[['new','Abrir nova ninhada']]),...nests.map(nest=>[nest.id,(nest.name||'Ninhada')+' · '+nestSummary(nest)])];
+ const help=closing?'O encerramento mantém o histórico e os desfechos registrados de cada ovo.'
+  :action==='chicks'?'Se os ovos ainda não foram registrados, o nascimento será salvo com os pais e sem preencher a quantidade de ovos nem a origem individual.'
+  :'Informe os ovos desta postura. Selecione uma ninhada aberta para acrescentar ovos ou abra uma nova.';
+ modal(quickReproActions[action],`<form id="quickReproForm">
+  <p><strong>${esc(pairLabel(couple))}</strong></p><p class="muted">${help}</p>
+  <div class="form-grid">
+  <div ${!nests.length&&!closing?'hidden':''}><label for="quickNest">Ninhada *</label><select id="quickNest" name="nest" required>
+  <option value="">SELECIONE</option>${choices.map(([key,label])=>`<option value="${esc(key)}" ${selected===key?'selected':''}>${esc(label)}</option>`).join('')}
+  </select></div>
+  ${input('date',closing?'Data do encerramento':action==='eggs'?'Data da postura':'Data do nascimento','date',today(),true)}
+  ${closing?select('result','Resultado',nestResults,'',true):input('amount',action==='eggs'?'Quantidade de ovos':'Quantidade de filhotes','number',1,true,'min="1" max="100" step="1"')}
+  </div><p class="form-feedback" role="alert" hidden></p>
+  <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Cancelar</button>
+  <button type="submit" class="btn">${closing?'Encerrar ninhada':'Salvar registro'}</button></div></form>`);
+ const form=document.getElementById('quickReproForm');
+ form.onsubmit=event=>{
+  event.preventDefault();
+  const f=form.elements,error=saveQuickRepro(action,coupleId,f.nest.value,f.date.value,Number(f.amount?.value),f.result?.value);
+  if(error)return formFeedback(form,error);
+  closeModal();render();toast(closing?'Ninhada encerrada.':'Registro salvo.');
+ };
+}
+function saveQuickChick(chickId,field,value){
+ const chick=getRecord('chicks',chickId);
+ if(!chick||!['ring','separatedAt'].includes(field))return 'O filhote não foi encontrado.';
+ const updated={...chick,[field]:value.trim()};
+ const issue=validateIntegrated('chicks',updated,chick)||validate('chicks',updated,chick.id);
+ if(issue)return issue;
+ if(field==='separatedAt'&&updated.separatedAt&&!validFinanceDate(updated.separatedAt))return 'Informe uma data válida.';
+ if(field==='ring'&&updated.ring){
+  const ring=upper(updated.ring);
+  if(db.birds.some(bird=>upper(bird.ring).trim()===ring))return 'Esta anilha já está cadastrada no Plantel.';
+  if(db.chicks.some(other=>other!==chick&&upper(other.ring).trim()===ring))return 'Esta anilha já está cadastrada em outro filhote.';
+ }
+ if(chick[field]===updated[field])return '';
+ const previous=JSON.stringify(db),stamp=new Date().toISOString();
+ if(field==='separatedAt'){
+  updated.separationHistory=[...(chick.separationHistory||[]),{at:stamp,from:chick.separatedAt||'',to:updated.separatedAt||''}];
+ }
+ Object.assign(chick,updated,{updatedAt:stamp});
+ return finishReproChange('chicks',field==='ring'?'EDITAR ANILHA':'REGISTRAR SEPARAÇÃO',chick,previous);
+}
+function openQuickChick(chickId,field){
+ const chick=getRecord('chicks',chickId);
+ if(!chick||!['ring','separatedAt'].includes(field))return;
+ const ring=field==='ring';
+ modal(ring?'Anilha do filhote':'Separação do filhote',`<form id="quickChickForm">
+  <p><strong>${esc(chick.name)}</strong></p>
+  ${input('fieldValue',ring?'Código de anilha':'Data da separação',ring?'text':'date',chick[field]||(ring?'':today()))}
+  <p class="helper">${ring?'Deixe em branco para remover o código desta ficha.':'Deixe em branco para retirar a separação, preservando o histórico.'}</p>
+  <p class="form-feedback" role="alert" hidden></p>
+  <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Cancelar</button><button type="submit" class="btn">Salvar registro</button></div></form>`);
+ const form=document.getElementById('quickChickForm');
+ form.onsubmit=event=>{
+  event.preventDefault();
+  const error=saveQuickChick(chickId,field,form.elements.fieldValue.value);
+  if(error)return formFeedback(form,error);
+  closeModal();render();toast('Ficha do filhote atualizada.');
+ };
+}
+document.addEventListener('toggle',event=>{
+ const nestId=event.target.dataset?.reproDetails;
+ if(!nestId||!event.target.isConnected)return;
+ if(event.target.open)reproOpenDetails.add(nestId);
+ else reproOpenDetails.delete(nestId);
+},true);
+document.addEventListener('click',event=>{
+ const button=event.target.closest('[data-repro-action],[data-repro-chick]');
+ if(!button)return;
+ if(button.dataset.reproChick){
+  for(const detail of button.closest('.repro-card').querySelectorAll('[data-repro-details][open]')){
+   reproOpenDetails.add(detail.dataset.reproDetails);
+  }
+  return openQuickChick(button.dataset.reproChick,button.dataset.reproField);
+ }
+ openQuickRepro(button.dataset.reproAction,button.dataset.reproPair,button.dataset.reproNest);
+});
 function feedingPage(){const chosen=['food','feedings'].includes(filteredMode)?filteredMode:'feedings';return `${header('Alimentação','Catálogo e histórico individual de alimentação.')}<div class="toolbar"><button data-sub="feedings" class="btn ${chosen==='feedings'?'':'secondary'}">Registros de fornecimento</button><button data-sub="food" class="btn ${chosen==='food'?'':'secondary'}">Catálogo de alimentos</button></div>${generic(chosen)}<div class="notice info">Cadastre as quantidades definidas pelo criador ou veterinário. Este programa não prescreve dietas.</div>`}
 function stockAcquisitionQuantity(record){
  if(record.acquisitionQuantity!==undefined&&record.acquisitionQuantity!==null&&record.acquisitionQuantity!=='')return Number(record.acquisitionQuantity);
@@ -855,6 +1084,7 @@ function separationDays(r){if(!r.date||!r.separatedAt)return null;return Math.ro
 function lineageText(ctx){const b=x=>x?birdName(x)+' · '+(x.ring||'SEM ANILHA')+' [ID: '+x.id+']':'NÃO INFORMADO';return `Macho: ${b(ctx.male)}\nFêmea: ${b(ctx.female)}\nTemporada: ${ctx.season?.name||'NÃO INFORMADA'}\nTentativa: ${ctx.attempt?.start||ctx.attempt?.id||'NÃO INFORMADA'}\nNinhada: ${ctx.nest?.name||'NÃO INFORMADA'}\nOvo: ${ctx.egg?.name||'NÃO INFORMADO'}`}
 function cellValue(type,r,key){
  if(type==='expenses'&&key==='expenseStatus')return r.expenseStatus===expenseOpen?'Pendente':'Paga';
+ if(type==='nests'&&key==='closedAt')return r.closedAt?fmtDate(r.closedAt):'—';
  if(key==='stockCost'){const value=stockExpenseValue(type,r);return value?brl(value):'—'}
  if(type==='expenses'&&key==='description'&&r.birdAcquisitionId)return `${esc(r.description)}<div class="muted">Plantel · aquisição</div>`;
  if(type==='expenses'&&key==='description'&&r.stockOrigin)return `${esc(r.description)}<div class="muted">Estoque · ${r.quantity==null?'Quantidade a conferir':esc([r.quantity,r.unit].filter(x=>x!==''&&x!=null).join(' '))}</div>`;
