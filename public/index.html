@@ -90,6 +90,14 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 .bird-info,.tree-card{overflow-wrap:anywhere}
 .bird-acquisition{min-width:0;margin:0;padding:12px;border:1px solid var(--line);border-radius:12px}
 .bird-acquisition legend{font-weight:700;padding:0 5px}
+.finance-period h4{margin:10px 0}
+.finance-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:8px;margin:8px 0 18px}
+.finance-metrics div{padding:10px;background:var(--cream);border-radius:8px;overflow-wrap:anywhere}
+.finance-metrics dt{font-size:12px}
+.finance-metrics dd{margin:3px 0 0;font-size:16px;font-weight:750}
+.sales-list{display:grid;gap:12px}
+.sale-card{margin:0;overflow-wrap:anywhere}
+.sale-card .btn{min-height:44px}
 .purchase-preview{font-weight:650;margin:8px 0}
 @media(max-width:760px){
  .topbar{flex-wrap:wrap;gap:6px}
@@ -119,12 +127,12 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 </style></head><body><div class="app"><aside class="sidebar" id="sidebar"><div class="logo"><img class="logo-photo" src="data:image/jpeg;base64,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" width="240" height="179" alt="Casal de aves em um galho"><strong>Canto &amp; Ninho</strong></div><div class="nav-title">GESTÃO DO CRIADOURO</div><button type="button" class="btn secondary mobile-close" id="menuClose">Fechar menu</button><nav id="navigation" aria-label="Módulos"></nav><div class="side-foot">🌿 Seus dados são armazenados neste dispositivo. Faça backups regularmente.<br><br>Protótipo local, sem conexão a órgãos oficiais.</div></aside><button type="button" class="menu-backdrop" id="menuBackdrop" tabindex="-1" aria-label="Fechar menu" hidden></button><main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button><div><div class="eyebrow">PAINEL DE GERENCIAMENTO</div><h1 id="pageTitle" tabindex="-1">Início</h1></div></div><div class="topright"><button class="btn secondary small cloud-status" id="cloudButton" type="button" aria-label="Estado dos dados: Verificando nuvem">Verificando nuvem…</button><button class="btn secondary small" id="backupTop">↓ Backup</button></div></header><div id="content" class="content"></div></main></div><div id="modalRoot"></div><div id="toastRoot"></div><div id="welcomeRoot"></div><script>
 'use strict';
 const KEY='caboclinho_manager_v04';
-const collections=['birds','food','feedings','couples','seasons','attempts','nests','eggs','chicks','tasks','health','trips','events','stock','movements','expenses','facilities','transfers','documents','knowledge'];
+const collections=['birds','food','feedings','couples','seasons','attempts','nests','eggs','chicks','tasks','health','trips','events','stock','movements','expenses','revenues','facilities','transfers','documents','knowledge'];
 const defaultDB=()=>({version:4,settings:{name:'MEU CRIADOURO',owner:'',timezone:'America/Fortaleza',statuses:['REGULAR','PENDENTE DE DOCUMENTAÇÃO','EM ATUALIZAÇÃO','OUTRA SITUAÇÃO'],conditions:['NORMAL','EM ADAPTAÇÃO','EM OBSERVAÇÃO','EM QUARENTENA','OUTRA CONDIÇÃO'],lowStock:2},audit:[],...Object.fromEntries(collections.map(c=>[c,[]]))});
 function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.version===4){const d=defaultDB();return {...d,...v,settings:{...d.settings,...v.settings}}}}catch(e){console.error(e)}return defaultDB()}
 let db=load(),page='home',query='',treeBird='',treeDepth=2,expandedChildren=true,editing=null,reportMode='birds',filteredMode='',uiState={};
-const labels={home:['Início','⌂'],birds:['Plantel','♣'],tree:['Árvore genealógica','♧'],reproduction:['Reprodução','♡'],tasks:['Manejo','☷'],feedings:['Alimentação','◉'],health:['Saúde','✚'],events:['Agenda','▦'],stock:['Estoque','▤'],expenses:['Despesas','＄'],reports:['Relatórios','▥'],facilities:['Instalações','▣'],trips:['Campeadas','☀'],documents:['Documentação','▧'],knowledge:['Biblioteca','◈'],settings:['Configurações','⚙']};
-const modules=['home','birds','tree','reproduction','tasks','feedings','health','events','stock','expenses','reports','facilities','trips','documents','knowledge','settings'];
+const labels={home:['Início','⌂'],birds:['Plantel','♣'],tree:['Árvore genealógica','♧'],reproduction:['Reprodução','♡'],tasks:['Manejo','☷'],feedings:['Alimentação','◉'],health:['Saúde','✚'],events:['Agenda','▦'],stock:['Estoque','▤'],expenses:['Despesas','＄'],revenues:['Receitas','＋'],reports:['Relatórios','▥'],facilities:['Instalações','▣'],trips:['Campeadas','☀'],documents:['Documentação','▧'],knowledge:['Biblioteca','◈'],settings:['Configurações','⚙']};
+const modules=['home','birds','tree','reproduction','tasks','feedings','health','events','stock','expenses','revenues','reports','facilities','trips','documents','knowledge','settings'];
 const id=()=>window.crypto?.randomUUID?.()||'id_'+Date.now()+'_'+Math.random().toString(36).slice(2);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const upper=s=>String(s??'').toLocaleUpperCase('pt-BR');
@@ -189,24 +197,30 @@ function showDailyTasks(){
 }
 function header(title,desc,button='',cmd=''){return `<div class="section-head"><div><h2>${title}</h2><p>${desc}</p></div>${button?`<button class="btn" data-action="${cmd}">＋ ${button}</button>`:''}</div>`}
 function table(headers,rows){return `<div class="panel"><div class="table-wrap"><table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="empty">Nenhum registro encontrado. Utilize o botão de cadastro para começar.</td></tr>`}</tbody></table></div></div>`}
-const act=(type,item)=>type==='expenses'&&item.birdAcquisitionId&&findBird(item.birdAcquisitionId)
+const act=(type,item)=>type==='stock'&&cageProduct(item)&&Number(item.quantity)>0
+ ?`<div class="actions"><button class="btn small" data-sale-kind="cage" data-sale-item="${esc(item.id)}">Registrar venda</button>
+ <button class="btn secondary small" data-edit="stock" data-id="${esc(item.id)}">Editar</button>
+ <button class="btn danger small" data-delete="stock" data-id="${esc(item.id)}">Excluir</button></div>`
+ :type==='movements'&&item.saleId?'Vinculada à venda'
+ :type==='expenses' &&item.birdAcquisitionId&&findBird(item.birdAcquisitionId)
  ?`<button class="btn secondary small" data-edit="birds" data-id="${esc(item.birdAcquisitionId)}">Editar no Plantel</button>`
  :type==='expenses'&&item.stockOrigin
  ?`<button class="btn secondary small" data-edit="${item.stockOrigin}" data-id="${esc(item.stockOriginId)}">Editar no Estoque</button>`
  :`<div class="actions"><button class="btn secondary small" data-edit="${type}" data-id="${item.id}">Editar</button><button class="btn danger small" data-delete="${type}" data-id="${item.id}">Excluir</button></div>`;
-function home(){const active=db.couples.filter(c=>!c.end).length;const pending=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)).length;const healthAlert=db.health.filter(h=>h.alert==='SIM').length;const low=db.stock.filter(s=>Number(s.quantity)<=Number(s.min||db.settings.lowStock)).length;const exp=expenseRows().filter(e=>e.date?.slice(0,7)===today().slice(0,7)).reduce((a,b)=>a+Number(b.value||0),0);const nums=[['Aves no plantel',db.birds.length,'♣'],['Machos',db.birds.filter(b=>sexValue(b.sex)==='MACHO').length,'♂'],['Fêmeas',db.birds.filter(b=>sexValue(b.sex)==='FÊMEA').length,'♀'],['Sexo desconhecido',db.birds.filter(b=>sexValue(b.sex)==='NÃO IDENTIFICADO').length,'?'],['Casais ativos',active,'♡'],['Ovos registrados',db.eggs.length,'◉'],['Filhotes registrados',db.chicks.length,'✦'],['Tarefas pendentes',pending,'☷']];const due=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)&&t.date<=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),soon=db.events.filter(e=>e.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);return `<div class="hero"><div><div style="font-size:11px;letter-spacing:2px;opacity:.7">BEM-VINDO AO CANTO & NINHO</div><h2>${esc(db.settings.name)}</h2><p>Seu criadouro organizado, da genealogia ao manejo diário.</p><button style="margin-top:20px" class="btn light" data-action="new:birds">＋ Cadastrar ave</button></div><img class="hero-photo" id="speciesHeroImage" alt="Ilustração neutra de ave; fotografia da espécie indisponível" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20900%20600%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23d9e7d1%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23859d73%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22900%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M0%20520Q210%20380%20400%20480T900%20420V600H0%22%20fill%3D%22%236b8760%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M200%20530Q450%20460%20850%20340%22%20stroke%3D%22%235b6c43%22%20stroke-width%3D%2223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3Cellipse%20cx%3D%22540%22%20cy%3D%22265%22%20rx%3D%22175%22%20ry%3D%22118%22%20fill%3D%22%239b6849%22%20transform%3D%22rotate%28-13%20540%20265%29%22%2F%3E%3Cellipse%20cx%3D%22485%22%20cy%3D%22270%22%20rx%3D%2295%22%20ry%3D%2258%22%20fill%3D%22%23e1ba84%22%20transform%3D%22rotate%2817%20485%20270%29%22%2F%3E%3Ccircle%20cx%3D%22680%22%20cy%3D%22200%22%20r%3D%2267%22%20fill%3D%22%239b6849%22%2F%3E%3Ccircle%20cx%3D%22702%22%20cy%3D%22183%22%20r%3D%2210%22%20fill%3D%22%23202a21%22%2F%3E%3Cpath%20d%3D%22M735%20215l63%2015-62%2027%22%20fill%3D%22%23d5ae6b%22%2F%3E%3Cpath%20d%3D%22M398%20280L250%20220l70%20145%22%20fill%3D%22%23765238%22%2F%3E%3Cpath%20d%3D%22M563%20359l-15%20105m50-110l16%2096%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%2211%22%20fill%3D%22none%22%2F%3E%3Cpath%20d%3D%22M515%20463l42%207m38-18l41%204%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%228%22%2F%3E%3Cg%20fill%3D%22%23e7eedb%22%20opacity%3D%22.55%22%3E%3Ccircle%20cx%3D%22110%22%20cy%3D%2290%22%20r%3D%2238%22%2F%3E%3Ccircle%20cx%3D%22810%22%20cy%3D%2297%22%20r%3D%2258%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"></div><div class="quick-actions" aria-label="Ações do dia">
+function home(){const active=db.couples.filter(c=>!c.end).length;const pending=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)).length;const healthAlert=db.health.filter(h=>h.alert==='SIM').length;const low=db.stock.filter(s=>Number(s.quantity)<=Number(s.min||db.settings.lowStock)).length;const exp=financeTotals(today().slice(0,7)).paid/100;const nums=[['Aves no plantel',db.birds.length,'♣'],['Machos',db.birds.filter(b=>sexValue(b.sex)==='MACHO').length,'♂'],['Fêmeas',db.birds.filter(b=>sexValue(b.sex)==='FÊMEA').length,'♀'],['Sexo desconhecido',db.birds.filter(b=>sexValue(b.sex)==='NÃO IDENTIFICADO').length,'?'],['Casais ativos',active,'♡'],['Ovos registrados',db.eggs.length,'◉'],['Filhotes registrados',db.chicks.length,'✦'],['Tarefas pendentes',pending,'☷']];const due=db.tasks.filter(t=>!['CONCLUÍDA','CANCELADA'].includes(t.status)&&t.date<=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),soon=db.events.filter(e=>e.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);return `<div class="hero"><div><div style="font-size:11px;letter-spacing:2px;opacity:.7">BEM-VINDO AO CANTO & NINHO</div><h2>${esc(db.settings.name)}</h2><p>Seu criadouro organizado, da genealogia ao manejo diário.</p><button style="margin-top:20px" class="btn light" data-action="new:birds">＋ Cadastrar ave</button></div><img class="hero-photo" id="speciesHeroImage" alt="Ilustração neutra de ave; fotografia da espécie indisponível" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20900%20600%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23d9e7d1%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23859d73%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22900%22%20height%3D%22600%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M0%20520Q210%20380%20400%20480T900%20420V600H0%22%20fill%3D%22%236b8760%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M200%20530Q450%20460%20850%20340%22%20stroke%3D%22%235b6c43%22%20stroke-width%3D%2223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3Cellipse%20cx%3D%22540%22%20cy%3D%22265%22%20rx%3D%22175%22%20ry%3D%22118%22%20fill%3D%22%239b6849%22%20transform%3D%22rotate%28-13%20540%20265%29%22%2F%3E%3Cellipse%20cx%3D%22485%22%20cy%3D%22270%22%20rx%3D%2295%22%20ry%3D%2258%22%20fill%3D%22%23e1ba84%22%20transform%3D%22rotate%2817%20485%20270%29%22%2F%3E%3Ccircle%20cx%3D%22680%22%20cy%3D%22200%22%20r%3D%2267%22%20fill%3D%22%239b6849%22%2F%3E%3Ccircle%20cx%3D%22702%22%20cy%3D%22183%22%20r%3D%2210%22%20fill%3D%22%23202a21%22%2F%3E%3Cpath%20d%3D%22M735%20215l63%2015-62%2027%22%20fill%3D%22%23d5ae6b%22%2F%3E%3Cpath%20d%3D%22M398%20280L250%20220l70%20145%22%20fill%3D%22%23765238%22%2F%3E%3Cpath%20d%3D%22M563%20359l-15%20105m50-110l16%2096%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%2211%22%20fill%3D%22none%22%2F%3E%3Cpath%20d%3D%22M515%20463l42%207m38-18l41%204%22%20stroke%3D%22%2367432f%22%20stroke-width%3D%228%22%2F%3E%3Cg%20fill%3D%22%23e7eedb%22%20opacity%3D%22.55%22%3E%3Ccircle%20cx%3D%22110%22%20cy%3D%2290%22%20r%3D%2238%22%2F%3E%3Ccircle%20cx%3D%22810%22%20cy%3D%2297%22%20r%3D%2258%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"></div><div class="quick-actions" aria-label="Ações do dia">
 <button class="btn secondary" data-action="dailyTasks">Tarefas de hoje</button>
 <button class="btn secondary" data-action="quickFeeding">Registrar alimentação</button>
 <button class="btn secondary" data-action="quickPurchase">Registrar compra</button>
-</div><div class="grid">${nums.map(n=>`<div class="stat"><div class="symbol">${n[2]}</div><div class="number">${n[1]}</div><div class="label">${n[0]}</div></div>`).join('')}</div><div class="panels"><div><section class="panel" id="dailyTasks" tabindex="-1"><h3>Atividades pendentes até hoje</h3>${due.length?`<ul class="mini-list">${due.map(t=>`<li><span>${esc(t.name)} <span class="muted">· ${fmtDate(t.date)}</span></span><button class="btn small secondary" data-complete="${t.id}">Concluir</button></li>`).join('')}</ul>`:'<div class="empty">Nenhuma tarefa pendente para hoje.</div>'}</section><div class="panel"><h3>Próximos compromissos</h3>${soon.length?`<ul class="mini-list">${soon.map(e=>`<li>${esc(e.title)} <span class="muted">${fmtDate(e.date)}</span></li>`).join('')}</ul>`:'<div class="empty">Nenhum compromisso cadastrado.</div>'}</div></div><div><div class="panel"><h3>Resumo operacional</h3><ul class="mini-list"><li>Alertas de saúde <strong>${healthAlert}</strong></li><li>Itens com estoque baixo <strong>${low}</strong></li><li>Itens vencidos / próximos de vencer (30 dias) <strong>${db.stock.filter(s=>s.expiry&&s.expiry<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)).length}</strong></li><li>Despesas do mês <strong>${brl(exp)}</strong></li><li>Atividades agendadas hoje <strong>${db.events.filter(e=>e.date===today()).length}</strong></li></ul></div><div class="notice info">Indicadores calculados somente a partir dos dados cadastrados. O sistema não confirma situação legal perante órgãos oficiais.</div></div></div>`}
+</div><div class="grid">${nums.map(n=>`<div class="stat"><div class="symbol">${n[2]}</div><div class="number">${n[1]}</div><div class="label">${n[0]}</div></div>`).join('')}</div><div class="panels"><div><section class="panel" id="dailyTasks" tabindex="-1"><h3>Atividades pendentes até hoje</h3>${due.length?`<ul class="mini-list">${due.map(t=>`<li><span>${esc(t.name)} <span class="muted">· ${fmtDate(t.date)}</span></span><button class="btn small secondary" data-complete="${t.id}">Concluir</button></li>`).join('')}</ul>`:'<div class="empty">Nenhuma tarefa pendente para hoje.</div>'}</section><div class="panel"><h3>Próximos compromissos</h3>${soon.length?`<ul class="mini-list">${soon.map(e=>`<li>${esc(e.title)} <span class="muted">${fmtDate(e.date)}</span></li>`).join('')}</ul>`:'<div class="empty">Nenhum compromisso cadastrado.</div>'}</div></div><div><div class="panel"><h3>Resumo operacional</h3><ul class="mini-list"><li>Alertas de saúde <strong>${healthAlert}</strong></li><li>Itens com estoque baixo <strong>${low}</strong></li><li>Itens vencidos / próximos de vencer (30 dias) <strong>${db.stock.filter(s=>s.expiry&&s.expiry<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)).length}</strong></li><li>Despesas pagas no mês <strong>${brl(exp)}</strong></li><li>Atividades agendadas hoje <strong>${db.events.filter(e=>e.date===today()).length}</strong></li></ul></div><div class="notice info">Indicadores calculados somente a partir dos dados cadastrados. O sistema não confirma situação legal perante órgãos oficiais.</div></div></div>`}
 function birdIdentity(b){
- return `<div class="plantel-photo-name">${birdPhotoImg(b,'plantel-species-photo')}<div class="bird-info"><strong>${esc(birdName(b))}</strong><div class="muted">${esc(b.scientific)}</div></div></div>`;
+ return `<div class="plantel-photo-name">${birdPhotoImg(b,'plantel-species-photo')}<div class="bird-info"><strong>${esc(birdName(b))}</strong><div class="muted">${esc(b.scientific)}</div>
+ ${activeBirdSale(b.id)?'<span class="tag">Vendida</span>':''}</div></div>`;
 }
 function birdDetails(b){
  return `<div class="helper">${birdExtraFields.map(([key,label])=>esc(label+': '+(key==='birthDate'?(b[key]?fmtDate(b[key]):'—'):(b[key]||'—')))).join(' · ')}</div>`;
 }
 function birdActions(b){
- return `<div class="actions"><button class="btn small secondary" data-tree="${esc(b.id)}">Árvore</button><button class="btn small secondary" data-bird-photo="${esc(b.id)}">${photoData(b.photo)?'Trocar foto':'Adicionar foto'}</button>${act('birds',b)}</div>`;
+ return `<div class="actions"><button class="btn small secondary" data-tree="${esc(b.id)}">Árvore</button><button class="btn small secondary" data-bird-photo="${esc(b.id)}">${photoData(b.photo)?'Trocar foto':'Adicionar foto'}</button>${activeBirdSale(b.id)?'':`<button class="btn small secondary" data-sale-kind="bird" data-sale-item="${esc(b.id)}">Registrar venda</button>`}${act('birds',b)}</div>`;
 }
 function birds(){
  const found=db.birds.filter(b=>upper([b.name,b.scientific,b.ring].join(' ')).includes(upper(query)));
@@ -226,7 +240,196 @@ function descendants(root,depth=0,seen=new Set()){if(depth>=3)return '';const ch
 function genealogy(){if(!treeBird&&db.birds.length)treeBird=db.birds[0].id;const b=findBird(treeBird);return `${header('Árvore genealógica','Pais, avós e descendentes conforme vínculos registrados.')}<div class="panel"><div class="toolbar"><select class="field" id="treeSelect" aria-label="Ave para consultar a genealogia" style="flex:1"><option value="">SELECIONE UMA AVE</option>${db.birds.map(x=>`<option value="${x.id}" ${x.id===treeBird?'selected':''}>${esc(birdName(x))} · ${esc(x.ring||'SEM ANILHA')}</option>`).join('')}</select><button class="btn secondary" data-action="toggleDesc">${expandedChildren?'Recolher descendentes':'Expandir descendentes'}</button></div>${b?`<div class="tree-wrap"><div class="tree-label">Avós paternos / maternos</div><div class="tree-level">${[findBird(b.father)?.father,findBird(b.father)?.mother,findBird(b.mother)?.father,findBird(b.mother)?.mother].map((x,i)=>ancestors(findBird(x),2,['AVÔ PATERNO','AVÓ PATERNA','AVÔ MATERNO','AVÓ MATERNA'][i])).join('')}</div><div class="tree-link">↓</div><div class="tree-label">Pai / Mãe</div><div class="tree-level">${ancestors(findBird(b.father),1,'PAI')}${ancestors(findBird(b.mother),1,'MÃE')}</div><div class="tree-link">↓</div><div class="tree-label">Ave selecionada</div><div class="tree-level">${ancestors(b,0)}</div><div class="tree-link">↓</div><div class="tree-label">Filhos e descendentes (até 3 gerações)</div>${descendants(b)}</div>`:'<div class="empty">Cadastre uma ave para visualizar sua genealogia.</div>'}</div><div class="notice">Parentescos desconhecidos não significam ausência de parentesco. A árvore exibe apenas relações efetivamente cadastradas.</div>`}
 const grainStockCategory='GRÃOS SECOS E GERMINADOS';
 const produceStockCategory='LEGUMES, INFLORESCÊNCIAS E FRUTAS';
+const paymentReceived='RECEBIDO',paymentOpen='A RECEBER';
+const expensePaid='PAGA',expenseOpen='PENDENTE';
+const cageCategory='GAIOLAS';
+function validFinanceDate(date){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return false;
+ const parsed=new Date(date+'T00:00:00Z');
+ return !Number.isNaN(parsed.getTime())&&parsed.toISOString().slice(0,10)===date;
+}
+function moneyCents(value){return Math.round(Number(value)*100)}
+function cageProduct(item){return upper(item?.category)===cageCategory}
+function activeBirdSale(birdId){return db.revenues.find(r=>!r.cancelledDate&&r.kind==='bird'&&r.itemId===birdId)}
+function saleCategory(kind){return kind==='bird'?'Venda de ave':'Venda de gaiola'}
+function expensePaymentFields(record){
+ return `<fieldset class="wide bird-acquisition">
+  <legend>Pagamento da despesa</legend><div class="form-grid">
+  ${select('expenseStatus','Situação',[expensePaid,expenseOpen],record?.expenseStatus||expensePaid,true)}
+  ${input('expensePaidDate','Data do pagamento','date',record?.expensePaidDate||'',false,record?.expenseStatus===expenseOpen?'disabled':'')}
+  </div><p class="helper">Se estiver paga e a data do pagamento ficar em branco, será usada a data do lançamento.</p>
+ </fieldset>`;
+}
+function financeTotals(period,expenses=expenseRows()){
+ const includes=date=>typeof date==='string'&&date.startsWith(period);
+ const totals={received:0,refunds:0,receivable:0,paid:0,payable:0};
+ for(const sale of db.revenues){
+  const amount=moneyCents(sale.value);
+  if(sale.paymentStatus===paymentReceived){
+   if(includes(sale.receivedDate))totals.received+=amount;
+   if(includes(sale.cancelledDate))totals.refunds+=amount;
+  }else if(!sale.cancelledDate&&includes(sale.date))totals.receivable+=amount;
+ }
+ for(const expense of expenses){
+  if(expense.expenseStatus===expenseOpen){
+   if(includes(expense.date))totals.payable+=moneyCents(expense.value);
+  }else if(includes(expense.expensePaidDate||expense.date))totals.paid+=moneyCents(expense.value);
+ }
+ return {...totals,balance:totals.received-totals.refunds-totals.paid};
+}
+function financeSummary(title,totals){
+ const metrics=[['Receitas recebidas',totals.received],['Estornos de receitas',totals.refunds],
+  ['Despesas pagas',totals.paid],['Saldo de caixa',totals.balance],
+  ['Vendas a receber',totals.receivable],['Despesas pendentes',totals.payable]];
+ return `<section class="finance-period"><h4>${title}</h4><dl class="finance-metrics">${metrics.map(([label,cents])=>`<div><dt>${label}</dt><dd>${brl(cents/100)}</dd></div>`).join('')}</dl></section>`;
+}
+function salesPage(){
+ const list=db.revenues.filter(r=>upper([r.itemName,r.date,saleCategory(r.kind),r.cancelledDate?'Cancelada':r.paymentStatus].join(' ')).includes(upper(query)));
+ return `${header('Receitas','Vendas de aves e gaiolas, recebimentos e estornos.')}
+ <div class="quick-actions"><button class="btn" data-sale-kind="bird">Registrar venda de ave</button>
+ <button class="btn secondary" data-sale-kind="cage">Registrar venda de gaiola</button></div>
+ <div class="toolbar"><input id="search" class="field" aria-label="Buscar vendas" placeholder="Buscar vendas" value="${esc(query)}"></div>
+ <div class="sales-list">${list.map(sale=>{
+  const active=!sale.cancelledDate;
+  const difference=Number.isFinite(sale.acquisitionCost)?brl((moneyCents(sale.value)-moneyCents(sale.acquisitionCost))/100):'';
+  return `<article class="panel sale-card"><h3>${esc(sale.itemName)} <span class="tag">${esc(active?sale.paymentStatus:'CANCELADA')}</span></h3>
+   <p>${saleCategory(sale.kind)} · ${fmtDate(sale.date)} · <strong>${brl(sale.value)}</strong>${sale.kind==='cage'?' · '+esc(sale.quantity)+' un.':''}</p>
+   ${sale.receivedDate?`<p>Recebimento: ${fmtDate(sale.receivedDate)}</p>`:''}
+   ${sale.cancelledDate?`<p>Cancelamento: ${fmtDate(sale.cancelledDate)}</p>`:''}
+   ${difference?`<p>Diferença sobre o custo de aquisição: ${difference}</p>`:''}
+   ${active?`<div class="actions"><button class="btn secondary" data-sale-edit="${esc(sale.id)}">Editar venda</button>
+    <button class="btn danger" data-sale-cancel="${esc(sale.id)}">Cancelar venda</button></div>`:''}</article>`;
+ }).join('')||'<p class="empty">Nenhuma venda encontrada.</p>'}</div>`;
+}
+function saleItems(kind,old){
+ return kind==='bird'
+  ?db.birds.filter(b=>!activeBirdSale(b.id)||b.id===old?.itemId)
+  :db.stock.filter(item=>cageProduct(item)&&(Number(item.quantity)>0||item.id===old?.itemId));
+}
+function openSale(kind,itemId='',old=null){
+ const available=saleItems(kind,old);
+ if(!available.length)return toast(kind==='bird'?'Nenhuma ave cadastrada e disponível para venda.':'Cadastre uma gaiola com saldo no Estoque.');
+ const cage=kind==='cage';
+ modal(old?'Editar venda':saleCategory(kind),`<form id="saleForm">
+ <div class="form-grid"><div><label for="saleItem">${cage?'Gaiola':'Ave'} *</label><select name="itemId" id="saleItem" required ${old?'disabled':''}>
+ <option value="">SELECIONE</option>${available.map(item=>`<option value="${esc(item.id)}" ${item.id===(old?.itemId||itemId)?'selected':''}>${esc(cage?item.name:birdName(item)+' · '+(item.ring||'SEM ANILHA'))}</option>`).join('')}</select></div>
+ ${input('date','Data da venda','date',old?.date||today(),true)}
+ ${cage?input('quantity','Quantidade','number',old?.quantity||1,true,'min="1" step="1"'):''}
+ ${input('price',cage?'Valor unitário (R$)':'Valor da venda (R$)','text',old?(cage?old.unitPrice:old.value):'',true,'inputmode="decimal" pattern="[0-9]+([,.][0-9]{1,2})?"')}
+ ${select('paymentStatus','Situação do pagamento',[paymentReceived,paymentOpen],old?.paymentStatus||paymentReceived,true)}
+ ${input('receivedDate','Data do recebimento','date',old?.receivedDate||'')}
+ <output class="wide purchase-preview" aria-live="polite"></output></div>
+ <p class="form-feedback" role="alert" hidden></p>
+ <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Fechar</button><button type="submit" class="btn">Salvar venda</button></div></form>`);
+ const form=document.getElementById('saleForm'), fields=form.elements;
+ let customReceiptDate=Boolean(old?.receivedDate&&old.receivedDate!==old.date);
+ const update=()=>{
+  const received=fields.paymentStatus.value===paymentReceived;
+  fields.receivedDate.parentElement.hidden=!received;
+  fields.receivedDate.disabled=!received;
+  fields.receivedDate.required=received;
+  if(received&&!customReceiptDate)fields.receivedDate.value=fields.date.value;
+  const cents=moneyCents(stockDecimal(fields.price.value))*(cage?Number(fields.quantity.value):1);
+  form.querySelector('output').textContent=Number.isSafeInteger(cents)&&cents>0?'Total da venda: '+brl(cents/100):'';
+ };
+ form.addEventListener('input',e=>{
+  if(e.target===fields.receivedDate)customReceiptDate=Boolean(fields.receivedDate.value);
+  update();
+ });
+ form.addEventListener('change',update);
+ update();
+ form.onsubmit=e=>{
+  e.preventDefault();
+  const error=saveSale({kind,itemId:fields.itemId.value,date:fields.date.value,
+   quantity:cage?Number(fields.quantity.value):1,unitPrice:stockDecimal(fields.price.value),
+   paymentStatus:fields.paymentStatus.value,receivedDate:fields.receivedDate.disabled?'':fields.receivedDate.value},old?.id);
+  if(error)return formFeedback(form,error);
+  closeModal();render();toast('Venda registrada em Receitas.');
+ };
+}
+function saveSale(fields,oldId){
+ const old=oldId?getRecord('revenues',oldId):null;
+ if(oldId&&(!old||old.cancelledDate))return 'Esta venda já foi cancelada ou não está mais disponível.';
+ const bird=fields.kind==='bird',item=getRecord(bird?'birds':'stock',fields.itemId);
+ if(!item||(!bird&&!cageProduct(item)))return 'Selecione um item disponível para venda.';
+ if(old&&(old.kind!==fields.kind||old.itemId!==item.id))return 'O item da venda já registrada precisa ser mantido.';
+ const date=fields.date,received=fields.paymentStatus===paymentReceived;
+ if(!validFinanceDate(date))return 'Informe uma data de venda válida.';
+ if(![paymentReceived,paymentOpen].includes(fields.paymentStatus))return 'Informe a situação do pagamento.';
+ if(received&&(!validFinanceDate(fields.receivedDate)||fields.receivedDate<date))return 'Informe o recebimento na data da venda ou em uma data posterior.';
+ const quantity=fields.quantity,cents=moneyCents(fields.unitPrice)*quantity;
+ if(!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(cents)||cents<=0)return 'Informe uma quantidade inteira e um valor maior que zero.';
+ if(bird&&quantity!==1)return 'Registre uma ave por venda.';
+ if(bird&&db.revenues.some(r=>r.kind==='bird'&&r.itemId===item.id&&!r.cancelledDate&&r.id!==oldId))return 'Esta ave já tem uma venda registrada.';
+ const available=bird?0:Number(item.quantity)+Number(old?.quantity||0);
+ const movement=bird||!old?null:db.movements.find(m=>m.saleId===oldId&&m.stock===item.id&&m.type==='SAÍDA');
+ if(!bird&&old&&!movement)return 'A saída vinculada não foi localizada. Confira o histórico de estoque.';
+ if(!bird&&(!Number.isFinite(available)||quantity>available))return 'Estoque insuficiente para esta venda.';
+ const previous=JSON.stringify(db), stamp=new Date().toISOString();
+ const record={...old,...fields,id:oldId||id(),itemName:old?.itemName||(bird?birdName(item)+(item.ring&&item.ring!==birdName(item)?' · '+item.ring:''):item.name),
+  unitPrice:moneyCents(fields.unitPrice)/100,value:cents/100,receivedDate:received?fields.receivedDate:'',
+  acquisitionCost:old?old.acquisitionCost:(bird&&Number(item.acquisitionValue)>0?Number(item.acquisitionValue):null),
+  createdAt:old?.createdAt||stamp,updatedAt:stamp};
+ if(!bird){
+  item.quantity=available-quantity;
+  const output={stock:item.id,type:'SAÍDA',quantity,date,notes:'VENDA DE GAIOLA',saleId:record.id,updatedAt:stamp};
+  if(movement)Object.assign(movement,output);
+  else db.movements.push({id:id(),createdAt:stamp,...output});
+ }
+ if(old)Object.assign(old,record);else db.revenues.push(record);
+ if(persist('revenues',old?'EDITAR VENDA':'REGISTRAR VENDA',record))return '';
+ db=JSON.parse(previous);
+ return 'Não foi possível gravar a venda. O preenchimento foi preservado.';
+}
+function cancelSale(saleId,date){
+ const sale=getRecord('revenues',saleId);
+ if(!sale||sale.cancelledDate)return 'A venda já foi cancelada ou não está disponível.';
+ if(!validFinanceDate(date)||date<(sale.receivedDate||sale.date))return 'Informe uma data de cancelamento igual ou posterior à venda e ao recebimento.';
+ const previous=JSON.stringify(db);
+ if(sale.kind==='cage'){
+  const item=getRecord('stock',sale.itemId), movement=db.movements.find(m=>m.saleId===saleId&&m.stock===sale.itemId&&m.type==='SAÍDA');
+  if(!item||!movement||!Number.isFinite(Number(item.quantity)))return 'A saída vinculada não foi localizada. Confira o histórico de estoque.';
+  item.quantity=Number(item.quantity)+sale.quantity;
+  db.movements=db.movements.filter(m=>m!==movement);
+ }
+ sale.cancelledDate=date;
+ if(persist('revenues','CANCELAR VENDA',sale))return '';
+ db=JSON.parse(previous);
+ return 'Não foi possível gravar o cancelamento.';
+}
+function openSaleCancellation(sale){
+ modal('Cancelar venda',`<form id="saleCancelForm">
+ <p>${esc(sale.itemName)} · ${brl(sale.value)}</p>
+ <p>${sale.receivedDate?'O cancelamento registrará o estorno integral na data informada.':'O cancelamento retirará a venda do total a receber.'}
+ ${sale.kind==='cage'?'As unidades voltarão ao estoque.':'A ave voltará a ficar disponível no Plantel.'}</p>
+ ${input('cancelledDate',sale.receivedDate?'Data do estorno':'Data do cancelamento','date',today(),true)}
+ <p class="form-feedback" role="alert" hidden></p>
+ <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Voltar</button><button type="submit" class="btn danger">Confirmar cancelamento</button></div></form>`);
+ const form=document.getElementById('saleCancelForm');
+ form.onsubmit=e=>{
+  e.preventDefault();
+  const error=cancelSale(sale.id,form.elements.cancelledDate.value);
+  if(error)return formFeedback(form,error);
+  closeModal();render();toast('Venda cancelada.');
+ };
+}
+document.addEventListener('change',event=>{
+ if(event.target.name!=='expenseStatus')return;
+ const date=event.target.form.elements.expensePaidDate;
+ date.disabled=event.target.value===expenseOpen;
+});
+document.addEventListener('click',event=>{
+ const button=event.target.closest('[data-sale-kind],[data-sale-edit],[data-sale-cancel]');
+ if(!button)return;
+ if(button.dataset.saleKind)return openSale(button.dataset.saleKind,button.dataset.saleItem);
+ const sale=getRecord('revenues',button.dataset.saleEdit||button.dataset.saleCancel);
+ if(!sale||sale.cancelledDate)return;
+ if(button.dataset.saleEdit)openSale(sale.kind,sale.itemId,sale);
+ else openSaleCancellation(sale);
+});
+
 const stockCatalog=new Map([
+ [cageCategory,new Map([['GAIOLA',''],['GAIOLA DE CRIAÇÃO',''],['GAIOLA DE TRANSPORTE','']])],
  [grainStockCategory,new Map([
   ['PAINÇO COMUM',''],['PAINÇO PORTUGUÊS',''],['PAINÇO VERDE',''],['PAINÇO VERMELHO',''],
   ['PAINÇO PRETO',''],['MILHETO',''],['ALPISTE',''],
@@ -268,7 +471,7 @@ const configs={
   ['stock','Produto','stock',true],['type','Tipo','choices',['ENTRADA','SAÍDA']],['quantity','Quantidade','number',true],
   ['date','Data','date',true],['cost','Custo total (R$)','number'],['unitCost','Custo por unidade (R$)','number'],['notes','Observações','textarea']
  ],cols:[['Produto','stock'],['Tipo','type'],['Quantidade','quantity'],['Data','date'],['Custo da entrada','stockCost']]},
- expenses:{title:'Despesas',subtitle:'Despesas do criadouro em reais.',fields:[['date','Data','date',true],['category','Categoria','choices',['ALIMENTAÇÃO','MATERIAIS','INSTALAÇÕES','VETERINÁRIO','EXAMES','MEDICAMENTOS PRESCRITOS','MANUTENÇÃO','OUTRAS']],['description','Descrição','text',true],['value','Valor (R$)','number',true],['payment','Forma de pagamento','choices',['PIX','DINHEIRO','CARTÃO','TRANSFERÊNCIA','OUTRO']],['notes','Observações','textarea']],cols:[['Data','date'],['Categoria','category'],['Descrição','description'],['Valor','value'],['Pagamento','payment']]},
+ expenses:{title:'Despesas',subtitle:'Despesas do criadouro em reais.',fields:[['date','Data','date',true],['category','Categoria','choices',['ALIMENTAÇÃO','MATERIAIS','INSTALAÇÕES','VETERINÁRIO','EXAMES','MEDICAMENTOS PRESCRITOS','MANUTENÇÃO','OUTRAS']],['description','Descrição','text',true],['value','Valor (R$)','number',true],['payment','Forma de pagamento','choices',['PIX','DINHEIRO','CARTÃO','TRANSFERÊNCIA','OUTRO']],['notes','Observações','textarea']],cols:[['Data','date'],['Categoria','category'],['Descrição','description'],['Valor','value'],['Situação','expenseStatus'],['Pagamento','payment']]},
  facilities:{title:'Instalações',subtitle:'Viveiros, gaiolas, ninhos e ambientes.',fields:[['name','Identificação','text',true],['type','Tipo','choices',['VIVEIRO','GAIOLA','NINHO','AMBIENTE','OUTRO']],['notes','Observações','textarea']],cols:[['Identificação','name'],['Tipo','type']]},
  transfers:{title:'Ocupações e movimentações',subtitle:'Histórico da localização de aves.',fields:[['bird','Ave','bird',true],['facility','Instalação','facility',true],['start','Entrada','date',true],['end','Saída','date'],['notes','Observações','textarea']],cols:[['Ave','bird'],['Instalação','facility'],['Entrada','start'],['Saída','end']]},
  documents:{title:'Registros documentais',subtitle:'Controle referencial local (sem anexos nesta versão).',fields:[['name','Documento','text',true],['bird','Ave relacionada','bird'],['type','Tipo','choices',['AUTORIZAÇÃO','REGISTRO','COMPROVANTE','DOCUMENTO DO CRIADOURO','OUTRO']],['status','Verificação','choices',['INFORMAÇÃO CADASTRADA','PENDÊNCIA DE REGISTRO OFICIAL','REGISTRO OFICIAL CONFIRMADO (INFORMADO PELO USUÁRIO)']],['date','Data','date'],['reference','Referência / número','text'],['notes','Observações','textarea']],cols:[['Documento','name'],['Ave','bird'],['Verificação','status'],['Referência','reference']]},
@@ -310,7 +513,8 @@ function stockExpenseCandidates(){
    result.push({
     id:`estoque:${type}:${record.id}`,stockOrigin:type,stockOriginId:record.id,
     description:product?.name||'PRODUTO NÃO LOCALIZADO',date,value,
-    category:category===grainStockCategory?'ALIMENTAÇÃO — SEMENTES':category===produceStockCategory?'ALIMENTAÇÃO — LEGUMES, INFLORESCÊNCIAS E FRUTAS':'OUTROS',
+    expenseStatus:record.expenseStatus,expensePaidDate:record.expensePaidDate,
+    category:category===cageCategory?cageCategory:category===grainStockCategory?'ALIMENTAÇÃO — SEMENTES':category===produceStockCategory?'ALIMENTAÇÃO — LEGUMES, INFLORESCÊNCIAS E FRUTAS':'OUTROS',
     quantity:type==='stock'?stockAcquisitionQuantity(record):Number(record.quantity),unit:product?.unit||'',
     review
    });
@@ -352,6 +556,10 @@ function setupStockForm(type,record,form){
    category.value=oldCategory;
   }
   category.required=!(record&&!oldCategory);
+  const unit=form.elements.unit;
+  const setCageUnit=()=>{if(category.value===cageCategory)unit.value='UN'};
+  category.addEventListener('change',setCageUnit);
+  if(!record)setCageUnit();
   if(!record)date.value=today();
   const originalName=upper(record?.name);
   if(record)acquisitionQuantity.value=stockAcquisitionQuantity(record)??'';
@@ -404,6 +612,14 @@ function setupStockForm(type,record,form){
  form.addEventListener('input',updateTotal);
  form.addEventListener('change',updateTotal);
  updateTotal();
+ addHelp(expensePaymentFields(record));
+ const paymentBox=form.elements.expenseStatus.closest('fieldset');
+ const updatePaymentVisibility=()=>{
+  paymentBox.hidden=cost.disabled;
+  paymentBox.disabled=cost.disabled;
+ };
+ form.addEventListener('change',updatePaymentVisibility);
+ updatePaymentVisibility();
  addHelp('<p class="wide helper">Informe o custo total ou o custo por unidade. O total informado prevalece. Entradas com custo entram em Despesas.</p>');
  const previousValue=record&&stockExpenseValue(type,record);
  if(previousValue&&!record.stockExpenseConfirmed&&db.expenses.some(e=>!e.birdAcquisitionId&&stockExpenseKey(e.date,e.value)===stockExpenseKey(record.date,previousValue))){
@@ -418,6 +634,11 @@ function prepareStockSave(type,record,old,form){
  if(type==='stock'){
   if(!stockProducts(record.category,old).includes(record.name))return 'SELECIONE UM PRODUTO DA CATEGORIA.';
   if(!old&&!stockCatalog.has(record.category))return 'SELECIONE A CATEGORIA.';
+  if(cageProduct(record)){
+   if(!Number.isSafeInteger(record.quantity))return 'Informe a quantidade de gaiolas em unidades inteiras.';
+   record.unit='UN';
+  }
+  if(old&&!cageProduct(record)&&db.revenues.some(r=>r.kind==='cage'&&r.itemId===old.id))return 'Mantenha a categoria Gaiolas para preservar o histórico de vendas.';
   if(old&&upper(old.category)===record.category&&upper(old.name)===record.name){
    record.category=old.category;
    record.name=old.name;
@@ -426,6 +647,7 @@ function prepareStockSave(type,record,old,form){
    record.acquisitionQuantity=old?stockAcquisitionQuantity(old):record.quantity;
   }
  }
+ if(type==='movements'&&cageProduct(getRecord('stock',record.stock))&&!Number.isSafeInteger(record.quantity))return 'Informe a quantidade de gaiolas em unidades inteiras.';
  if(type==='movements'&&!['ENTRADA','SAÍDA'].includes(record.type))return 'SELECIONE O TIPO DE MOVIMENTAÇÃO.';
  if(type==='movements'&&record.type==='SAÍDA'){
   record.cost=0;
@@ -449,9 +671,18 @@ function prepareStockSave(type,record,old,form){
 
 function stockPage(){const chosen=['stock','movements'].includes(filteredMode)?filteredMode:'stock';return `${header('Estoque','Saldos, aquisições e movimentações.')}<div class="toolbar"><button data-sub="stock" class="btn ${chosen==='stock'?'':'secondary'}">Produtos</button><button data-sub="movements" class="btn ${chosen==='movements'?'':'secondary'}">Movimentações</button></div><div class="quick-actions"><button class="btn secondary" data-action="quickPurchase">Registrar compra</button><button class="btn secondary" data-action="quickConsumption">Registrar consumo</button></div>${generic(chosen)}${stockExpenseReview()}`}
 function facilitiesPage(){const chosen=['facilities','transfers'].includes(filteredMode)?filteredMode:'facilities';return `${header('Instalações','Cadastro e histórico de ocupação.')}<div class="toolbar"><button data-sub="facilities" class="btn ${chosen==='facilities'?'':'secondary'}">Instalações</button><button data-sub="transfers" class="btn ${chosen==='transfers'?'':'secondary'}">Ocupações</button></div>${generic(chosen)}`}
-function reports(){const expenses=expenseRows();const counts=collections.map(c=>[c,(c==='expenses'?expenses:db[c]).length]);const month=uiState.reportMonth||today().slice(0,7);const yearly=uiState.reportYear||today().slice(0,4);const monthly=expenses.filter(e=>e.date?.slice(0,7)===month).reduce((n,e)=>n+Number(e.value||0),0);const grouped=Object.entries(expenses.filter(e=>e.date?.startsWith(yearly)).reduce((x,e)=>(x[e.category||'OUTRAS']=(x[e.category||'OUTRAS']||0)+Number(e.value||0),x),{}));return `${header('Relatórios e exportações','Valores e contagens calculados a partir dos registros disponíveis.')}<div class="panel"><h3>Financeiro</h3><div class="toolbar"><label>Mês <input class="field" type="month" id="reportMonth" value="${month}"></label><label>Ano <input class="field" type="number" min="2000" max="2100" id="reportYear" value="${yearly}"></label></div><div style="font-size:25px;font-weight:800">${brl(monthly)}</div><p class="muted">Despesas do mês selecionado: soma dos valores registrados.</p>${table(['Categoria','Total no ano'],grouped.map(x=>[esc(x[0]),brl(x[1])]))}</div><div class="panel"><h3>Quantidade de registros por módulo</h3>${table(['Módulo','Registros'],counts.filter(x=>x[1]>0).map(x=>[esc(x[0]),String(x[1])]))}</div><div class="panel"><h3>Exportação de registros</h3><div class="toolbar"><select class="field" id="reportCol">${collections.map(c=>`<option value="${c}" ${c===reportMode?'selected':''}>${({birds:'PLANTEL',feedings:'ALIMENTAÇÃO',food:'ALIMENTOS',couples:'CASAIS',tasks:'MANEJO',trips:'CAMPEADAS',health:'SAÚDE',stock:'ESTOQUE',expenses:'DESPESAS'})[c]||c.toUpperCase()}</option>`).join('')}</select><button class="btn" data-action="csv">Exportar CSV</button><button class="btn secondary" data-action="print">Imprimir / salvar PDF</button><button class="btn secondary" data-action="backup">Backup JSON</button><button class="btn secondary" data-action="restore">Importar backup JSON</button></div><div class="helper">PDF disponível via impressão do navegador. CSV contém dados do módulo escolhido.</div></div><div class="notice">Indicadores de fertilidade, eclosão e sobrevivência exigem definições consistentes de períodos e resultados. Não são calculados automaticamente nesta versão para evitar percentuais enganosos.</div>`}
+function reports(){
+ const expenses=expenseRows();
+ const counts=collections.map(c=>[c,(c==='expenses'?expenses:db[c]).length]);
+ const month=uiState.reportMonth||today().slice(0,7),yearly=String(uiState.reportYear||today().slice(0,4));
+ const monthly=financeTotals(month,expenses),annual=financeTotals(yearly,expenses);
+ const grouped=Object.entries(expenses.filter(e=>e.expenseStatus!==expenseOpen&&(e.expensePaidDate||e.date)?.startsWith(yearly))
+  .reduce((totals,e)=>{const category=e.category||'OUTRAS';totals[category]=(totals[category]||0)+moneyCents(e.value);return totals},{}));
+ return `${header('Relatórios e exportações','Valores e contagens calculados a partir dos registros disponíveis.')}<div class="panel"><h3>Financeiro</h3><div class="toolbar"><label>Mês <input class="field" type="month" id="reportMonth" value="${esc(month)}"></label><label>Ano <input class="field" type="number" min="2000" max="2100" id="reportYear" value="${esc(yearly)}"></label></div>${financeSummary('Mês selecionado',monthly)}${financeSummary('Ano selecionado',annual)}
+ <p class="muted">O caixa usa as datas de recebimento, estorno e pagamento. Vendas a receber e despesas pendentes aparecem pela data do lançamento.</p>
+ ${table(['Categoria','Despesas pagas no ano'],grouped.map(([category,cents])=>[esc(category),brl(cents/100)]))}</div><div class="panel"><h3>Quantidade de registros por módulo</h3>${table(['Módulo','Registros'],counts.filter(x=>x[1]>0).map(x=>[esc(x[0]),String(x[1])]))}</div><div class="panel"><h3>Exportação de registros</h3><div class="toolbar"><select class="field" id="reportCol">${collections.map(c=>`<option value="${c}" ${c===reportMode?'selected':''}>${({birds:'PLANTEL',feedings:'ALIMENTAÇÃO',food:'ALIMENTOS',couples:'CASAIS',tasks:'MANEJO',trips:'CAMPEADAS',health:'SAÚDE',stock:'ESTOQUE',expenses:'DESPESAS',revenues:'RECEITAS'})[c]||c.toUpperCase()}</option>`).join('')}</select><button class="btn" data-action="csv">Exportar CSV</button><button class="btn secondary" data-action="print">Imprimir / salvar PDF</button><button class="btn secondary" data-action="backup">Backup JSON</button><button class="btn secondary" data-action="restore">Importar backup JSON</button></div><div class="helper">PDF disponível via impressão do navegador. CSV contém dados do módulo escolhido.</div></div><div class="notice">Indicadores de fertilidade, eclosão e sobrevivência exigem definições consistentes de períodos e resultados. Não são calculados automaticamente nesta versão para evitar percentuais enganosos.</div>`}
 function settings(){return `${header('Configurações','Dados locais, preferências e cópias de segurança.')}<div class="panel"><h3>Dados do criadouro</h3><form id="settingsForm" class="form-grid">${input('name','Nome do criadouro','text',db.settings.name,true)}${input('owner','Responsável','text',db.settings.owner)}${select('timezone','Fuso horário',['America/Fortaleza','America/Sao_Paulo','America/Manaus','America/Rio_Branco','America/Noronha'],db.settings.timezone)}${input('lowStock','Padrão de estoque mínimo','number',db.settings.lowStock,false,'min="0" step="0.01"')}<div class="wide"><button class="btn" type="submit">Salvar configurações</button></div></form></div><div class="panel"><h3>Opções editáveis do plantel</h3><div class="form-grid"><div><label>Situações cadastrais (uma por linha)</label><textarea class="field" id="statusChoices" rows="5" style="width:100%">${esc(db.settings.statuses.join('\n'))}</textarea></div><div><label>Condições de manejo (uma por linha)</label><textarea class="field" id="conditionChoices" rows="5" style="width:100%">${esc(db.settings.conditions.join('\n'))}</textarea></div><div class="wide"><button class="btn secondary" data-action="saveChoices">Atualizar opções</button></div></div></div><div class="panel"><h3>Backup, restauração e privacidade</h3><p class="muted">Os registros são mantidos apenas neste navegador, sem sincronização com outros dispositivos.</p><div class="actions"><button class="btn" data-action="backup">Baixar backup JSON</button><button class="btn secondary" data-action="restore">Importar backup JSON</button><button class="btn danger" data-action="reset">Apagar dados locais</button></div><input type="file" id="restoreFile" accept="application/json,.json" hidden><div class="notice">A importação apresenta uma prévia, solicita confirmação e cria uma cópia de segurança. O envio à nuvem requer autorização explícita. Autenticação e permissões multiusuário ainda não estão disponíveis.</div></div><div class="panel"><h3>Histórico recente de alterações</h3>${table(['Data','Coleção','Operação'],db.audit.slice(-15).reverse().map(a=>[new Date(a.at).toLocaleString('pt-BR'),esc(a.collection),esc(a.action)]))}</div>`}
-function render(){const html={home, birds,tree:genealogy,reproduction,tasks:()=>generic('tasks'),feedings:feedingPage,health:()=>generic('health'),events:()=>generic('events'),stock:stockPage,expenses:()=>generic('expenses'),reports,facilities:facilitiesPage,trips:()=>generic('trips'),documents:()=>generic('documents'),knowledge:()=>generic('knowledge'),settings}[page]();document.getElementById('content').innerHTML=html;}
+function render(){const html={home, birds,tree:genealogy,reproduction,tasks:()=>generic('tasks'),feedings:feedingPage,health:()=>generic('health'),events:()=>generic('events'),stock:stockPage,expenses:()=>generic('expenses'),revenues:salesPage,reports,facilities:facilitiesPage,trips:()=>generic('trips'),documents:()=>generic('documents'),knowledge:()=>generic('knowledge'),settings}[page]();document.getElementById('content').innerHTML=html;}
 function makeSelect(kind,value=''){let entries=[];if(kind==='bird'||kind==='male'||kind==='female')entries=db.birds.filter(b=>kind==='bird'||sexValue(b.sex)===(kind==='male'?'MACHO':'FÊMEA')).map(b=>[b.id,birdName(b)+' · '+(b.ring||'SEM ANILHA')]);else{const mapping={food:'food',season:'seasons',couple:'couples',attempt:'attempts',nest:'nests',egg:'eggs',stock:'stock',facility:'facilities'};entries=db[mapping[kind]].map(r=>[r.id,kind==='couple'?birdName(findBird(r.male))+' + '+birdName(findBird(r.female)):kind==='attempt'?'TENTATIVA '+(r.start||r.id.slice(0,5)):r.name||'SEM IDENTIFICAÇÃO'])}return `<select name="${kind}" ${['bird','male','female'].includes(kind)?'':' '}><option value="">SELECIONE</option>${entries.map(([k,v])=>`<option value="${esc(k)}" ${k===value?'selected':''}>${esc(v)}</option>`).join('')}</select>`}
 function formField(f,r){const [k,title,type,extra]=f,val=r[k]??'',required=extra===true?'required':'';if(type==='textarea')return textarea(k,title,val);if(type==='stockProduct')return select(k,title,[], '',true);if(type==='choices')return select(k,title,extra,val,required==='required');if(['bird','male','female','food','season','couple','attempt','nest','egg','stock','facility'].includes(type))return `<div><label for="f_${k}">${title}${required?' *':''}</label>${makeSelect(type,val).replace(/name="[^"]*"/,`id="f_${k}" name="${k}" ${required}`)}</div>`;return input(k,title,type,val,required==='required',type==='number'?'step="any" min="0"':'')}
 let modalTrigger=null;
@@ -465,6 +696,7 @@ function modal(title,html){
 function openForm(type,record=null){editing={type,id:record?.id||null};let fields='';if(type==='birds'){const r=record||{};fields=`${input('name','Nome (opcional)','text',r.name)}${input('scientific','Nome científico','text',r.scientific||'SPOROPHILA BOUVREUIL',true)}${input('ring','Anilha completa','text',r.ring)}${select('sex','Sexo',['MACHO','FÊMEA','NÃO IDENTIFICADO'],sexValue(r.sex),true)}${birdField('father','Pai (ave cadastrada)','MACHO',r.father)}${birdField('mother','Mãe (ave cadastrada)','FÊMEA',r.mother)}${select('status','Situação cadastral',db.settings.statuses,r.status||db.settings.statuses[0],true)}${select('condition','Condição de manejo',db.settings.conditions,r.condition||db.settings.conditions[0],true)}`}
 else fields=configs[type].fields.map(f=>formField(f,record||{})).join('');const hint=type==='birds'?'<div class="notice info">Cadastro simplificado com exatamente oito campos. A anilha preserva zeros à esquerda e caracteres especiais. Nenhum registro confirma regularidade oficial.</div>':'';modal((record?'Editar: ':'Novo registro: ')+(type==='birds'?'AVE':configs[type].title),`<form id="recordForm" data-type="${type}"><div class="form-grid">${fields}</div>${hint}<p class="form-feedback" role="alert" hidden></p><div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Cancelar</button><button type="submit" class="btn">Salvar registro</button></div></form>`);
  if(type==='stock'||type==='movements')setupStockForm(type,record,document.getElementById('recordForm'));
+ if(type==='expenses')document.querySelector('#recordForm .form-grid').insertAdjacentHTML('beforeend',expensePaymentFields(record));
 }
 function checkCycle(candidate,relative,birds){let visited=new Set();function walk(x){if(!x||visited.has(x))return false;if(sameId(x,candidate))return true;visited.add(x);const b=birds.find(z=>sameId(z.id,x));return b?walk(b.father)||walk(b.mother):false}return walk(relative)}
 function related(a,b){if(!a||!b)return 'ASCENDÊNCIA NÃO COMPLETAMENTE INFORMADA';const ancestors=x=>{const set=new Set();let unknown=false;function walk(z,depth){if(!z||depth>8){unknown=true;return}if(set.has(z))return;set.add(z);const node=findBird(z);if(node){walk(node.father,depth+1);walk(node.mother,depth+1)}}walk(x,0);return {set,unknown}};const aa=ancestors(a),bb=ancestors(b);if(aa.set.has(b)||bb.set.has(a)||[...aa.set].some(x=>bb.set.has(x)))return 'PARENTESCO CONHECIDO ENTRE AS AVES: REVISE O CASAL';return aa.unknown||bb.unknown?'HÁ ASCENDÊNCIA DESCONHECIDA. A AUSÊNCIA DE VÍNCULOS REGISTRADOS NÃO COMPROVA AUSÊNCIA DE PARENTESCO.':''}
@@ -503,7 +735,7 @@ function updateBirdAcquisitionExpense(bird,linked){
  const details={
   birdAcquisitionId:bird.id, date:bird.acquisitionDate, category:'AVES',
   description:'Aquisição de ave · '+birdName(bird)+(bird.ring&&bird.ring!==birdName(bird)?' · '+bird.ring:''),
-  value:bird.acquisitionValue, updatedAt:bird.updatedAt
+  value:bird.acquisitionValue,expenseStatus:bird.expenseStatus,expensePaidDate:bird.expensePaidDate,updatedAt:bird.updatedAt
  };
  if(linked)Object.assign(linked,details);
  else db.expenses.push({id:id(),createdAt:bird.updatedAt,...details});
@@ -511,6 +743,15 @@ function updateBirdAcquisitionExpense(bird,linked){
 function submitRecord(form){const type=form.dataset.type;const old=editing?.id?db[type].find(x=>x.id===editing.id):null;const values=readValues(form,type);if(!values)return;const updated={...(old||{}),...values,id:old?.id||id(),createdAt:old?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
 if(type==='stock'||type==='movements'){const stockError=prepareStockSave(type,updated,old,form);if(stockError)return formFeedback(form,stockError)}
 const err=validateIntegrated(type,updated,old)||validate(type,updated,old?.id);if(err)return formFeedback(form,err);if(type==='chicks'&&old&&old.separatedAt!==updated.separatedAt){updated.separationHistory=[...(old.separationHistory||[]),{at:new Date().toISOString(),from:old.separatedAt||'',to:updated.separatedAt||''}]}if(type==='couples'){const warning=related(updated.male,updated.female);if(warning&&!confirm(warning+'\n\nDESEJA REGISTRAR O CASAL MESMO ASSIM?'))return}
+const expenseDate=type==='birds'?updated.acquisitionDate:updated.date;
+const hasExpense=type==='expenses'||(type==='birds'&&updated.acquisitionValue>0)||(['stock','movements'].includes(type)&&stockExpenseValue(type,updated)>0);
+if(hasExpense){
+ updated.expenseStatus=updated.expenseStatus===expenseOpen?expenseOpen:expensePaid;
+ if(updated.expenseStatus===expenseOpen)updated.expensePaidDate='';
+ else if(updated.expensePaidDate&&(!validFinanceDate(updated.expensePaidDate)||updated.expensePaidDate<expenseDate)){
+  return formFeedback(form,'Informe uma data de pagamento igual ou posterior à data do lançamento.');
+ }
+}
 let linkedExpense;
 if(type==='birds'){
  const error=birdAcquisitionError(updated);
@@ -524,7 +765,12 @@ if(type==='birds'){
 }
 const beforeChange=JSON.stringify(db);if(type==='movements'){const stock=db.stock.find(x=>x.id===updated.stock);if(old){const p=db.stock.find(x=>x.id===old.stock);if(p)p.quantity=Number(p.quantity)+(old.type==='ENTRADA'?-Number(old.quantity):Number(old.quantity))}stock.quantity=Number(stock.quantity)+(updated.type==='ENTRADA'?Number(updated.quantity):-Number(updated.quantity))}
 if(old)Object.assign(old,updated);else db[type].push(updated);if(type==='birds')updateBirdAcquisitionExpense(updated,linkedExpense);if(!persist(type,old?'EDITAR':'CRIAR',updated)){db=JSON.parse(beforeChange);return formFeedback(form,'Não foi possível salvar. O preenchimento foi preservado.')}closeModal();render();toast('REGISTRO SALVO COM SUCESSO.')}
-function deleteRecord(type,recordId){const obj=db[type].find(x=>x.id===recordId);if(!obj)return;const references={birds:[['birds','father'],['birds','mother'],['feedings','bird'],['couples','male'],['couples','female'],['health','bird'],['tasks','bird'],['trips','bird'],['events','bird'],['transfers','bird'],['documents','bird']],food:[['feedings','food']],couples:[['attempts','couple'],['chicks','couple']],seasons:[['attempts','season']],attempts:[['nests','attempt']],nests:[['eggs','nest']],eggs:[['chicks','egg']],stock:[['movements','stock']],facilities:[['transfers','facility'],['tasks','facility']]};const used=hasDependents(type,recordId)||(references[type]||[]).some(([col,key])=>db[col].some(x=>x.id!==recordId&&(Array.isArray(x[key])?x[key].includes(recordId):String(x[key]||'').toLowerCase()===String(recordId).toLowerCase())));if(used)return toast('EXCLUSÃO BLOQUEADA: REGISTRO POSSUI VÍNCULOS. PRESERVE O HISTÓRICO.');const acquisition=type==='birds'&&db.expenses.some(e=>e.birdAcquisitionId===recordId);
+function deleteRecord(type,recordId){const obj=db[type].find(x=>x.id===recordId);if(!obj)return;
+if((type==='movements'&&obj.saleId)||(type==='birds'&&db.revenues.some(r=>r.kind==='bird'&&r.itemId===recordId))
+ ||(type==='stock'&&db.revenues.some(r=>r.kind==='cage'&&r.itemId===recordId))){
+ return toast('Este registro tem histórico de venda em Receitas.');
+}
+const references={birds:[['birds','father'],['birds','mother'],['feedings','bird'],['couples','male'],['couples','female'],['health','bird'],['tasks','bird'],['trips','bird'],['events','bird'],['transfers','bird'],['documents','bird']],food:[['feedings','food']],couples:[['attempts','couple'],['chicks','couple']],seasons:[['attempts','season']],attempts:[['nests','attempt']],nests:[['eggs','nest']],eggs:[['chicks','egg']],stock:[['movements','stock']],facilities:[['transfers','facility'],['tasks','facility']]};const used=hasDependents(type,recordId)||(references[type]||[]).some(([col,key])=>db[col].some(x=>x.id!==recordId&&(Array.isArray(x[key])?x[key].includes(recordId):String(x[key]||'').toLowerCase()===String(recordId).toLowerCase())));if(used)return toast('EXCLUSÃO BLOQUEADA: REGISTRO POSSUI VÍNCULOS. PRESERVE O HISTÓRICO.');const acquisition=type==='birds'&&db.expenses.some(e=>e.birdAcquisitionId===recordId);
 if(!confirm(acquisition?'Excluir esta ave? A despesa de aquisição será mantida no histórico financeiro.':'EXCLUIR ESSE REGISTRO? ESSA AÇÃO NÃO PODE SER DESFEITA.'))return;const beforeDelete=JSON.stringify(db);if(type==='movements'){const product=db.stock.find(x=>x.id===obj.stock);if(product){const change=obj.type==='ENTRADA'?-Number(obj.quantity):Number(obj.quantity);if(Number(product.quantity)+change<0)return toast('EXCLUSÃO PRODUZIRIA ESTOQUE NEGATIVO.');product.quantity=Number(product.quantity)+change}}db[type]=db[type].filter(x=>x.id!==recordId);if(!persist(type,'EXCLUIR',obj)){db=JSON.parse(beforeDelete);return}render();toast('REGISTRO EXCLUÍDO.')}
 function focusAfterClose(trigger){
  queueMicrotask(()=>{
@@ -558,7 +804,7 @@ document.addEventListener('keydown',event=>{
 function backup(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});download(blob,'caboclinho-backup-'+today()+'.json')}
 function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},300)}
 function csv(){const arr=reportMode==='expenses'?expenseRows():db[reportMode],fields=[...new Set(arr.flatMap(x=>Object.keys(x)))];if(!fields.length)return toast('NÃO HÁ DADOS NESSE MÓDULO.');const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"';download(new Blob(['\uFEFF'+[fields.join(';'),...arr.map(r=>fields.map(k=>q(r[k])).join(';'))].join('\r\n')],{type:'text/csv;charset=utf-8'}),reportMode+'-'+today()+'.csv')}
-function restore(file){const reader=new FileReader();reader.onload=()=>{try{const next=JSON.parse(reader.result);if(!next||next.version!==4||!collections.every(c=>Array.isArray(next[c]))||!next.settings)throw Error('Formato inválido ou incompatível');if(!confirm('SUBSTITUIR TODOS OS DADOS LOCAIS PELOS DADOS DO BACKUP?'))return;const original=db;db={...defaultDB(),...next,settings:{...defaultDB().settings,...next.settings}};if(!save()){db=original;return}seedFoods();go('home');toast('BACKUP RESTAURADO.')}catch(e){toast('ARQUIVO INVÁLIDO: '+e.message)}};reader.readAsText(file)}
+function restore(file){const reader=new FileReader();reader.onload=()=>{try{const next=JSON.parse(reader.result);if(!next||next.version!==4||!validRecordCollections(next)||!next.settings)throw Error('Formato inválido ou incompatível');if(!confirm('SUBSTITUIR TODOS OS DADOS LOCAIS PELOS DADOS DO BACKUP?'))return;const original=db;db={...defaultDB(),...next,settings:{...defaultDB().settings,...next.settings}};if(!save()){db=original;return}seedFoods();go('home');toast('BACKUP RESTAURADO.')}catch(e){toast('ARQUIVO INVÁLIDO: '+e.message)}};reader.readAsText(file)}
 function seedFoods(){if(!db.food.length){[['PEPINO','VERDURAS'],['MAXIXE','VERDURAS'],['MAÇÃ','FRUTAS'],['JILÓ','VERDURAS']].forEach(([name,category])=>db.food.push({id:id(),name,category,notes:'',createdAt:new Date().toISOString()}));save()}}
 function handleAction(action){if(action.startsWith('new:'))return openForm(action.slice(4));if(action==='close')return closeModal();if(action==='backup')return backup();if(action==='csv')return csv();if(action==='print')return window.print();if(action==='toggleDesc'){expandedChildren=!expandedChildren;return render()}if(action==='restore')return document.getElementById('restoreFile')?.click();if(action==='saveChoices'){const statuses=document.getElementById('statusChoices').value.split('\n').map(x=>upper(x.trim())).filter(Boolean);const conditions=document.getElementById('conditionChoices').value.split('\n').map(x=>upper(x.trim())).filter(Boolean);if(!statuses.length||!conditions.length)return toast('INFORME PELO MENOS UMA OPÇÃO.');db.settings.statuses=[...new Set(statuses)];db.settings.conditions=[...new Set(conditions)];persist('settings','EDITAR OPÇÕES',{});toast('OPÇÕES ATUALIZADAS.');return}if(action==='reset'){if(confirm('APAGAR TODOS OS REGISTROS DESTE DISPOSITIVO?')&&confirm('CONFIRMA A EXCLUSÃO DEFINITIVA?')){db=defaultDB();seedFoods();persist('settings','REINICIAR',{});go('home')}}}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.page)return go(b.dataset.page);if(b.dataset.action)return handleAction(b.dataset.action);if(b.dataset.edit)return openForm(b.dataset.edit,db[b.dataset.edit].find(x=>x.id===b.dataset.id));if(b.dataset.delete)return deleteRecord(b.dataset.delete,b.dataset.id);if(b.dataset.tree){treeBird=b.dataset.tree;return go('tree')}if(b.dataset.sub){filteredMode=b.dataset.sub;query='';return render()}if(b.dataset.complete){const t=db.tasks.find(t=>t.id===b.dataset.complete);if(t){t.status='CONCLUÍDA';t.done=today();persist('tasks','CONCLUIR',t);render();toast('TAREFA CONCLUÍDA.')}}});
@@ -608,6 +854,7 @@ function lineage(type,r,seen=new Set()){
 function separationDays(r){if(!r.date||!r.separatedAt)return null;return Math.round((Date.parse(r.separatedAt+'T00:00:00Z')-Date.parse(r.date+'T00:00:00Z'))/86400000)}
 function lineageText(ctx){const b=x=>x?birdName(x)+' · '+(x.ring||'SEM ANILHA')+' [ID: '+x.id+']':'NÃO INFORMADO';return `Macho: ${b(ctx.male)}\nFêmea: ${b(ctx.female)}\nTemporada: ${ctx.season?.name||'NÃO INFORMADA'}\nTentativa: ${ctx.attempt?.start||ctx.attempt?.id||'NÃO INFORMADA'}\nNinhada: ${ctx.nest?.name||'NÃO INFORMADA'}\nOvo: ${ctx.egg?.name||'NÃO INFORMADO'}`}
 function cellValue(type,r,key){
+ if(type==='expenses'&&key==='expenseStatus')return r.expenseStatus===expenseOpen?'Pendente':'Paga';
  if(key==='stockCost'){const value=stockExpenseValue(type,r);return value?brl(value):'—'}
  if(type==='expenses'&&key==='description'&&r.birdAcquisitionId)return `${esc(r.description)}<div class="muted">Plantel · aquisição</div>`;
  if(type==='expenses'&&key==='description'&&r.stockOrigin)return `${esc(r.description)}<div class="muted">Estoque · ${r.quantity==null?'Quantidade a conferir':esc([r.quantity,r.unit].filter(x=>x!==''&&x!=null).join(' '))}</div>`;
@@ -753,8 +1000,15 @@ openForm=function(type,record=null){openBeforeExpansion(type,record);if(type!=='
   </div>
   <p class="helper" id="birdAcquisitionHelp">Preencha o valor e a data para lançar a compra em Despesas. Deixe em branco se a ave nasceu no criadouro, foi recebida gratuitamente ou tem custo desconhecido.</p>
  </fieldset>`);
+ form.querySelector('.form-grid').insertAdjacentHTML('beforeend',expensePaymentFields(record));
  const valueField=form.elements.acquisitionValue,dateField=form.elements.acquisitionDate;
- const updateAcquisitionDate=()=>{dateField.required=stockDecimal(valueField.value)>0};
+ const updateAcquisitionDate=()=>{
+  const hasCost=stockDecimal(valueField.value)>0;
+  dateField.required=hasCost;
+  const paymentBox=form.elements.expenseStatus.closest('fieldset');
+  paymentBox.hidden=!hasCost;
+  paymentBox.disabled=!hasCost;
+ };
  valueField.addEventListener('input',updateAcquisitionDate);
  updateAcquisitionDate();
 };
@@ -1084,7 +1338,7 @@ function cloudLocalSafetyCopy(){
  return key;
 }
 function cloudAdopt(data){
- if(!data||data.version!==4||!data.settings||!collections.every(col=>Array.isArray(data[col])))throw Error('Os dados recebidos são incompatíveis.');
+ if(!data||data.version!==4||!data.settings||!validRecordCollections(data))throw Error('Os dados recebidos são incompatíveis.');
  const baseline=defaultDB();
  const next={...baseline,...data,settings:{...baseline.settings,...data.settings}};
  localStorage.setItem(KEY,JSON.stringify(next));
@@ -1273,18 +1527,21 @@ let backupCandidate=null;
 const backupImportInput=document.createElement('input');backupImportInput.type='file';backupImportInput.accept='.json,application/json';backupImportInput.hidden=true;backupImportInput.id='backupImportGlobal';document.body.appendChild(backupImportInput);
 const backupImportRoot=document.createElement('div');backupImportRoot.id='backupImportRoot';document.body.appendChild(backupImportRoot);
 function beginBackupImport(){backupImportInput.value='';backupImportInput.click()}
+function validRecordCollections(data){
+ return collections.every(col=>(col==='revenues'&&data[col]===undefined)||Array.isArray(data[col]));
+}
 function validateBackupObject(obj){
  if(!obj||typeof obj!=='object'||Array.isArray(obj))throw Error('O arquivo não contém um backup JSON válido.');
  // Compatível com a exportação nativa do aplicativo (objeto direto, versão 4).
  if(obj.version!==4)throw Error('Versão de backup incompatível. Esta versão importa apenas backups JSON v4 do Canto & Ninho/Caboclinho Manager.');
  if(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw Error('O backup não contém configurações válidas.');
- for(const col of collections){if(!Array.isArray(obj[col]))throw Error('Coleção obrigatória ausente ou inválida: '+col);if(obj[col].length>100000)throw Error('Quantidade excessiva de registros em '+col);const ids=new Set();for(const item of obj[col]){if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.id!=='string'||!item.id.trim())throw Error('Registro sem identificador válido em '+col);if(ids.has(item.id))throw Error('Identificador duplicado em '+col);ids.add(item.id)}}
+ for(const col of collections){if(col==='revenues'&&obj[col]===undefined)continue;if(!Array.isArray(obj[col]))throw Error('Coleção obrigatória ausente ou inválida: '+col);if(obj[col].length>100000)throw Error('Quantidade excessiva de registros em '+col);const ids=new Set();for(const item of obj[col]){if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.id!=='string'||!item.id.trim())throw Error('Registro sem identificador válido em '+col);if(ids.has(item.id))throw Error('Identificador duplicado em '+col);ids.add(item.id)}}
  if(obj.audit!==undefined&&!Array.isArray(obj.audit))throw Error('Histórico de alterações inválido.');
  if(obj.settings.speciesSelected!==undefined&&!Array.isArray(obj.settings.speciesSelected))throw Error('Lista de espécies inválida.');
  if(obj.settings.speciesCustom!==undefined&&!Array.isArray(obj.settings.speciesCustom))throw Error('Catálogo personalizado inválido.');
  const base=defaultDB();return {...base,...obj,settings:{...base.settings,...obj.settings}};
 }
-function backupSummary(data){const counts=collections.map(c=>({label:({birds:'Aves',food:'Alimentos',feedings:'Alimentações',couples:'Casais',eggs:'Ovos',chicks:'Filhotes',tasks:'Manejo',health:'Saúde',expenses:'Despesas',documents:'Documentos'})[c]||c,count:data[c].length}));return {total:counts.reduce((a,v)=>a+v.count,0),counts};}
+function backupSummary(data){const counts=collections.map(c=>({label:({birds:'Aves',food:'Alimentos',feedings:'Alimentações',couples:'Casais',eggs:'Ovos',chicks:'Filhotes',tasks:'Manejo',health:'Saúde',expenses:'Despesas',revenues:'Receitas',documents:'Documentos'})[c]||c,count:data[c].length}));return {total:counts.reduce((a,v)=>a+v.count,0),counts};}
 function safetyDownload(data,kind){const file='canto-ninho-'+kind+'-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';download(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),file)}
 function closeBackupImport(){backupImportRoot.innerHTML='';backupCandidate=null;}
 function showBackupImportPreview(data,filename){const current=backupSummary(db),incoming=backupSummary(data);backupCandidate={data,filename};
