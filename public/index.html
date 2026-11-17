@@ -99,6 +99,29 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 .repro-card{margin:0;overflow-wrap:anywhere}
 .repro-card .btn{min-height:44px}
 .repro-card .tag{display:inline-block}
+.repro-overview,.repro-cards{min-width:0;align-items:start}
+.repro-summary{margin:0;padding:0;min-width:0}
+.repro-summary h3{margin:0;font-size:inherit}
+.repro-toggle{width:100%;min-height:58px;padding:12px 14px;border:0;border-radius:inherit;
+ background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit;
+ display:grid;gap:5px 8px;grid-template-columns:minmax(0,1fr) auto auto;align-items:center}
+.repro-toggle:hover,.repro-toggle[aria-expanded="true"]{background:#f2eee3}
+.repro-summary-name{font-weight:700;overflow-wrap:anywhere}
+.repro-toggle .tag{grid-column:2;grid-row:1;white-space:nowrap}
+.repro-toggle .tag[data-pair-state="breeding"]{color:#214a38;background:#e3eee5}
+.repro-summary-count,.repro-summary-reminder{grid-column:1/-1;color:#4e544c;font-size:.85rem;font-weight:400}
+.repro-chevron{grid-column:3;grid-row:1;width:7px;height:7px;margin:0 3px 3px 4px;
+ border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg)}
+.repro-toggle[aria-expanded="true"] .repro-chevron{transform:rotate(225deg);margin-bottom:-3px}
+.repro-filters .btn{min-height:44px}
+.repro-detail-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.repro-detail-head h3{margin-top:5px}
+.repro-detail details{margin-top:12px}
+@media(min-width:1200px){
+ .repro-overview.repro-has-detail{display:grid;gap:16px;grid-template-columns:minmax(0,1.55fr) minmax(280px,1fr)}
+ .repro-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 .repro-nest{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
 .repro-nest h4{margin:0;font-size:15px}
 .repro-nest summary{cursor:pointer;padding:8px 0}
@@ -667,35 +690,129 @@ function reproNestDetails(nest){
   ${renderNestTiming(nest)}
  </section>`;
 }
-function reproPairCard(couple){
- const nests=pairNests(couple.id), open=nests.filter(nest=>!nest.closedAt);
- const history=db.chicks.filter(chick=>!lineage('chicks',chick).nest&&sameId(lineage('chicks',chick).couple?.id,couple.id));
+const reproductionWide=window.matchMedia('(min-width: 1200px)');
+const reproFilters=[
+ ['all','Todos'],['breeding','Em reprodução'],['active','Ativos'],['closed','Encerrados']
+];
+let reproFilter='all', reproSelection='';
+
+function reproOverview(couple,nests,upcoming,eggCounts,date){
+ const open=nests.filter(nest=>!nest.closedAt);
+ const breeding=!couple.end&&open.length>0;
+ const eggs=open.reduce((count,nest)=>count+(eggCounts.get(nest.id.toLowerCase())||0),0);
+ const reminder=nests.map(nest=>upcoming.get(nest.id)).filter(Boolean)
+  .sort((a,b)=>a.date.localeCompare(b.date))[0];
+ return {couple,nests,open,breeding,eggs,reminder,date};
+}
+function reproStatus(summary){
+ if(summary.couple.end)return 'Encerrado';
+ return summary.breeding?'Em reprodução':'Ativo';
+}
+function reproPairCard(summary,selected){
+ const {couple,nests,open,eggs,reminder,date}=summary;
+ const plural=(count,one,many)=>count+' '+(count===1?one:many);
+ const count=open.length?plural(open.length,'ninhada em andamento','ninhadas em andamento'):
+  nests.length?plural(nests.length,'ninhada encerrada','ninhadas encerradas'):'Sem ninhadas';
+ const reminderText=reminder
+  ? reminder.label+' · '+(reminder.date<date?'até '+fmtDate(reminder.end):fmtDate(reminder.date))
+  : '';
+ return `<article class="panel repro-summary">
+  <h3><button class="repro-toggle" type="button" data-repro-select="${esc(couple.id)}"
+   aria-expanded="${selected}" ${selected?'aria-controls="reproPairDetails"':''}>
+   <span class="repro-summary-name">${esc(pairLabel(couple))}</span>
+   <span class="tag" data-pair-state="${summary.breeding?'breeding':couple.end?'closed':'active'}">${reproStatus(summary)}</span>
+   <span class="repro-summary-count">${count}${open.length?' · '+plural(eggs,'ovo','ovos'):''}</span>
+   ${reminderText?`<span class="repro-summary-reminder">${esc(reminderText)}</span>`:''}
+   <span class="repro-chevron" aria-hidden="true"></span>
+  </button></h3>
+ </article>`;
+}
+function reproPairDetails(summary){
+ const {couple,nests,open}=summary;
+ const history=db.chicks.filter(chick=>{
+  const origin=lineage('chicks',chick);
+  return !origin.nest&&sameId(origin.couple?.id,couple.id);
+ });
  const suggested=open.length===1&&open[0].quickRepro?open[0].id:'';
- return `<article class="panel repro-card">
-  <h3>${esc(pairLabel(couple))} <span class="tag">${couple.end?'Separado':'Ativo'}</span></h3>
-  <p class="muted">${nests.length} ${nests.length===1?'ninhada':'ninhadas'} · ${open.length} em acompanhamento</p>
+ return `<section class="panel repro-card repro-detail" id="reproPairDetails" aria-labelledby="reproDetailsTitle">
+  <div class="repro-detail-head"><h3 id="reproDetailsTitle" tabindex="-1">${esc(pairLabel(couple))}</h3>
+  <button type="button" class="btn secondary small" data-repro-select="${esc(couple.id)}">Recolher</button></div>
   <div class="actions">${couple.end?'':reproButton('eggs',couple.id,suggested,!open.length)+reproButton('chicks',couple.id,suggested,!!open.length)}
   ${open.length?reproButton('close',couple.id,open.length===1?open[0].id:''):''}
   <button type="button" class="btn secondary small" data-edit="couples" data-id="${esc(couple.id)}">Editar casal</button></div>
   ${open.map(reproNestDetails).join('')}
   ${nests.length>open.length?`<details data-repro-details="closed:${esc(couple.id)}" ${reproOpenDetails.has('closed:'+couple.id)?'open':''}><summary>Ninhadas encerradas (${nests.length-open.length})</summary>${nests.filter(nest=>nest.closedAt).map(reproNestDetails).join('')}</details>`:''}
   ${history.length?`<details data-repro-details="legacy:${esc(couple.id)}" ${reproOpenDetails.has('legacy:'+couple.id)?'open':''}><summary>Filhotes sem ninhada vinculada (${history.length})</summary><ul class="repro-chicks">${history.map(reproChickDetails).join('')}</ul></details>`:''}
- </article>`;
+ </section>`;
 }
-function reproduction(){
- const history=Object.hasOwn(reproTabs,filteredMode);
- const mode=history?filteredMode:'';
+function reproductionCards(){
+ const date=today(), upcoming=new Map(), eggCounts=new Map();
+ for(const notice of agendaNotices()){
+  if(notice.type!=='reproduction'||!notice.source||upcoming.has(notice.source))continue;
+  if(notice.date>=date||notice.end>=date)upcoming.set(notice.source,notice);
+ }
+ for(const egg of db.eggs){
+  const nestId=String(egg.nest||'').toLowerCase();
+  eggCounts.set(nestId,(eggCounts.get(nestId)||0)+1);
+ }
  const couples=db.couples.filter(couple=>{
   const parents=[findBird(couple.male),findBird(couple.female)];
   return upper(parents.map(bird=>[birdName(bird),bird?.ring].join(' ')).join(' ')).includes(upper(query));
- }).sort((a,b)=>Number(Boolean(a.end))-Number(Boolean(b.end)));
+ }).map(couple=>reproOverview(couple,pairNests(couple.id),upcoming,
+   eggCounts,date))
+  .filter(summary=>reproFilter==='all'||(reproFilter==='breeding'&&summary.breeding)||
+   (reproFilter==='active'&&!summary.couple.end)||(reproFilter==='closed'&&summary.couple.end))
+  .sort((a,b)=>Number(b.breeding)-Number(a.breeding)||Number(Boolean(a.couple.end))-Number(Boolean(b.couple.end)));
+ const current=couples.find(summary=>summary.couple.id===reproSelection);
+ const detail=current?reproPairDetails(current):'';
+ const cards=couples.map(summary=>{
+  const selected=summary===current;
+  return reproPairCard(summary,selected)+(selected&&!reproductionWide.matches?detail:'');
+ }).join('');
+ const empty=db.couples.length?'Nenhum casal corresponde aos filtros.':'Cadastre um casal para acompanhar a reprodução.';
+ return `<div class="toolbar"><input class="field" id="search" aria-label="Buscar casal por nome ou anilha" placeholder="Buscar casal por nome ou anilha" value="${esc(query)}"></div>
+  <div class="toolbar repro-filters" role="group" aria-label="Filtrar casais">
+   ${reproFilters.map(([key,label])=>`<button type="button" class="btn small ${reproFilter===key?'':'secondary'}"
+    data-repro-filter="${key}" aria-pressed="${reproFilter===key}">${label}</button>`).join('')}
+  </div>
+  ${cards?`<div class="repro-overview${current?' repro-has-detail':''}"><div class="repro-cards">${cards}</div>
+   ${reproductionWide.matches?detail:''}</div>`:`<p class="empty">${empty}</p>`}`;
+}
+function reproduction(){
+ const history=Object.hasOwn(reproTabs,filteredMode);
  return `${header('Reprodução','Acompanhe posturas e nascimentos pelo casal.','Novo casal','new:couples')}
   <div class="toolbar"><button class="btn ${history?'secondary':''}" data-sub="reproCards" aria-pressed="${!history}">Cartões dos casais</button>
   <button class="btn ${history?'':'secondary'}" data-sub="couples" aria-pressed="${history}">Histórico e detalhes</button></div>
-  ${history?`<div class="toolbar">${Object.entries(reproTabs).map(([key,label])=>`<button class="btn ${key===mode?'':'secondary'} small" data-sub="${key}" aria-pressed="${key===mode}">${label}</button>`).join('')}</div>
-  ${generic(mode)}`:`<div class="toolbar"><input class="field" id="search" aria-label="Buscar casal por nome ou anilha" placeholder="Buscar casal por nome ou anilha" value="${esc(query)}"></div>
-  <div class="repro-cards">${couples.map(reproPairCard).join('')||'<p class="empty">Nenhum casal encontrado. Cadastre um casal para acompanhar a reprodução.</p>'}</div>`}`;
+  ${history?`<div class="toolbar">${Object.entries(reproTabs).map(([key,label])=>`<button class="btn ${key===filteredMode?'':'secondary'} small" data-sub="${key}" aria-pressed="${key===filteredMode}">${label}</button>`).join('')}</div>
+  ${generic(filteredMode)}`:reproductionCards()}`;
 }
+reproductionWide.addEventListener('change',()=>{
+ if(page!=='reproduction'||Object.hasOwn(reproTabs,filteredMode)||!reproSelection)return;
+ const focus=document.activeElement;
+ const context=focus?.closest('#reproPairDetails');
+ render();
+ if(context)document.getElementById('reproDetailsTitle')?.focus();
+ else if(focus?.dataset.reproSelect)focusReproCard(focus.dataset.reproSelect);
+});
+function focusReproCard(coupleId){
+ [...document.querySelectorAll('.repro-toggle')].find(button=>button.dataset.reproSelect===coupleId)?.focus();
+}
+document.addEventListener('click',event=>{
+ const button=event.target.closest('[data-repro-select],[data-repro-filter]');
+ if(!button)return;
+ if(button.dataset.reproFilter){
+  reproFilter=button.dataset.reproFilter;
+  reproSelection='';
+  render();
+  document.querySelector(`[data-repro-filter="${reproFilter}"]`)?.focus();
+  return;
+ }
+ const selected=button.dataset.reproSelect;
+ reproSelection=reproSelection===selected?'':selected;
+ render();
+ if(reproSelection&&reproductionWide.matches)document.getElementById('reproDetailsTitle')?.focus();
+ else focusReproCard(selected);
+});
 
 function makeQuickNest(coupleId,date,stamp){
  const year=date.slice(0,4);
