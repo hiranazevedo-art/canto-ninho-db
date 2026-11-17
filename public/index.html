@@ -174,6 +174,8 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 #cageScanner video{display:block;width:100%;max-height:360px;border-radius:8px;background:#222}
 #cageScanner video[hidden]{display:none}
 #cageManualForm{display:grid;gap:8px;margin-top:14px}
+.cloud-compare{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.cloud-conflict-item{margin:10px 0;min-width:0}.cloud-compare>div{padding:8px;background:#f5f1e8;overflow-wrap:anywhere}.cloud-compare h3{font-size:1rem;margin:0}.cloud-compare dd,.cloud-capacity dd{margin:0 0 6px}
 </style></head><body><div class="app"><aside class="sidebar" id="sidebar"><div class="logo"><img class="logo-photo" src="data:image/jpeg;base64,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" width="240" height="179" alt="Casal de aves em um galho"><strong>Canto &amp; Ninho</strong></div><div class="nav-title">GESTÃO DO CRIADOURO</div><button type="button" class="btn secondary mobile-close" id="menuClose">Fechar menu</button><nav id="navigation" aria-label="Módulos"></nav><div class="side-foot">🌿 Seus dados são armazenados neste dispositivo. Faça backups regularmente.<br><br>Protótipo local, sem conexão a órgãos oficiais.</div></aside><button type="button" class="menu-backdrop" id="menuBackdrop" tabindex="-1" aria-label="Fechar menu" hidden></button><main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button><div><div class="eyebrow">PAINEL DE GERENCIAMENTO</div><h1 id="pageTitle" tabindex="-1">Início</h1></div></div><div class="topright"><button class="btn secondary small cloud-status" id="cloudButton" type="button" aria-label="Estado dos dados: Verificando nuvem">Verificando nuvem…</button><button class="btn secondary small" id="backupTop">↓ Backup</button></div></header><div id="content" class="content"></div></main></div><div id="modalRoot"></div><div id="toastRoot"></div><div id="welcomeRoot"></div><script src="./sync-core.js"></script><script src="./vendor/qrcode-generator.js"></script><script src="./vendor/jspdf.umd.min.js"></script><script src="./vendor/jsQR.js"></script><script>
 'use strict';
 const KEY='caboclinho_manager_v04';
@@ -939,10 +941,10 @@ function saveQuickChick(chickId,field,value){
  const issue=validateIntegrated('chicks',updated,chick)||validate('chicks',updated,chick.id);
  if(issue)return issue;
  if(field==='separatedAt'&&updated.separatedAt&&!validFinanceDate(updated.separatedAt))return 'Informe uma data válida.';
- if(field==='ring'&&updated.ring){
-  const ring=upper(updated.ring);
-  if(db.birds.some(bird=>upper(bird.ring).trim()===ring))return 'Esta anilha já está cadastrada no Plantel.';
-  if(db.chicks.some(other=>other!==chick&&upper(other.ring).trim()===ring))return 'Esta anilha já está cadastrada em outro filhote.';
+ if(field==='ring'&&canonicalRing(updated.ring)!==canonicalRing(chick.ring)&&updated.ring){
+  const ring=canonicalRing(updated.ring);
+  if(db.birds.some(bird=>canonicalRing(bird.ring)===ring))return 'Esta anilha já está cadastrada no Plantel.';
+  if(db.chicks.some(other=>other!==chick&&canonicalRing(other.ring)===ring))return 'Esta anilha já está cadastrada em outro filhote.';
  }
  if(chick[field]===updated[field])return '';
  const previous=JSON.stringify(db),stamp=new Date().toISOString();
@@ -1368,9 +1370,17 @@ else fields=configs[type].fields.map(f=>formField(f,record||{})).join('');const 
  }
 }
 function checkCycle(candidate,relative,birds){let visited=new Set();function walk(x){if(!x||visited.has(x))return false;if(sameId(x,candidate))return true;visited.add(x);const b=birds.find(z=>sameId(z.id,x));return b?walk(b.father)||walk(b.mother):false}return walk(relative)}
-function validate(type,r,current,pendingParents=[]){if(type==='birds'){if(!r.scientific.trim())return 'O NOME CIENTÍFICO É OBRIGATÓRIO.';if(r.ring&&db.birds.some(b=>b.id!==current&&upper(b.ring)===upper(r.ring)))return 'ESSA ANILHA JÁ ESTÁ CADASTRADA.';if(current&&(r.father===current||r.mother===current))return 'A AVE NÃO PODE SER SEU PRÓPRIO PAI OU MÃE.';if(r.father&&sexValue(findAncestor(r.father,pendingParents)?.sex)!=='MACHO')return parentError(r.father,'PAI','MACHO');if(r.mother&&sexValue(findAncestor(r.mother,pendingParents)?.sex)!=='FÊMEA')return parentError(r.mother,'MÃE','FÊMEA');const candidates=[...ancestryBirds().filter(b=>!sameId(b.id,r.id)),...pendingParents,r];if(checkCycle(r.id||current,r.father,candidates)||checkCycle(r.id||current,r.mother,candidates))return 'VÍNCULO GENEALÓGICO CIRCULAR NÃO PERMITIDO.'}
+function validate(type,r,current,pendingParents=[]){if(type==='birds'){if(!r.scientific.trim())return 'O NOME CIENTÍFICO É OBRIGATÓRIO.';if(canonicalRing(r.ring)&&canonicalRing(r.ring)!==canonicalRing(findBird(current)?.ring)&&
+ (db.birds.some(b=>b.id!==current&&canonicalRing(b.ring)===canonicalRing(r.ring))||
+ db.chicks.some(c=>!sameId(c.id,r.sourceChick)&&!sameId(c.plantelBirdId,current)&&canonicalRing(c.ring)===canonicalRing(r.ring))))return 'ESSA ANILHA JÁ ESTÁ CADASTRADA.';if(current&&(r.father===current||r.mother===current))return 'A AVE NÃO PODE SER SEU PRÓPRIO PAI OU MÃE.';if(r.father&&sexValue(findAncestor(r.father,pendingParents)?.sex)!=='MACHO')return parentError(r.father,'PAI','MACHO');if(r.mother&&sexValue(findAncestor(r.mother,pendingParents)?.sex)!=='FÊMEA')return parentError(r.mother,'MÃE','FÊMEA');const candidates=[...ancestryBirds().filter(b=>!sameId(b.id,r.id)),...pendingParents,r];if(checkCycle(r.id||current,r.father,candidates)||checkCycle(r.id||current,r.mother,candidates))return 'VÍNCULO GENEALÓGICO CIRCULAR NÃO PERMITIDO.'}
 if(type==='couples'){if(!r.male||!r.female||r.male===r.female)return 'SELECIONE UM MACHO E UMA FÊMEA DIFERENTES.';if(findBird(r.male)?.scientific!==findBird(r.female)?.scientific)return 'NÃO É PERMITIDO FORMAR CASAL ENTRE ESPÉCIES DIFERENTES.'}
-if(type==='chicks'&&r.ring&&db.chicks.some(x=>x.id!==current&&x.ring===r.ring))return 'ANILHA JÁ UTILIZADA EM OUTRO FILHOTE.';
+if(type==='chicks'){
+ const previous=getRecord('chicks',current);
+ if(r.egg&&!sameId(r.egg,previous?.egg)&&db.chicks.some(x=>x.id!==current&&sameId(x.egg,r.egg)))return 'ESTE OVO JÁ TEM UM FILHOTE VINCULADO.';
+ if(canonicalRing(r.ring)&&canonicalRing(r.ring)!==canonicalRing(previous?.ring)&&
+ (db.chicks.some(x=>x.id!==current&&canonicalRing(x.ring)===canonicalRing(r.ring))||
+ db.birds.some(b=>!sameId(b.id,r.plantelBirdId)&&canonicalRing(b.ring)===canonicalRing(r.ring))))return 'ANILHA JÁ CADASTRADA.';
+}
 if(type==='movements'){const s=db.stock.find(s=>s.id===r.stock);if(!s)return 'SELECIONE UM PRODUTO.';const previous=db.movements.find(x=>x.id===current);const reversed=previous&&previous.stock===r.stock?(previous.type==='ENTRADA'?-Number(previous.quantity):Number(previous.quantity)):0;const delta=r.type==='ENTRADA'?Number(r.quantity):-Number(r.quantity);if(Number(s.quantity)+reversed+delta<stockReserved(s.id))return 'SALDO DISPONÍVEL INSUFICIENTE PARA ESTA MOVIMENTAÇÃO.';if(previous&&previous.stock!==r.stock){const p=db.stock.find(x=>x.id===previous.stock);if(p&&Number(p.quantity)+(previous.type==='ENTRADA'?-Number(previous.quantity):Number(previous.quantity))<stockReserved(p.id))return 'A TRANSFERÊNCIA DE MOVIMENTAÇÃO GERARIA SALDO NEGATIVO NO PRODUTO ANTERIOR.'}}
 if(type==='feedings'&&!birdIds(r.bird).length&&!r.group)return 'INFORME A AVE OU O GRUPO.';
 for(const [a,b] of [['start','end']]){if(r[a]&&r[b]&&/^\d{4}-\d{2}-\d{2}$/.test(r[a])&&/^\d{4}-\d{2}-\d{2}$/.test(r[b])&&r[b]<r[a])return 'A DATA DE TÉRMINO NÃO PODE ANTECEDER O INÍCIO.'}return ''}
@@ -1687,7 +1697,7 @@ function openPDFImport(){ibamaSourceRows=[];modal('Importar relação de aves',`
 function loadLib(src,test){if(test())return Promise.resolve();return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=()=>test()?resolve():reject(Error('Biblioteca indisponível'));s.onerror=()=>reject(Error('Não foi possível baixar a biblioteca. Verifique a conexão.'));document.head.append(s)})}
 async function readBirdPDF(file){if(!file)return;const progress=document.getElementById('pdfProgress');try{progress.textContent='Lendo PDF…';await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let text='';for(let i=1;i<=doc.numPages;i++){progress.textContent=`Lendo página ${i}/${doc.numPages}…`;const page=await doc.getPage(i),content=await page.getTextContent();if(!unusablePDFText(content.items.map(x=>x.str).join(' '))){const lines=new Map();for(const item of content.items){const y=Math.round(item.transform[5]/3)*3;if(!lines.has(y))lines.set(y,[]);lines.get(y).push(item)}text+=[...lines].sort((a,b)=>b[0]-a[0]).map(([,items])=>items.sort((a,b)=>a.transform[4]-b.transform[4]).map(x=>x.str).join(' | ')).join('\n')+'\n'}else{progress.textContent=`Reconhecendo página digitalizada ${i}…`;await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>window.Tesseract);const viewport=page.getViewport({scale:2}),canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;const result=await Tesseract.recognize(canvas,'por');text+=result.data.text+'\n'}}progress.textContent='Extração concluída. Confira o texto e indique as colunas; nenhum registro foi salvo.';document.getElementById('pdfReview').innerHTML=`<p>Texto extraído (editável): mantenha uma ave por linha e separe as colunas com |. Remova cabeçalhos e rodapés. Campos ausentes devem ficar vazios.</p><textarea id="pdfText" style="width:100%;min-height:200px"></textarea><p>Informe a posição de cada coluna (1, 2, 3…). Deixe em branco se não existir.</p><div class="form-grid">${['ring:Anilha','scientific:Nome científico','sex:Sexo','name:Nome','status:Situação cadastral','condition:Condição de manejo'].map(x=>{const [k,l]=x.split(':');return input('map_'+k,l,'number','',false,'min="1"')}).join('')}</div><button class="btn" onclick="prepareImport()">Preparar prévia</button><div id="importPreview"></div>`;document.getElementById('pdfText').value=text;autoIbamaPreview(text)}catch(err){progress.textContent='Falha na leitura: '+err.message}}
 function prepareImport(){const keys=['ring','scientific','sex','name','status','condition'];const mappings=Object.fromEntries(keys.map(k=>[k,Number(document.querySelector('[name="map_'+k+'"]').value)||0]));importRows=document.getElementById('pdfText').value.split(/\r?\n/).filter(x=>x.trim()).map(line=>{const cells=line.split('|').map(x=>x.trim());return Object.fromEntries(keys.map(k=>[k,mappings[k]?cells[mappings[k]-1]||'':'']))});document.getElementById('importPreview').innerHTML='<p>Revise cada ave. Anilha e nome científico são necessários para a importação. Valores desconhecidos não serão inventados.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Importar</th>'+keys.map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr></thead><tbody>'+importRows.map((r,i)=>'<tr><td><input type="checkbox" data-import-row="'+i+'" checked></td>'+keys.map(k=>'<td><input aria-label="'+k+' linha '+(i+1)+'" data-import-key="'+k+'" data-row="'+i+'" value="'+esc(r[k])+'" style="min-width:130px"></td>').join('')+'</tr>').join('')+'</tbody></table></div><button class="btn" onclick="commitImport()">Confirmar importação</button><p id="importResult" role="status"></p>'}
-function commitImport(){const before=JSON.stringify(db);let added=0,duplicates=0,review=0;const messages=[];document.querySelectorAll('[data-import-row]:checked').forEach(check=>{const i=Number(check.dataset.importRow),r={};document.querySelectorAll('[data-row="'+i+'"]').forEach(el=>r[el.dataset.importKey]=el.value.trim());if(!r.ring||!r.scientific){review++;messages.push('Linha '+(i+1)+': falta anilha ou nome científico');return}if(db.birds.some(b=>upper(b.ring||'').replace(/\s+/g,'')===upper(r.ring).replace(/\s+/g,''))){duplicates++;return}const normalized=sexValue(r.sex);if(r.sex&&normalized==='NÃO IDENTIFICADO'&&!['NÃO IDENTIFICADO','DESCONHECIDO'].includes(upper(r.sex))){review++;messages.push('Linha '+(i+1)+': revisar sexo');return}for(const [k,choices]of [['status',db.settings.statuses],['condition',db.settings.conditions]]){if(r[k]&&!choices.some(x=>upper(x)===upper(r[k]))){review++;messages.push('Linha '+(i+1)+': revisar '+k);return}}db.birds.push({...r,sex:normalized,father:'',mother:'',id:id(),createdAt:new Date().toISOString(),importSource:'PDF conferido pelo usuário',...(ibamaSourceRows[i]?{sourceMetadata:{...ibamaSourceRows[i],needsReview:true}}:{})});added++});if(added&&!persist('birds','IMPORTAR PDF',{count:added})){db=JSON.parse(before);document.getElementById('importResult').textContent='Falha ao salvar; nenhum cadastro foi mantido.';return}render();document.getElementById('importResult').textContent=`Importadas: ${added}. Já cadastradas: ${duplicates}. Revisão: ${review}. ${messages.join('; ')}`}
+function commitImport(){const before=JSON.stringify(db);let added=0,duplicates=0,review=0;const messages=[];document.querySelectorAll('[data-import-row]:checked').forEach(check=>{const i=Number(check.dataset.importRow),r={};document.querySelectorAll('[data-row="'+i+'"]').forEach(el=>r[el.dataset.importKey]=el.value.trim());if(!r.ring||!r.scientific){review++;messages.push('Linha '+(i+1)+': falta anilha ou nome científico');return}if([...db.birds,...db.chicks].some(b=>canonicalRing(b.ring)===canonicalRing(r.ring))){duplicates++;return}const normalized=sexValue(r.sex);if(r.sex&&normalized==='NÃO IDENTIFICADO'&&!['NÃO IDENTIFICADO','DESCONHECIDO'].includes(upper(r.sex))){review++;messages.push('Linha '+(i+1)+': revisar sexo');return}for(const [k,choices]of [['status',db.settings.statuses],['condition',db.settings.conditions]]){if(r[k]&&!choices.some(x=>upper(x)===upper(r[k]))){review++;messages.push('Linha '+(i+1)+': revisar '+k);return}}db.birds.push({...r,sex:normalized,father:'',mother:'',id:id(),createdAt:new Date().toISOString(),importSource:'PDF conferido pelo usuário',...(ibamaSourceRows[i]?{sourceMetadata:{...ibamaSourceRows[i],needsReview:true}}:{})});added++});if(added&&!persist('birds','IMPORTAR PDF',{count:added})){db=JSON.parse(before);document.getElementById('importResult').textContent='Falha ao salvar; nenhum cadastro foi mantido.';return}render();document.getElementById('importResult').textContent=`Importadas: ${added}. Já cadastradas: ${duplicates}. Revisão: ${review}. ${messages.join('; ')}`}
 // Preserve document text and ring case while reviewing the import.
 document.addEventListener('input',e=>{if(e.target.id==='pdfText'||e.target.hasAttribute('data-import-key'))e.stopImmediatePropagation()},true);
 let taskMonth=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'}).slice(0,7);
@@ -1731,7 +1741,7 @@ const readBeforeExpansion=readValues;readValues=function(form,type){const v=read
 document.addEventListener('change',e=>{const f=e.target.closest('form');if(!f)return;if(e.target.matches('[data-bird-birth-picker]'))f.elements.birthDate.value=e.target.value?fmtDate(e.target.value):'';if(e.target.matches('[data-bird-birth]'))f.querySelector('[data-bird-birth-picker]').value=parseBRDate(e.target.value)||''});
 const importFields=[['scientific','Nome científico'],['name','Nome individual'],['sex','Sexo'],['birthDate','Nascimento (DD/MM/AAAA)'],['ringType','Tipo de anilha'],['ringDiameter','Diâmetro'],['ring','Código de anilha'],['status','Situação cadastral'],['condition','Condição de manejo']];
 function showBirdPreview(rows){importRows=rows;document.getElementById('pdfReview').innerHTML='<p>Confira todos os campos. Informações incertas permanecem em branco. O nome comum da espécie não é utilizado como nome individual.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Importar</th>'+importFields.map(x=>'<th>'+x[1]+'</th>').join('')+'<th>Revisão</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-import-row="'+i+'" checked></td>'+importFields.map(([k,l])=>'<td><input data-import-key="'+k+'" data-row="'+i+'" aria-label="'+l+'" value="'+esc(k==='birthDate'&&/^\d{4}-/.test(r[k]||'')?fmtDate(r[k]):r[k]||'')+'" style="min-width:145px"></td>').join('')+'<td>'+esc(r.review||'Conferir leitura, especialmente anilha e espécie.')+'</td></tr>').join('')+'</tbody></table></div><button class="btn" onclick="commitImport()">Confirmar importação</button><p id="importResult" role="status"></p>'}
-commitImport=function(){const before=JSON.stringify(db);let added=0,duplicates=0,review=0;const errors=[];for(const check of document.querySelectorAll('[data-import-row]:checked')){const i=Number(check.dataset.importRow),r={};document.querySelectorAll('[data-row="'+i+'"]').forEach(el=>r[el.dataset.importKey]=el.value.trim());const birth=parseBRDate(r.birthDate||'');if(!r.scientific||!r.ring||birth===null){review++;errors.push('Linha '+(i+1)+': confira espécie, código e nascimento.');continue}const sx=sexValue(r.sex);if(r.sex&&sx==='NÃO IDENTIFICADO'&&!['NÃO IDENTIFICADO','DESCONHECIDO'].includes(upper(r.sex))){review++;errors.push('Linha '+(i+1)+': sexo incerto.');continue}if(db.birds.some(b=>upper(b.ring||'').replace(/\s/g,'')===upper(r.ring).replace(/\s/g,''))){duplicates++;continue}if([['status',db.settings.statuses],['condition',db.settings.conditions]].some(([k,list])=>r[k]&&!list.some(x=>upper(x)===upper(r[k])))){review++;errors.push('Linha '+(i+1)+': situação ou condição não cadastrada.');continue}db.birds.push({...r,birthDate:birth,sex:sx,father:'',mother:'',id:id(),createdAt:new Date().toISOString(),importSource:'PDF revisado',sourceMetadata:{commonName:importRows[i]?.commonName||'',reviewedAt:new Date().toISOString()}});added++}if(added&&!persist('birds','IMPORTAR PDF',{count:added})){db=JSON.parse(before);return document.getElementById('importResult').textContent='Falha ao salvar. Nenhum registro mantido.'}render();document.getElementById('importResult').textContent=`Importadas: ${added}. Já cadastradas: ${duplicates}. Revisão: ${review}. ${errors.join(' ')}`};
+commitImport=function(){const before=JSON.stringify(db);let added=0,duplicates=0,review=0;const errors=[];for(const check of document.querySelectorAll('[data-import-row]:checked')){const i=Number(check.dataset.importRow),r={};document.querySelectorAll('[data-row="'+i+'"]').forEach(el=>r[el.dataset.importKey]=el.value.trim());const birth=parseBRDate(r.birthDate||'');if(!r.scientific||!r.ring||birth===null){review++;errors.push('Linha '+(i+1)+': confira espécie, código e nascimento.');continue}const sx=sexValue(r.sex);if(r.sex&&sx==='NÃO IDENTIFICADO'&&!['NÃO IDENTIFICADO','DESCONHECIDO'].includes(upper(r.sex))){review++;errors.push('Linha '+(i+1)+': sexo incerto.');continue}if([...db.birds,...db.chicks].some(b=>canonicalRing(b.ring)===canonicalRing(r.ring))){duplicates++;continue}if([['status',db.settings.statuses],['condition',db.settings.conditions]].some(([k,list])=>r[k]&&!list.some(x=>upper(x)===upper(r[k])))){review++;errors.push('Linha '+(i+1)+': situação ou condição não cadastrada.');continue}db.birds.push({...r,birthDate:birth,sex:sx,father:'',mother:'',id:id(),createdAt:new Date().toISOString(),importSource:'PDF revisado',sourceMetadata:{commonName:importRows[i]?.commonName||'',reviewedAt:new Date().toISOString()}});added++}if(added&&!persist('birds','IMPORTAR PDF',{count:added})){db=JSON.parse(before);return document.getElementById('importResult').textContent='Falha ao salvar. Nenhum registro mantido.'}render();document.getElementById('importResult').textContent=`Importadas: ${added}. Já cadastradas: ${duplicates}. Revisão: ${review}. ${errors.join(' ')}`};
 function normalized(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
 function structuredBirdRows(words){const lines=[];for(const w of words.slice().sort((a,b)=>a.y-b.y||a.x-b.x)){let l=lines.find(l=>Math.abs(l.y-(w.y+w.h/2))<Math.max(6,w.h*.55));if(!l){l={y:w.y+w.h/2,items:[]};lines.push(l)}l.items.push(w)}let columns=null;const result=[];for(const l of lines){l.items.sort((a,b)=>a.x-b.x);const txt=normalized(l.items.map(x=>x.text).join(' '));if(txt.includes('sexo')&&txt.includes('nascimento')){const specs=[['scientific','cient'],['commonName','comum'],['sex','sexo'],['birthDate','nascimento'],['ringType','tipo'],['ringDiameter','diam'],['ring','digo']];columns=specs.map(([key,token])=>{const index=l.items.findIndex(w=>normalized(w.text).includes(token));if(index<0)return null;const word=l.items[index];return {key,x:word.x,right:word.x+word.w}});if(columns.some(x=>!x)){columns=null;continue}columns.forEach((c,i)=>c.left=i?(columns[i-1].right+c.x)/2:-Infinity);continue}if(!columns)continue;if(/aten[cç]|observa/.test(txt))break;const cells={};for(const w of l.items){const c=columns.slice().reverse().find(c=>w.x+w.w/2>=c.left);if(c)cells[c.key]=(cells[c.key]?cells[c.key]+' ':'')+w.text}if(cells.scientific)cells.scientific=cells.scientific.replace(/^\d+\s+/,'');if(cells.scientific&&/^[A-Za-z]+\s+[a-z]+/.test(cells.scientific)&&cells.ring&&(/\d{2}\/\d{2}\/\d{4}/.test(cells.birthDate||'')||/anilha/i.test(cells.ringType||''))){cells.birthDate=parseBRDate((cells.birthDate||'').replace(/\s/g,''))||'';const sex=sexValue(cells.sex);cells.review=sex==='NÃO IDENTIFICADO'?'Sexo não reconhecido; confira a imagem.':'Conferir OCR antes de salvar.';cells.sex=sex==='NÃO IDENTIFICADO'?'':sex;result.push(cells)}}return result}
 parseIbamaRows=function(text){const result=[];const lines=text.split(/\r?\n/);for(let i=0;i<lines.length;i++){let line=lines[i].replace(/\|/g,' ').trim();if(!/^(?:\d+\s+)?[A-Z][a-z]+\s+[a-z]+\b/.test(line))continue;while(i+1<lines.length&&/^\s*[\d.,]+(?:\s+\d+)?\s*$/.test(lines[i+1]))line+=' '+lines[++i].trim();const m=line.match(/^(?:\d+\s+)?([A-Z][a-z]+\s+[a-z]+)\s+(.*?)\s+([^\s]+)\s+(\d{2}\/\d{2}\/\d{4})\s+(anilha\s*(?:fechada|aberta))\s*(.*)$/i);if(!m)continue;let tail=m[6].trim(),diam='';const dm=tail.match(/^([\d.,]+)\s+/);if(dm){diam=dm[1];tail=tail.slice(dm[0].length)}if(!tail)continue;const sx=sexValue(m[3]);result.push({scientific:m[1],commonName:m[2],sex:sx==='NÃO IDENTIFICADO'?'':sx,birthDate:parseBRDate(m[4])||'',ringType:m[5].replace(/^anilha\s*/i,'anilha '),ringDiameter:diam,ring:tail,review:sx==='NÃO IDENTIFICADO'?'Sexo incerto: '+m[3]+'. Confira também o diâmetro.':'Conferir espécie e código de anilha.'})}return result};
@@ -1991,8 +2001,9 @@ const cloudButton=document.getElementById('cloudButton');
 const cloudModal=document.createElement('div');
 cloudModal.id='cloudModal';
 document.body.appendChild(cloudModal);
-function markCloudMeta(revision,dirty=false,localOnly=cloudState.meta?.localOnly===true){
- const meta={revision,dirty,at:new Date().toISOString(),...(localOnly?{localOnly:true}:{})};
+function markCloudMeta(revision,dirty=false,localOnly=cloudState.meta?.localOnly===true,
+ lastSyncedAt=cloudState.meta?.lastSyncedAt){
+ const meta={revision,dirty,at:new Date().toISOString(),lastSyncedAt,...(localOnly?{localOnly:true}:{})};
  try{localStorage.setItem(CLOUD_META_KEY,JSON.stringify(meta));cloudState.meta=meta;return true}
  catch(e){console.warn('Não foi possível registrar estado de sincronização',e);return false}
 }
@@ -2047,7 +2058,7 @@ function cloudShow(mode='login',message=''){
  document.getElementById('cloudSwitch').onclick=()=>cloudShow(isSignup?'login':'register');
  document.getElementById('cloudForm').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,btn=form.querySelector('button[type=submit]');btn.disabled=true;try{const values=Object.fromEntries(new FormData(form));await cloudAPI('/api/account','POST',{action:isSignup?'register':'login',...values},'');cloudState.token='';sessionStorage.removeItem('canto_cloud_token');cloudState.needsLogin=false;await cloudInitialize();if(form.isConnected)cloudClose()}catch(err){const error=form.querySelector('#cloudError');if(error&&form.isConnected)error.textContent=err.message}finally{btn.disabled=false}}
 }
-async function cloudAPI(path,method='GET',body=null,token=cloudState.token){const res=await fetch(path,{method,credentials:'same-origin',headers:{...(body?{'content-type':'application/json'}:{}),...(token?{authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});let data;try{data=await res.json()}catch{throw Error('API da Cloudflare não respondeu com JSON.')}if(!res.ok){const err=Error(data.error||'Erro HTTP '+res.status);err.status=res.status;throw err}return data}
+async function cloudAPI(path,method='GET',body=null,token=cloudState.token){const res=await fetch(path,{method,credentials:'same-origin',headers:{...(body?{'content-type':'application/json'}:{}),...(token?{authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});let data;try{data=await res.json()}catch{throw Error('API da Cloudflare não respondeu com JSON.')}if(!res.ok){const err=Error(data.error||'Erro HTTP '+res.status);err.status=res.status;err.issues=data.issues;throw err}return data}
 function hasRealRecords(data){return !!(data.settings?.setupComplete||collections.some(c=>c!=='food'&&Array.isArray(data[c])&&data[c].length))}
 function cloudLocalSafetyCopy(){
  const key=KEY+'_reserva_nuvem_recente';
@@ -2074,7 +2085,7 @@ function cloudReady(revision){
  syncConflicts=[];
  cloudState.pending=false;
  cloudState.retry=0;
- if(markCloudMeta(revision,false,false))cloudStatus('Sincronizado','synced');
+ if(markCloudMeta(revision,false,false,new Date().toISOString()))cloudStatus('Sincronizado','synced');
  else cloudStatus('Dados salvos · confira a sincronização');
 }
 function cloudConflict(conflicts=[]){
@@ -2203,7 +2214,7 @@ function restoreSyncBase(){
 function finishCloudUpload(sequence,more=false){
  cloudState.retry=0;
  cloudState.pending=more||sequence!==cloudState.sequence;
- const recorded=markCloudMeta(cloudState.revision,cloudState.pending);
+ const recorded=markCloudMeta(cloudState.revision,cloudState.pending,false,new Date().toISOString());
  rememberWorkingData();
  cloudStatus(cloudState.pending?'Salvo neste aparelho · aguardando envio':
   recorded?'Sincronizado':'Dados salvos · confira a sincronização',recorded&&!cloudState.pending?'synced':'');
@@ -2355,6 +2366,7 @@ async function cloudUpload(){
   markCloudMeta(cloudState.revision,true);
   if(error.status===409)cloudConflict();
   else if(error.status===401)cloudNeedsLogin('Sessão expirada · alterações neste aparelho');
+  else if(error.status===422)cloudConflict(Array.isArray(error.issues)?error.issues:[]);
   else if(error.status===413){cloudState.ready=false;cloudStatus('Salvo neste aparelho · limite da nuvem atingido')}
   else{
    cloudState.retry++;
@@ -2392,6 +2404,107 @@ async function cloudRefresh(){
   }
  }finally{cloudState.reading=false}
 }
+function cloudReviewItem(item,index,selectable){
+ const {issue,here,there,edited}=item;
+ const module=configs[issue.collection]?.title||labels[issue.collection]?.[0]||
+  (issue.collection==='pedigreeBirds'?'Ancestrais externos':'Configurações');
+ const fields=edited.length?edited:['name','ring','status','egg','hatchedAt','date'];
+ const captions={name:'Nome',notes:'Observações',condition:'Condição',photo:'Foto',breeder:'Criadouro',
+  composition:'Composição',description:'Descrição',title:'Título',ring:'Anilha',status:'Situação',egg:'Ovo',
+  hatchedAt:'Eclosão',date:'Data'};
+ function info(record){
+  if(!record)return '<p>Registro ausente nesta versão.</p>';
+  const values=fields.filter(key=>Object.hasOwn(record,key)||edited.includes(key));
+  return values.length?`<dl>${values.map(key=>{
+   const value=record[key];
+   const display=key==='photo'?(value?'Foto cadastrada':'Sem foto'):
+    value&&typeof value==='object'?'Informação vinculada':String(value??'').slice(0,600);
+   const photo=key==='photo'&&photoData(value);
+   return `<dt>${esc(captions[key]||key)}</dt><dd>${photo?`<img width="72" height="72" src="${esc(photo)}" alt="Foto do registro">`:esc(display||'Não informado')}</dd>`;
+  }).join('')}</dl>`:'<p>Registro disponível.</p>';
+ }
+ return `<fieldset class="cloud-conflict-item"><legend>${esc(module+' · '+issue.label)}</legend>
+ <div class="cloud-compare"><div><h3>Neste aparelho</h3>${info(here)}</div>
+ <div><h3>Na nuvem</h3>${info(there)}</div></div>
+ ${selectable?`<label for="cloudChoice${index}">Versão a manter</label>
+ <select id="cloudChoice${index}" name="choice${index}" required><option value="">Selecione</option>
+ <option value="local">Neste aparelho</option><option value="remote">Na nuvem</option></select>`:''}</fieldset>`;
+}
+async function cloudOpenReview(){
+ if(cloudState.reading||cloudState.checking||cloudState.busy||cloudState.importing||!cloudState.conflict)return;
+ const sequence=cloudState.sequence, button=document.getElementById('cloudReview');
+ if(button)button.disabled=true;
+ cloudState.reading=true;
+ try{
+  const remote=await cloudAPI('/api/data');
+  if(!cloudCanAdopt(sequence)||!cloudState.conflict||!button?.isConnected)return;
+  if(!remote.data)return toast('A nuvem está vazia. Confira os dados antes de sincronizar.');
+  const base=syncBase?.data;
+  const review=base?syncCore.reviewConflicts(base,db,remote.data):{items:[]};
+  if(base&&!review.items.length){
+   cloudState.revision=syncBase.revision;
+   if(!await rebaseCloud(remote))return;
+   cloudState.conflict=false; cloudState.ready=true;
+   cloudClose();
+   await cloudUpload();
+   return;
+  }
+  const ready=review.items.length>0&&review.items.every(item=>item.canChoose);
+  cloudDialog(`<h2 id="cloudTitle">Revisar conflitos</h2>
+   <p>${ready?'Escolha a versão de cada ficha. As mudanças independentes serão preservadas.':
+    review.items.length?'Algumas mudanças afetam registros vinculados. Baixe o backup para conferir o conjunto antes de carregar a nuvem.':
+    'Este aparelho ainda não tem a revisão anterior necessária para comparar as fichas.'}</p>
+   <form id="cloudReviewForm">${review.items.map((item,index)=>cloudReviewItem(item,index,ready)).join('')}
+   <p class="form-feedback" role="alert" hidden></p>
+   <div class="cloud-actions"><button type="button" class="btn secondary" id="cloudBack">Voltar</button>
+   <button type="button" class="btn secondary" id="cloudReviewBackup">Baixar backup</button>
+   ${ready?'<button type="submit" class="btn">Aplicar escolhas</button>':''}</div></form>`);
+  document.getElementById('cloudBack').onclick=cloudShowStatus;
+  document.getElementById('cloudReviewBackup').onclick=backup;
+  if(ready)document.getElementById('cloudReviewForm').onsubmit=event=>{
+   event.preventDefault();
+   void cloudApplyReview(event.currentTarget,review.items,remote,sequence);
+  };
+ }catch(error){toast('Não foi possível comparar os dados: '+error.message)}
+ finally{cloudState.reading=false;if(button?.isConnected)button.disabled=false}
+}
+async function cloudApplyReview(form,items,remote,sequence){
+ if(cloudState.reading||cloudState.busy||!cloudState.conflict)return;
+ if(!cloudCanAdopt(sequence))return formFeedback(form,'Os dados deste aparelho mudaram. Reabra a revisão.');
+ const fields=new FormData(form), choices=Object.fromEntries(items.map(({issue},index)=>[
+  issue.collection+':'+issue.id,fields.get('choice'+index)
+ ]));
+ const button=form.querySelector('button[type=submit]');
+ button.disabled=true;
+ cloudState.reading=true;
+ try{
+  const latest=await cloudAPI('/api/data');
+  if(!form.isConnected)return;
+  if(!cloudCanAdopt(sequence)||latest.revision!==remote.revision)return formFeedback(form,'Os dados mudaram durante a revisão. Volte e compare novamente.');
+  const plan=syncCore.reviewConflicts(syncBase.data,db,latest.data,choices);
+  if(!plan.result)return formFeedback(form,'Não foi possível aplicar estas escolhas em conjunto.');
+  cloudLocalSafetyCopy();
+  cloudAdopt(plan.result);
+  cloudState.revision=latest.revision;
+  markCloudMeta(latest.revision,true,false);
+  await setSyncBase(latest.revision,latest.data,latest.incremental);
+  cloudState.conflict=false;cloudState.ready=true;cloudState.pending=true;
+  syncConflicts=[];
+  rememberWorkingData();
+  cloudClose();
+  await cloudUpload();
+ }catch(error){formFeedback(form,'Não foi possível salvar a revisão: '+error.message)}
+ finally{cloudState.reading=false;button.disabled=false}
+}
+function cloudCapacity(){
+ const data=syncBase?.data, bytes=data?new TextEncoder().encode(JSON.stringify(data)).length:null;
+ const raw=cloudState.meta?.lastSyncedAt, date=raw?new Date(raw):null;
+ const size=value=>(value/1_000_000).toLocaleString('pt-BR',{maximumFractionDigits:3})+' MB';
+ return `<dl class="cloud-capacity"><dt>Última sincronização confirmada</dt>
+ <dd>${date&&!Number.isNaN(date.valueOf())?date.toLocaleString('pt-BR'):'Sem registro neste aparelho'}</dd>
+ <dt>Cópia da nuvem conhecida neste aparelho</dt><dd>${bytes===null?'Disponível após sincronizar':size(bytes)+' de 1,5 MB'}${bytes>=1_200_000?' · perto do limite':''}</dd></dl>`;
+}
+
 async function cloudRecover(){
  if(cloudState.reading||cloudState.checking||cloudState.busy||cloudState.importing)return;
  if(!confirm('Carregar a versão da nuvem neste aparelho? Uma cópia de segurança dos registros locais será mantida.'))return;
@@ -2417,18 +2530,21 @@ function cloudShowStatus(){
  const entry=cloudState.needsLogin?'Entrar':'Verificar sincronização';
  cloudDialog(`<h2 id="cloudTitle">Dados do criadouro</h2><p role="status" data-cloud-status>${esc(cloudButton.textContent)}</p>
   ${cloudState.ready?`<p class="helper">${incrementalCloud?'Sincronização por registro':'Sincronização por cópia integral'}</p>`:''}
+  ${cloudCapacity()}
   ${cloudState.conflict?`<p>Há versões diferentes. Baixe um backup dos registros locais antes de carregar a versão da nuvem.</p>
   ${syncConflicts.length?`<ul>${syncConflicts.slice(0,12).map(item=>`<li>${esc(configs[item.collection]?.title||labels[item.collection]?.[0]||(item.collection==='pedigreeBirds'?'Ancestrais externos':'Configurações'))} · ${esc(item.label)}</li>`).join('')}${syncConflicts.length>12?'<li>Há outros registros afetados.</li>':''}</ul>`:''}`:''}
   <div class="cloud-actions">
    <button type="button" class="btn secondary" id="cloudDone">Fechar</button>
    <button type="button" class="btn secondary" id="cloudBackup">Baixar backup</button>
-   ${cloudState.conflict?'<button type="button" class="btn" id="cloudRecover">Carregar versão da nuvem</button>':`<button type="button" class="btn" id="cloudCheck">${entry}</button>`}
+   ${cloudState.conflict?'<button type="button" class="btn" id="cloudReview">Revisar conflitos</button><button type="button" class="btn secondary" id="cloudRecover">Carregar versão da nuvem</button>':`<button type="button" class="btn" id="cloudCheck">${entry}</button>`}
    ${cloudState.ready?'<button type="button" class="btn secondary" id="cloudLogout">Sair da conta</button>':''}
   </div>`);
  document.getElementById('cloudDone').onclick=cloudClose;
  document.getElementById('cloudBackup').onclick=backup;
  const recover=document.getElementById('cloudRecover'), check=document.getElementById('cloudCheck'), logout=document.getElementById('cloudLogout');
  if(recover)recover.onclick=cloudRecover;
+ const review=document.getElementById('cloudReview');
+ if(review)review.onclick=cloudOpenReview;
  if(check)check.onclick=async()=>{
   if(cloudState.meta?.localOnly){
    if(!confirm('Retomar a sincronização dos registros deste aparelho?'))return;
@@ -2747,7 +2863,7 @@ function chickToBird(chickId,name,sex,ring){
  if(!scientific||!validFinanceDate(chick.date))return 'Confirme a origem e o nascimento do filhote.';
  const normalized=upper(ring).trim();
  if(!normalized)return 'Informe a anilha para cadastrar a ave.';
- if(db.chicks.some(c=>!sameId(c.id,chick.id)&&upper(c.ring).trim()===normalized))return 'A anilha já está em outro filhote.';
+ if(db.chicks.some(c=>!sameId(c.id,chick.id)&&canonicalRing(c.ring)===canonicalRing(normalized)))return 'A anilha já está em outro filhote.';
  const stamp=new Date().toISOString(), bird={
   id:id(), name:upper(name).trim(), sex, scientific, birthDate:chick.date, ring:normalized,
   father:ctx.male?.id||'',mother:ctx.female?.id||'',ringDiameter:chick.ringDiameter||'',status:'PENDENTE DE DOCUMENTAÇÃO',
@@ -3035,7 +3151,7 @@ const parentRoles=[
  {key:'mother',label:'Mãe',sex:'FÊMEA'}
 ];
 const newAncestor='novo-ancestral';
-const canonicalRing=value=>upper(value).trim().replace(/\s+/g,' ');
+const canonicalRing=syncCore.normalizeRing;
 function ancestryBirds(){
  return [...db.birds,...db.pedigreeBirds];
 }
@@ -3144,10 +3260,14 @@ function operationalAlerts(){
  const date=today(), items=agendaNotices().filter(item=>
   item.type==='reproduction'&&(item.chick?item.date<=date:item.date===date||item.expected===date)
  );
- const rank=item=>item.chick&&item.end<=date?0:item.chick?1:2;
- items.sort((a,b)=>rank(a)-rank(b)||b.date.localeCompare(a.date));
+ const overdue=items.filter(item=>item.chick&&item.end<date).sort((a,b)=>b.end.localeCompare(a.end));
+ const current=items.filter(item=>!item.chick||item.end>=date);
+ const rank=item=>item.chick&&item.end===date?0:item.chick?1:2;
+ current.sort((a,b)=>rank(a)-rank(b)||b.date.localeCompare(a.date));
  return `<section class="panel operational-alerts"><h3>Prazos críticos</h3>
-  ${items.length?agendaList(items,{dashboard:true}):'<p class="muted">Nenhum prazo crítico para hoje.</p>'}</section>`;
+  ${current.length?agendaList(current,{dashboard:true}):'<p class="muted">Nenhum prazo crítico para hoje.</p>'}
+  ${overdue.length?`<details><summary>Anilhamentos com prazo vencido (${overdue.length})</summary>
+  ${agendaList(overdue,{dashboard:true})}</details>`:''}</section>`;
 }
 function operationalNoticeTitle(item){
  if(!item.chick)return item.expected===today()?'Eclosão prevista para hoje':item.label;
@@ -3265,8 +3385,8 @@ function birdMatchesSearch(bird,text){
  const term=normalizeSpecies(text);
  const fields=[bird.name,bird.scientific,bird.ring,birdSpeciesLabel(bird)];
  if(fields.some(value=>normalizeSpecies(value).includes(term)))return true;
- const compact=String(text).trim().replace(/\s+/g,'');
- return Boolean(compact)&&upper(bird.ring).replace(/\s+/g,'').includes(upper(compact));
+ const ring=canonicalRing(text);
+ return Boolean(ring)&&canonicalRing(bird.ring).includes(ring);
 }
 function plantelMatches(bird){
  if(plantelFilter==='male')return sexValue(bird.sex)==='MACHO';
