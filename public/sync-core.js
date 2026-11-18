@@ -172,5 +172,59 @@
     return { changes, result, conflicts };
   }
 
-  globalThis.CantoSync = { same, differences, validChanges, apply, merge, collections };
+  function integrityIssues(previous, next) {
+    function indexes(data) {
+      const result = new Map();
+      const add = (kind, value, collection, row, identity = row.id) => {
+        if (!value) return;
+        const key = kind + ':' + value;
+        if (!result.has(key)) result.set(key, new Map());
+        result.get(key).set(identity, { collection, id: row.id, label: value });
+      };
+      const birds = recordMap(data.birds), chicks = recordMap(data.chicks);
+      const bySource = new Map([...birds.values()].filter(bird => bird.sourceChick).map(bird => [bird.sourceChick, bird]));
+      for (const bird of birds.values()) add('ring', normalizeRing(bird.ring), 'birds', bird, 'bird:' + bird.id);
+      for (const chick of chicks.values()) {
+        const linked = birds.get(chick.plantelBirdId) || bySource.get(chick.id);
+        add('ring', normalizeRing(chick.ring), 'chicks', chick, linked ? 'bird:' + linked.id : 'chick:' + chick.id);
+        add('egg', String(chick.egg || '').toLowerCase(), 'chicks', chick);
+        if (chick.plantelBirdId) add('plantel', chick.plantelBirdId, 'chicks', chick);
+      }
+      for (const bird of birds.values()) {
+        if (chicks.has(bird.sourceChick)) add('source', bird.sourceChick, 'birds', bird);
+      }
+      for (const ancestor of recordMap(data.pedigreeBirds).values()) {
+        add('ancestor', normalizeRing(ancestor.ring), 'pedigreeBirds', ancestor);
+      }
+      return result;
+    }
+    const old = indexes(previous || {}), updated = indexes(next);
+    const issues = [];
+    for (const [key, group] of updated) {
+      if (group.size < 2 || [...group.keys()].every(id => old.get(key)?.has(id))) continue;
+      const kind = key.split(':', 1)[0];
+      const descriptions = {
+        ring: 'Anilha em duplicidade', ancestor: 'Anilha em duplicidade',
+        egg: 'Mais de um filhote vinculado ao mesmo ovo',
+        plantel: 'Mais de um filhote vinculado à mesma ave do Plantel',
+        source: 'Mais de uma ave no Plantel vinculada ao mesmo filhote'
+      };
+      for (const member of group.values()) {
+        issues.push({ ...member, reason: 'integrity',
+          label: descriptions[kind] + (kind === 'ring' || kind === 'ancestor' ? ': ' + member.label : '') });
+      }
+    }
+    return issues;
+  }
+
+  const reviewFields = {
+    birds: ['name', 'notes', 'condition', 'photo'],
+    pedigreeBirds: ['name', 'breeder'],
+    food: ['name', 'notes', 'composition'],
+    tasks: ['notes'], health: ['notes', 'description'], events: ['notes', 'title'],
+    documents: ['notes', 'name'], knowledge: ['name', 'notes']
+  };
+
+
+  globalThis.CantoSync = { same, differences, validChanges, apply, merge, collections, integrityIssues };
 })();
