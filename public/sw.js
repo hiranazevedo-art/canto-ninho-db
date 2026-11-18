@@ -1,4 +1,4 @@
-const CACHE='canto-ninho-v5-caboclinho';
+const CACHE='canto-ninho-v6-torneios';
 const ASSETS=['./','./index.html','./icon.svg','./manifest.webmanifest',
  './images/caboclinho.png','./sync-core.js','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
 self.addEventListener('install',event=>{

@@ -3,7 +3,7 @@
   'use strict';
   const collections = ['birds', 'food', 'feedings', 'couples', 'seasons', 'attempts', 'nests',
     'eggs', 'chicks', 'tasks', 'health', 'trips', 'events', 'stock', 'movements', 'expenses',
-    'revenues', 'facilities', 'transfers', 'documents', 'knowledge', 'pedigreeBirds', 'audit'];
+    'revenues', 'facilities', 'transfers', 'documents', 'knowledge', 'pedigreeBirds', 'tournaments', 'audit'];
   const recordMap = rows => new Map((rows || []).map(row => [row.id, row]));
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const field = (record, key) => Object.hasOwn(record || {}, key) ? record[key] : null;
