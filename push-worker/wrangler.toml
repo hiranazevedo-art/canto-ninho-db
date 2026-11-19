@@ -1,0 +1,14 @@
+name = "canto-ninho-push"
+main = "worker.js"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+preview_urls = false
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "canto-ninho-db"
+database_id = "SUBSTITUA_PELO_ID_DO_D1"

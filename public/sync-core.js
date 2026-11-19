@@ -169,6 +169,12 @@
         rings.set(ring, bird.id);
       }
     }
+    for(const issue of integrityIssues(remote,result)){
+      if(issue.reason!=='egg-outcome')continue;
+      const change=localKeys.get(key(issue));
+      if(change&&!conflicts.some(existing=>key(existing)===key(change)))
+        conflicts.push({...change,label:issue.label});
+    }
     return { changes, result, conflicts };
   }
 
@@ -213,6 +219,18 @@
         issues.push({ ...member, reason: 'integrity',
           label: descriptions[kind] + (kind === 'ring' || kind === 'ancestor' ? ': ' + member.label : '') });
       }
+    }
+    const unhatched = data => new Map((data.eggs || []).filter(egg=>egg.status==='NÃO ECLODIDO')
+      .map(egg=>[String(egg.id).toLowerCase(),egg]));
+    const before = unhatched(previous || {}), after = unhatched(next);
+    const previousChicks = recordMap(previous?.chicks);
+    for(const chick of next.chicks || []){
+      const link = String(chick.egg || '').toLowerCase();
+      const egg = after.get(link);
+      if(!egg||before.has(link)&&String(previousChicks.get(chick.id)?.egg || '').toLowerCase()===link)continue;
+      const label='Ovo marcado como não eclodido com filhote vinculado';
+      issues.push({collection:'eggs',id:egg.id,label,reason:'egg-outcome'},
+        {collection:'chicks',id:chick.id,label,reason:'egg-outcome'});
     }
     return issues;
   }

@@ -1,4 +1,4 @@
-const CACHE='canto-ninho-v7-persistencia';
+const CACHE='canto-ninho-v8-mobile-push';
 const ASSETS=['./','./index.html','./icon.svg','./manifest.webmanifest',
  './images/caboclinho.png','./sync-core.js','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
 self.addEventListener('install',event=>{
@@ -20,4 +20,28 @@ self.addEventListener('fetch',event=>{
   if(request.mode==='navigate')return (await caches.match(new URL('./',self.registration.scope)))||Response.error();
   return Response.error();
  }));
+});
+self.addEventListener('push',event=>{
+ let data;
+ try{data=event.data?.json();}catch{return;}
+ if(!data||typeof data.body!=='string'||typeof data.hash!=='string')return;
+ event.waitUntil(self.registration.showNotification('Canto & Ninho',{
+  body:data.body,tag:data.tag,icon:'./icon.svg',data:{hash:data.hash}
+ }));
+});
+self.addEventListener('notificationclick',event=>{
+ event.notification.close();
+ const hash=event.notification.data?.hash;
+ if(typeof hash!=='string'||!new URLSearchParams(hash).has('lembrete'))return;
+ const target=new URL('./',self.registration.scope);
+ target.hash=hash;
+ event.waitUntil((async()=>{
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  const app=windows.find(client=>{
+   const url=new URL(client.url);
+   return url.origin===target.origin&&[target.pathname,target.pathname+'index.html'].includes(url.pathname);
+  });
+  if(app){await app.focus();app.postMessage({reminder:hash});}
+  else await self.clients.openWindow(target.href);
+ })());
 });
