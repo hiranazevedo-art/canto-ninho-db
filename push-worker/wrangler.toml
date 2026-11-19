@@ -11,4 +11,4 @@ crons = ["*/15 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "canto-ninho-db"
-database_id = "SUBSTITUA_PELO_ID_DO_D1"
+database_id = "4e537724-e241-42b2-bfb8-373146c08a4d"
