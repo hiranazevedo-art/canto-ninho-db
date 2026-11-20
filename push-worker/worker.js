@@ -16,7 +16,7 @@ async function deliver(env,device,message){
  const vapidDetails={subject:env.VAPID_SUBJECT,publicKey:env.VAPID_PUBLIC_KEY,privateKey:env.VAPID_PRIVATE_KEY};
  const details=webPush.generateRequestDetails(subscription,JSON.stringify(message),{vapidDetails,TTL:14400});
  const response=await fetch(endpoint,{method:'POST',headers:details.headers,body:details.body,
-  redirect:'error',signal:AbortSignal.timeout(10000)});
+  redirect:'manual',signal:AbortSignal.timeout(10000)});
  await response.body?.cancel();
  if(response.status===404||response.status===410){
   await env.DB.prepare('DELETE FROM push_subscriptions WHERE owner_id=? AND device_id=? AND endpoint=?')
