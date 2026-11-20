@@ -5,6 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 preview_urls = false
 
+keep_vars = true
 [triggers]
 crons = ["*/15 * * * *"]
 
