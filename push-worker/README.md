@@ -39,7 +39,7 @@ indisponível. Para ativar o Web Push, configure o Worker e a conexão abaixo.
 ## Funcionamento
 
 O Worker lê ovoscopia, véspera de eclosão, abertura da janela de anilhamento,
-vencimento de documento e torneios agendados do D1 a partir das 8h no fuso do
+vencimento de documento e torneios agendados do D1 a partir das 6h no fuso do
 criadouro. Edições ou cancelamentos precisam estar sincronizados antes do
 envio. Cada lembrete tem uma tentativa de envio por aparelho, identificada no
 D1. O horário depende do cron e a entrega depende do serviço do aparelho.

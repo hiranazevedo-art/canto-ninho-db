@@ -1,5 +1,5 @@
-const CACHE='canto-ninho-v8-mobile-push';
-const ASSETS=['./','./index.html','./icon.svg','./manifest.webmanifest',
+const CACHE='canto-ninho-v9-canto-ninho';
+const ASSETS=['./','./index.html','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest',
  './images/caboclinho.png','./sync-core.js','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
@@ -26,7 +26,7 @@ self.addEventListener('push',event=>{
  try{data=event.data?.json();}catch{return;}
  if(!data||typeof data.body!=='string'||typeof data.hash!=='string')return;
  event.waitUntil(self.registration.showNotification('Canto & Ninho',{
-  body:data.body,tag:data.tag,icon:'./icon.svg',data:{hash:data.hash}
+  body:data.body,tag:data.tag,icon:'./icon-192.png',data:{hash:data.hash}
  }));
 });
 self.addEventListener('notificationclick',event=>{

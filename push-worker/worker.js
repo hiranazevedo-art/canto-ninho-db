@@ -58,7 +58,7 @@ async function sendScheduled(env,date){
    else data[row.collection].push(value);
   }
   const {day,hour}=localClock(date,timezone);
-  if(hour<8)continue;
+  if(hour<6)continue;
   const delivered=new Set(sent.results.map(row=>JSON.stringify([row.device_id,row.reminder_key])));
   const jobs=[];
   for(const reminder of remindersForDay(data,day)){
