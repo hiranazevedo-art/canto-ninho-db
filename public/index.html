@@ -388,6 +388,7 @@ const produceStockCategory='LEGUMES, INFLORESCÊNCIAS E FRUTAS';
 const paymentReceived='RECEBIDO',paymentOpen='A RECEBER';
 const expensePaid='PAGA',expenseOpen='PENDENTE';
 const cageCategory='GAIOLAS';
+const accessoryCategory='ACESSÓRIOS';
 function validFinanceDate(date){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return false;
  const parsed=new Date(date+'T00:00:00Z');
@@ -668,6 +669,7 @@ document.addEventListener('click',event=>{
 });
 
 const stockCatalog=new Map([
+ [accessoryCategory,new Map(['COMEDOURO','BEBEDOURO','NINHO','PORTA-VITAMINAS','BANHEIRA','TIGELAS','POLEIROS'].map(name=>[name,'']))],
  [cageCategory,new Map([['GAIOLA INDIVIDUAL',''],['GAIOLA DE CRIAÇÃO',''],['GAIOLA DE TRANSPORTE','']])],
  [grainStockCategory,new Map([
   ['MISTURA BALANCEADA',''],
@@ -1289,9 +1291,11 @@ function setupStockForm(type,record,form){
   }
   category.required=!(record&&!oldCategory);
   const unit=form.elements.unit;
-  const setCageUnit=()=>{if(category.value===cageCategory)unit.value='UN'};
-  category.addEventListener('change',setCageUnit);
-  if(!record)setCageUnit();
+  const setStockUnit=()=>{
+   if([cageCategory,accessoryCategory].includes(category.value))unit.value='UN';
+  };
+  category.addEventListener('change',setStockUnit);
+  if(!record||category.value===accessoryCategory)setStockUnit();
   if(!record)date.value=today();
   const originalName=upper(record?.name);
   if(record)acquisitionQuantity.value=stockAcquisitionQuantity(record)??'';
@@ -1366,6 +1370,7 @@ function prepareStockSave(type,record,old,form){
  if(type==='stock'){
   if(!stockProducts(record.category,old).includes(record.name))return 'SELECIONE UM PRODUTO DA CATEGORIA.';
   if(!old&&!stockCatalog.has(record.category))return 'SELECIONE A CATEGORIA.';
+  if(record.category===accessoryCategory)record.unit='UN';
   if(cageProduct(record)){
    if(!Number.isSafeInteger(record.quantity))return 'Informe a quantidade de gaiolas em unidades inteiras.';
    if(old&&record.quantity<stockReserved(old.id))return 'O saldo não pode ficar abaixo das unidades reservadas para entrega.';
@@ -1835,7 +1840,20 @@ parseIbamaRows=function(text){const result=[];const lines=text.split(/\r?\n/);fo
 readBirdPDF=async function(file){if(!file)return;const status=document.getElementById('pdfProgress');try{status.textContent='Lendo documento…';await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let rows=[],raw='';for(let n=1;n<=pdf.numPages;n++){status.textContent=`Analisando página ${n}/${pdf.numPages}…`;const page=await pdf.getPage(n),tc=await page.getTextContent(),text=tc.items.map(x=>x.str).join(' ');let words,pageText;if(unusablePDFText(text)){await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>window.Tesseract);const vp=page.getViewport({scale:3}),canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;status.textContent=`Reconhecendo colunas por OCR: página ${n}…`;const ocr=await Tesseract.recognize(canvas,'por');pageText=ocr.data.text;words=(ocr.data.words||[]).map(w=>({text:w.text,x:w.bbox.x0,y:w.bbox.y0,w:w.bbox.x1-w.bbox.x0,h:w.bbox.y1-w.bbox.y0}))}else{pageText=text;words=tc.items.map(x=>({text:x.str,x:x.transform[4],y:-x.transform[5],w:x.width,h:x.height||10}))}let found=structuredBirdRows(words);if(!found.length)found=parseIbamaRows(pageText);rows.push(...found);raw+=pageText+'\n'}if(rows.length){showBirdPreview(rows);status.textContent=`${rows.length} ave(s) identificada(s). Confira e confirme para salvar.`}else{status.textContent='Não foi possível identificar com segurança as colunas. Cole uma ave por linha abaixo, separando os campos por |.';document.getElementById('pdfReview').innerHTML='<p>Ordem: nome científico | nome individual | sexo | nascimento | tipo de anilha | diâmetro | código de anilha | situação | condição</p><textarea id="pdfText" style="width:100%;min-height:180px"></textarea><button class="btn" onclick="showBirdPreview(document.getElementById(\'pdfText\').value.split(/\\n/).filter(x=>x.trim()).map(line=>Object.fromEntries(importFields.map(([k],i)=>[k,line.split(\'|\')[i]?.trim()||\'\']))))">Preparar prévia manual</button>';document.getElementById('pdfText').value=raw}}catch(e){status.textContent='Erro ao ler: '+e.message}};
 // Uma linha por série; registros sem série permanecem individuais.
 function taskGroups(){const groups=new Map();for(const t of db.tasks){const key=t.seriesId?'series:'+t.seriesId:'task:'+t.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(t)}return [...groups.values()].map(g=>g.sort((a,b)=>a.date.localeCompare(b.date)))}
-const genericBeforeGroups=generic;generic=function(type){if(type!=='tasks')return genericBeforeGroups(type);const day=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});return header('Rotinas de manejo','Uma linha por rotina. As ocorrências ficam em Ver datas.','Nova rotina','new:tasks')+table(['Atividade','Aves','Intervalo','Próxima pendente','Pendentes / atrasadas','Ações'],taskGroups().map(g=>{const t=g[0],pending=g.filter(x=>!['CONCLUÍDA','CANCELADA'].includes(x.status)),next=pending[0],ref=next||t;return [esc(t.name),String(new Set(g.flatMap(x=>birdIds(x.bird))).size),t.intervalDays?`A cada ${t.intervalDays} dias`:'Individual',next?fmtDate(next.date):'Sem pendências',`${pending.length} / ${pending.filter(x=>x.date<day).length}`,`<button class="btn small secondary" data-series-view="${esc(t.id)}">Ver datas</button> <button class="btn small secondary" data-edit="tasks" data-id="${esc(ref.id)}">Editar rotina</button> ${next?`<button class="btn small" data-series-complete="${esc(next.id)}">Concluir ${fmtDate(next.date)}</button> <button class="btn small danger" data-series-cancel="${esc(t.id)}">Cancelar próximas</button>`:''}`]}))};
+let taskReminderDay='';
+function taskReminderPanel(){
+ if(!taskReminderDay)return '';
+ const rows=db.tasks.filter(task=>task.date===taskReminderDay);
+ return `<section class="panel" id="taskReminder" tabindex="-1">
+  <h3>Manejo em ${fmtDate(taskReminderDay)}</h3>
+  ${rows.length?`<ul class="mini-list">${rows.map(task=>{
+   const status=task.status||(task.done||task.completedAt?'CONCLUÍDA':'PENDENTE');
+   return `<li><span><strong>${esc(task.name)}</strong><br>${esc(status)}</span>
+    ${['CONCLUÍDA','CANCELADA'].includes(status)?'':`<button class="btn small" data-series-complete="${esc(task.id)}">Concluir</button>`}</li>`;
+  }).join('')}</ul>`:'<p>Nenhuma atividade registrada nesta data.</p>'}
+ </section>`;
+}
+const genericBeforeGroups=generic;generic=function(type){if(type!=='tasks')return genericBeforeGroups(type);const day=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});return header('Rotinas de manejo','Uma linha por rotina. As ocorrências ficam em Ver datas.','Nova rotina','new:tasks')+taskReminderPanel()+table(['Atividade','Aves','Intervalo','Próxima pendente','Pendentes / atrasadas','Ações'],taskGroups().map(g=>{const t=g[0],pending=g.filter(x=>!['CONCLUÍDA','CANCELADA'].includes(x.status)),next=pending[0],ref=next||t;return [esc(t.name),String(new Set(g.flatMap(x=>birdIds(x.bird))).size),t.intervalDays?`A cada ${t.intervalDays} dias`:'Individual',next?fmtDate(next.date):'Sem pendências',`${pending.length} / ${pending.filter(x=>x.date<day).length}`,`<button class="btn small secondary" data-series-view="${esc(t.id)}">Ver datas</button> <button class="btn small secondary" data-edit="tasks" data-id="${esc(ref.id)}">Editar rotina</button> ${next?`<button class="btn small" data-series-complete="${esc(next.id)}">Concluir ${fmtDate(next.date)}</button> <button class="btn small danger" data-series-cancel="${esc(t.id)}">Cancelar próximas</button>`:''}`]}))};
 function showTaskDates(idValue,month=''){const t=getRecord('tasks',idValue);if(!t)return;const all=db.tasks.filter(x=>t.seriesId?x.seriesId===t.seriesId:x.id===t.id).sort((a,b)=>a.date.localeCompare(b.date));const selected=month||all.find(x=>!['CONCLUÍDA','CANCELADA'].includes(x.status))?.date.slice(0,7)||all[0].date.slice(0,7);modal('Datas da rotina: '+t.name,`<label>Mês <input type="month" value="${esc(selected)}" data-series-month="${esc(t.id)}"></label>`+table(['Data','Situação','Ação'],all.filter(x=>x.date.startsWith(selected)).map(x=>[fmtDate(x.date),esc(x.status||'PENDENTE'),`<button class="btn small secondary" data-edit="tasks" data-id="${esc(x.id)}">Editar ocorrência</button> ${!['CONCLUÍDA','CANCELADA'].includes(x.status)?`<button class="btn small" data-series-complete="${esc(x.id)}">Concluir ${fmtDate(x.date)}</button>`:''}`])))}
 document.addEventListener('change',e=>{if(e.target.dataset.seriesMonth)showTaskDates(e.target.dataset.seriesMonth,e.target.value)});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.seriesView)return showTaskDates(b.dataset.seriesView);if(b.dataset.seriesComplete){const t=getRecord('tasks',b.dataset.seriesComplete);if(!t||['CONCLUÍDA','CANCELADA'].includes(t.status)||!confirm('Confirmar execução de '+t.name+' prevista para '+fmtDate(t.date)+'?'))return;const previous=JSON.stringify(db);t.status='CONCLUÍDA';t.completedAt=new Date().toISOString();t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});if(!persist('tasks','CONCLUIR',t)){db=JSON.parse(previous);return}closeModal();render()}if(b.dataset.seriesCancel){const t=getRecord('tasks',b.dataset.seriesCancel),day=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});const rows=db.tasks.filter(x=>(t.seriesId?x.seriesId===t.seriesId:x.id===t.id)&&x.date>=day&&!['CONCLUÍDA','CANCELADA'].includes(x.status));if(!rows.length)return toast('SEM OCORRÊNCIAS FUTURAS PENDENTES.');if(!confirm('Cancelar '+rows.length+' ocorrências a partir de hoje? Atrasadas e concluídas serão preservadas.'))return;const previous=JSON.stringify(db);rows.forEach(x=>{x.status='CANCELADA';x.updatedAt=new Date().toISOString()});if(!persist('tasks','CANCELAR PRÓXIMAS',t)){db=JSON.parse(previous);return}render()}});
@@ -4043,7 +4061,7 @@ document.addEventListener('click',event=>{
 
 function pushPanel(){
  return `<section class="panel" aria-labelledby="pushTitle"><h2 id="pushTitle">Notificações no celular</h2>
- <p class="helper">Receba lembretes de registros sincronizados a partir das 6h no fuso do criadouro.
+ <p class="helper">Receba lembretes de registros sincronizados a partir das 6h no fuso do criadouro, incluindo um resumo do manejo do dia quando houver atividades pendentes.
  No iPhone ou iPad, use Compartilhar → Adicionar à Tela de Início e abra o aplicativo pelo ícone.</p>
  <p id="pushFeedback" role="status"></p><div class="actions">
  <button type="button" class="btn secondary" data-push-action="enable">Ativar notificações neste aparelho</button>
@@ -4106,6 +4124,17 @@ let pendingReminderLink='';
 function followReminderLink(hash=location.hash.slice(1)){
  const params=new URLSearchParams(hash);
  const kind=params.get('lembrete'), ref=params.get('ref');
+ if(kind==='management'){
+  const day=params.get('dia');
+  if(!validFinanceDate(day))return;
+  taskReminderDay=day;
+  pendingReminderLink=cloudState.ready?'':hash;
+  go('tasks');
+  const panel=document.getElementById('taskReminder');
+  panel?.scrollIntoView({block:'start'});
+  panel?.focus({preventScroll:true});
+  return;
+ }
  if(!['teste','ovoscopy','hatching','ringing','document','tournament'].includes(kind))return;
  pendingReminderLink=hash;
  go('events');

@@ -54,5 +54,12 @@ export function remindersForDay(data,day){
  for(const tournament of data.tournaments){
   if(tournament.status==='AGENDADO')add(tournament.date,'tournament',tournament.id,'Torneio agendado');
  }
+ const pending=(data.tasks||[]).filter(task=>task?.date===day&&
+  !['CONCLUÍDA','CANCELADA'].includes(task.status)&&
+  (task.status||!task.done&&!task.completedAt)).length;
+ if(pending){
+  const count=pending===1?'1 atividade':pending+' atividades';
+  add(day,'management','daily','Você tem '+count+' de manejo para hoje');
+ }
  return items;
 }

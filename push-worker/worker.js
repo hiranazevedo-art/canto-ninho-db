@@ -7,7 +7,7 @@ const configuration=env=>env.VAPID_PUBLIC_KEY&&env.VAPID_PRIVATE_KEY&&env.VAPID_
 function payload(reminder){
  const params=new URLSearchParams({lembrete:reminder.kind,ref:reminder.id,dia:reminder.date});
  if(reminder.extra)params.set('prev',reminder.extra);
- return {title:'Canto & Ninho',body:reminder.label+' · consulte a Agenda.',tag:reminder.key,hash:params.toString()};
+ return {title:'Canto & Ninho',body:reminder.label+(reminder.kind==='management'?'':' · consulte a Agenda.'),tag:reminder.key,hash:params.toString()};
 }
 async function deliver(env,device,message){
  const endpoint=pushEndpoint(device.endpoint);
@@ -43,14 +43,15 @@ async function sendScheduled(env,date){
    env.DB.prepare('SELECT revision FROM sync_heads WHERE owner_id=?').bind(owner),
    env.DB.prepare(`SELECT collection,record_id,value FROM sync_records
     WHERE owner_id=? AND value IS NOT NULL AND (collection IN ('nests','eggs','chicks','documents','tournaments')
-    OR (collection='settings' AND record_id='timezone'))`).bind(owner),
+    OR (collection='tasks' AND json_extract(value,'$.date') BETWEEN date(?,'-1 day') AND date(?,'+1 day'))
+    OR (collection='settings' AND record_id='timezone'))`).bind(owner,date.toISOString(),date.toISOString()),
    env.DB.prepare('SELECT * FROM push_subscriptions WHERE owner_id=?').bind(owner),
    env.DB.prepare('SELECT device_id,reminder_key FROM push_deliveries WHERE owner_id=? AND created_at>=?')
     .bind(owner,date.getTime()-86400000)
   ]);
   const revision=head.results[0]?.revision;
   if(!revision)continue;
-  const data={nests:[],eggs:[],chicks:[],documents:[],tournaments:[]};
+  const data={nests:[],eggs:[],chicks:[],documents:[],tournaments:[],tasks:[]};
   let timezone;
   for(const row of records.results){
    const value=JSON.parse(row.value);
