@@ -1340,11 +1340,25 @@ function setupStockForm(type,record,form){
  total.setAttribute('aria-live','polite');
  form.querySelector('.form-grid').appendChild(total);
  const updateTotal=()=>{
-  const qty=type==='stock'?(acquisitionQuantity.value===''?(record?stockAcquisitionQuantity(record):stockDecimal(quantity.value)):stockDecimal(acquisitionQuantity.value)):stockDecimal(quantity.value);
-  const value=stockDecimal(cost.value)||stockDecimal(unitCost.value)*qty;
-  total.hidden=cost.disabled||!(value>0);
+  if(cost.disabled){
+   total.hidden=true;
+   total.textContent='';
+   return;
+  }
+  const qty=stockDecimal(quantity.value);
+  const acquired=acquisitionQuantity?.value;
+  const purchaseQty=type==='movements'?qty:acquired?stockDecimal(acquired):record?stockAcquisitionQuantity(record):qty;
+  if(stockDecimal(cost.value)===0||cost.dataset.stockCalculated){
+   const calculated=stockExpenseValue(type,{quantity:qty,acquisitionQuantity:purchaseQty??0,
+    unitCost:stockDecimal(unitCost.value),type:form.elements.type?.value});
+   cost.value=calculated?calculated.toFixed(2).replace('.',','):'';
+   cost.dataset.stockCalculated='1';
+  }
+  const value=stockDecimal(cost.value);
+  total.hidden=!(value>0);
   total.textContent=total.hidden?'':'Total da compra: '+brl(value);
  };
+ cost.addEventListener('input',()=>delete cost.dataset.stockCalculated);
  form.addEventListener('input',updateTotal);
  form.addEventListener('change',updateTotal);
  updateTotal();
@@ -1356,7 +1370,7 @@ function setupStockForm(type,record,form){
  };
  form.addEventListener('change',updatePaymentVisibility);
  updatePaymentVisibility();
- addHelp('<p class="wide helper">Informe o custo total ou o custo por unidade. O total informado prevalece. Entradas com custo entram em Despesas.</p>');
+ addHelp('<p class="wide helper">O custo por unidade preenche o total automaticamente. Você pode digitar o total manualmente. Entradas com custo entram em Despesas.</p>');
  const previousValue=record&&stockExpenseValue(type,record);
  if(previousValue&&!record.stockExpenseConfirmed&&db.expenses.some(e=>!e.birdAcquisitionId&&stockExpenseKey(e.date,e.value)===stockExpenseKey(record.date,previousValue))){
   addHelp('<label class="wide"><input type="checkbox" name="stockExpenseConfirmed"> Conferi a despesa manual e confirmo que esta compra deve entrar separadamente nos totais.</label>');
@@ -1366,6 +1380,7 @@ function prepareStockSave(type,record,old,form){
  for(const key of ['quantity','acquisitionQuantity','cost','unitCost']){
   if(form.elements[key]?.dataset?.stockDecimal&&!Number.isFinite(record[key])&&!form.elements[key].disabled)return 'Informe um valor numérico válido.';
  }
+ if(form.elements.cost.dataset.stockCalculated)record.cost=0;
  if(type==='movements'&&!(record.quantity>0))return 'Informe uma quantidade maior que zero.';
  if(type==='stock'){
   if(!stockProducts(record.category,old).includes(record.name))return 'SELECIONE UM PRODUTO DA CATEGORIA.';

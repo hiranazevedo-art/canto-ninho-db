@@ -1,4 +1,4 @@
-const CACHE='canto-ninho-v11-manejo';
+const CACHE='canto-ninho-v12-custo-estoque';
 const ASSETS=['./','./index.html','./icon-ninho-192.png','./icon-ninho-512.png','./manifest.webmanifest',
  './images/caboclinho.png','./sync-core.js','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
 self.addEventListener('install',event=>{
