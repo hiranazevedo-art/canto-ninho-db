@@ -94,7 +94,7 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 .quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 .quick-actions .btn{min-height:44px}
 [data-new-nest-dates][hidden]{display:none}
-#feedingPreferenceForm fieldset{min-width:0;margin:8px 0;padding:10px}
+#recordForm .food-checks,#feedingPreferenceForm fieldset{min-width:0;margin:8px 0;padding:10px}
 .form-feedback{color:#892b23;margin:10px 0;font-weight:650;overflow-wrap:anywhere}
 .modal .close{min-width:44px;min-height:44px}
 .bird-info,.tree-card{overflow-wrap:anywhere}
@@ -732,7 +732,7 @@ const stockCatalog=new Map([
 ]);
 const configs={
  food:{title:'Catálogo de alimentos',subtitle:'Alimentos disponíveis para registrar fornecimentos.',fields:[['name','Nome','text',true],['category','Categoria','choices',['RAÇÃO EXTRUSADA','FARINHADAS','FARINHA DE OSTRA','VERDURAS','FRUTAS','SEMENTES','OUTROS ALIMENTOS']],['notes','Observações','textarea']],cols:[['Alimento','name'],['Categoria','category']]},
- feedings:{title:'Registros de alimentação',subtitle:'Histórico do que foi oferecido a cada ave.',fields:[['bird','Ave','bird'],['group','Grupo (opcional)','text'],['food','Alimento','food',true],['quantity','Quantidade','number'],['unit','Unidade','choices',['G','KG','ML','UNIDADE','PORÇÃO']],['frequency','Frequência','text'],['date','Data de início','date',true],['end','Data de encerramento','date'],['time','Horário','time'],['notes','Observações / alterações da dieta','textarea']],cols:[['Ave / grupo','bird'],['Alimento','food'],['Quantidade','quantity'],['Início','date'],['Frequência','frequency']]},
+ feedings:{title:'Registros de alimentação',subtitle:'Histórico do que foi oferecido a cada ave.',fields:[['bird','Ave','bird'],['group','Grupo (opcional)','text'],['food','Alimentos','foodsMulti',true],['quantity','Quantidade total do fornecimento','number'],['unit','Unidade','choices',['G','KG','ML','UNIDADE','PORÇÃO']],['frequency','Frequência','text'],['date','Data de início','date',true],['end','Data de encerramento','date'],['time','Horário','time'],['notes','Observações / alterações da dieta','textarea']],cols:[['Ave / grupo','bird'],['Alimento','food'],['Quantidade','quantity'],['Início','date'],['Frequência','frequency']]},
  couples:{title:'Casais',subtitle:'Formação e acompanhamento de casais.',fields:[['male','Macho','male',true],['female','Fêmea','female',true],['start','Data de formação','date',true],['end','Separação','date'],['notes','Observações','textarea']],cols:[['Macho','male'],['Fêmea','female'],['Formação','start'],['Situação','end']]},
  seasons:{title:'Temporadas',subtitle:'Controle das temporadas reprodutivas.',fields:[['name','Identificação','text',true],['start','Início','date',true],['end','Encerramento','date'],['notes','Observações','textarea']],cols:[['Temporada','name'],['Início','start'],['Fim','end']]},
  attempts:{title:'Tentativas reprodutivas',subtitle:'Vincule tentativa, casal e temporada.',fields:[['season','Temporada','season',true],['couple','Casal','couple',true],['start','Data de início','date',true],['result','Resultado','text'],['notes','Observações','textarea']],cols:[['Temporada','season'],['Casal','couple'],['Início','start'],['Resultado','result']]},
@@ -759,7 +759,7 @@ const configs={
  documents:{title:'Registros documentais',subtitle:'Controle referencial local (sem anexos nesta versão).',fields:[['name','Documento','text',true],['bird','Ave relacionada','bird'],['type','Tipo','choices',['AUTORIZAÇÃO','REGISTRO','COMPROVANTE','DOCUMENTO DO CRIADOURO','OUTRO']],['status','Verificação','choices',['INFORMAÇÃO CADASTRADA','PENDÊNCIA DE REGISTRO OFICIAL','REGISTRO OFICIAL CONFIRMADO (INFORMADO PELO USUÁRIO)']],['date','Data','date'],['reference','Referência / número','text'],['notes','Observações','textarea']],cols:[['Documento','name'],['Ave','bird'],['Verificação','status'],['Referência','reference']]},
  knowledge:{title:'Biblioteca técnica',subtitle:'Catálogo de referências inseridas pelo usuário; sem validação automática.',fields:[['name','Título','text',true],['author','Autor ou instituição','text',true],['reference','Referência','text'],['date','Publicação','date'],['revised','Revisão','date'],['species','Espécie','text'],['scope','Aplicação','choices',['ESPECÍFICA DO CABOCLINHO','GERAL PARA PASSERIFORMES']],['status','Validação','choices',['NÃO VERIFICADA','VERIFICADA PELO RESPONSÁVEL']],['notes','Observações','textarea']],cols:[['Título','name'],['Autor','author'],['Espécie','species'],['Validação','status']]}
 };
-function descValue(k,val){if(!val)return '—';if(k==='bird')return birdIds(val).map(x=>esc(birdName(findBird(x)))).join(', ')||'—';if(k==='male'||k==='female')return esc(birdName(findBird(val)));const map={food:['food','name'],season:['seasons','name'],couple:['couples','male'],attempt:['attempts','id'],nest:['nests','name'],egg:['eggs','name'],stock:['stock','name'],facility:['facilities','name']};if(map[k]){const [col,field]=map[k];const obj=getRecord(col,val);if(!obj)return 'REMOVIDO';return k==='couple'?esc(birdName(findBird(obj.male)))+' + '+esc(birdName(findBird(obj.female))):k==='attempt'?'TENTATIVA '+esc(obj.start||obj.id.slice(0,6)):esc(obj[field])}if(['date','start','end','expiry','done','revised','separatedAt'].includes(k)&&/^\d{4}-\d{2}-\d{2}$/.test(val))return fmtDate(val);if(k==='value'||k==='cost')return brl(val);return esc(val)}
+function descValue(k,val){if(!val)return '—';if(k==='food')return esc(foodNames(val));if(k==='bird')return birdIds(val).map(x=>esc(birdName(findBird(x)))).join(', ')||'—';if(k==='male'||k==='female')return esc(birdName(findBird(val)));const map={season:['seasons','name'],couple:['couples','male'],attempt:['attempts','id'],nest:['nests','name'],egg:['eggs','name'],stock:['stock','name'],facility:['facilities','name']};if(map[k]){const [col,field]=map[k];const obj=getRecord(col,val);if(!obj)return 'REMOVIDO';return k==='couple'?esc(birdName(findBird(obj.male)))+' + '+esc(birdName(findBird(obj.female))):k==='attempt'?'TENTATIVA '+esc(obj.start||obj.id.slice(0,6)):esc(obj[field])}if(['date','start','end','expiry','done','revised','separatedAt'].includes(k)&&/^\d{4}-\d{2}-\d{2}$/.test(val))return fmtDate(val);if(k==='value'||k==='cost')return brl(val);return esc(val)}
 function recordActions(type,record){
  const extra=type==='facilities'&&upper(record.type)==='GAIOLA'
   ?`<button type="button" class="btn secondary small" data-cage-sheet="${esc(record.id)}">Ficha e QR Code</button>`
@@ -1270,6 +1270,23 @@ document.addEventListener('click',event=>{
  if(button)openCageLink(button.dataset.linkCage);
 });
 
+function foodIds(value){
+ return [...new Set((Array.isArray(value)?value:value?[value]:[]).map(key=>getRecord('food',key)?.id||key))];
+}
+function foodNames(value){
+ return foodIds(value).map(key=>getRecord('food',key)?.name||'Alimento indisponível').join(', ')||'—';
+}
+function foodChecks(key,label,value){
+ const selected=foodIds(value);
+ const choices=[...db.food,...selected.filter(id=>!getRecord('food',id)).map(id=>({id,name:'Alimento indisponível: '+id}))];
+ return `<fieldset class="wide food-checks"><legend>${esc(label)} *</legend>
+  <div class="bird-checks">${choices.map(food=>`<label><input type="checkbox" name="${key}" value="${esc(food.id)}" ${selected.includes(food.id)?'checked':''}> ${esc(food.name)}</label>`).join('')}</div></fieldset>`;
+}
+function foodSelection(formData,key){
+ const selected=foodIds(formData.getAll(key));
+ return selected.length>1?selected:selected[0]||'';
+}
+
 const preferenceRecipients=[['feeder','Comedouro'],['vitaminHolder','Porta-vitaminas']];
 const preferenceFields=[['consumption','Consumo aparente'],['leftovers','Sobras'],['husks','Cascas'],['spilled','Alimento derramado']];
 const preferenceResults=['Usou mais o comedouro','Usou mais o porta-vitaminas','Usou ambos','Inconclusivo'];
@@ -1284,7 +1301,7 @@ function preferenceHistory(){
   <button class="btn" data-preference-edit="new">Nova observação</button></div>
   ${rows.length?table(['Ave','Período','Comedouro','Porta-vitaminas','Resultado','Ações'],rows.map(row=>[
    esc(birdName(findBird(row.bird))),fmtDate(row.start)+' a '+fmtDate(row.end),
-   ...preferenceRecipients.map(([key])=>esc(getRecord('food',row[key])?.name||'Alimento indisponível')),
+   ...preferenceRecipients.map(([key])=>esc(foodNames(row[key]))),
    esc(row.result||'Em observação'),
    `<button class="btn secondary small" data-preference-edit="${esc(row.id)}">Ver / editar</button>`
   ])):'<p class="empty">Nenhuma observação para este filtro.</p>'}</section>`;
@@ -1304,13 +1321,12 @@ function preferenceDates(start,end){
 function openFeedingPreference(record=null){
  const start=record?.start||today();
  const draft=new Map(Object.entries(record?.daily||{}));
- const foodField=(key,label)=>`<div><label for="f_${key}">Alimento no ${label.toLowerCase()} *</label>
-  ${makeSelect('food',record?.[key]||'').replace('name="food"',`id="f_${key}" name="${key}" required`)}</div>`;
+
  modal(record?'Observação semanal':'Nova observação semanal',`<form id="feedingPreferenceForm"><div class="form-grid">
   <div><label for="preferenceBird">Ave *</label>${birdSelect('bird','',record?.bird||preferenceBirdFilter,false).replace('name="bird"','name="bird" id="preferenceBird"')}</div>
   ${input('start','Data inicial','date',start,true)}
   ${input('end','Data final','date',record?.end||addCalendarDays(start,6),true)}
-  ${preferenceRecipients.map(([key,label])=>foodField(key,label)).join('')}
+  ${preferenceRecipients.map(([key,label])=>foodChecks(key,'Alimentos no '+label.toLowerCase(),record?.[key])).join('')}
   </div><h3>Anotações por dia</h3><div data-preference-days></div><div class="form-grid">
   ${select('result','Resultado da semana',preferenceResults,record?.result||'')}
   ${textarea('notes','Observações finais',record?.notes||'')}
@@ -1350,9 +1366,10 @@ function openFeedingPreference(record=null){
   const dates=preferenceDates(fields.start.value,fields.end.value);
   if(!dates.length)return formFeedback(form,'Informe um período válido de até sete dias.');
   const bird=fields.bird.value;
-  const offers=Object.fromEntries(preferenceRecipients.map(([key])=>[key,fields.namedItem(key).value]));
-  if(!findBird(bird)||Object.values(offers).some(food=>!getRecord('food',food)))
-   return formFeedback(form,'Selecione a ave e os dois alimentos do catálogo.');
+  const formData=new FormData(form);
+  const offers=Object.fromEntries(preferenceRecipients.map(([key])=>[key,foodSelection(formData,key)]));
+  if(!findBird(bird)||Object.values(offers).some(value=>!value||foodIds(value).some(food=>!getRecord('food',food))))
+   return formFeedback(form,'Selecione a ave e pelo menos um alimento do catálogo para cada recipiente.');
   const start=dates[0],end=dates.at(-1), current=record&&getRecord('feedingPreferences',record.id);
   if(record&&JSON.stringify(current)!==original)return formFeedback(form,'A observação mudou. Feche o formulário e abra o registro novamente.');
   if(db.feedingPreferences.some(row=>row.id!==record?.id&&sameId(row.bird,bird)&&row.start<=end&&row.end>=start))
@@ -1909,17 +1926,17 @@ seedFoods=function(){oldSeedFoods();if(!db.food.some(f=>f.id===defaultFoodId)){d
 const baseFormField=formField;
 formField=function(f,r){const [key,label,type]=f;
  if(type==='activity'){const choices=[...activityChoices];if(r.name&&!choices.includes(r.name))choices.push(r.name);return select(key,label,choices,r.name||'',true)}
+ if(type==='foodsMulti')return foodChecks(key,label,r[key]??defaultFoodId);
  if(type==='birdsMulti'){const ids=birdIds(r[key]);return `<div class="wide"><div id="f_${key}_group">${esc(label)}</div><div class="bird-checks" role="group" aria-labelledby="f_${key}_group"><label><input type="checkbox" data-all-birds> ${editing?.type==='tasks'?'Marcar todas as aves cadastradas':'Selecionar todas as aves'}</label>${db.birds.map(b=>`<label><input type="checkbox" name="${key}" value="${esc(b.id)}" ${ids.includes(b.id)?'checked':''}> ${esc(birdName(b))} · ${esc(b.ring||'SEM ANILHA')}</label>`).join('')}${ids.filter(x=>!findBird(x)).map(x=>`<label><input type="checkbox" name="${key}" value="${esc(x)}" checked> Registro legado não localizado: ${esc(x)}</label>`).join('')}</div></div>`}
  if(type==='brDate')return `<div><label for="f_${key}">${label}</label><div class="date-dual"><input id="f_${key}" name="${key}" data-br-date type="text" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" value="${r[key]?esc(fmtDate(r[key])):''}" aria-label="Data da separação dos pais em DD/MM/AAAA"><input type="date" data-date-picker="${key}" value="${esc(r[key]||'')}" aria-label="Selecionar data da separação no calendário"></div><div class="helper">Opcional. Deixe em branco enquanto estiver com os pais.</div></div>`;
  const v={...r};if(referenceCollections[key]&&v[key])v[key]=getRecord(referenceCollections[key],v[key])?.id||v[key];return baseFormField(f,v);
 };
 const baseOpenForm=openForm;
 openForm=function(type,record=null){
- const data=record?{...record}:{};if(type==='feedings'&&!record)data.food=defaultFoodId;
+ const data=record?{...record}:{};
  // Keep editing mode and original identity; defaults are injected after base rendering.
  baseOpenForm(type,record);const form=document.getElementById('recordForm');
  if(type==='feedings'&&!record){
-  form.elements.food.value=defaultFoodId;
   form.elements.date.value=today();
   const last=db.feedings.at(-1);
   const lastBirds=birdIds(last?.bird).filter(b=>findBird(b));
@@ -1960,13 +1977,26 @@ function refreshForm(form,initial=false){
   if(timing&&!dates.childElementCount)dates.innerHTML=newNestDateFields(timing);
   for(const field of dates.querySelectorAll('input'))field.disabled=!timing;
  }
- const foodSummary=form.querySelector('#foodSummary');if(foodSummary&&foodSummary.dataset.foodId!==val('food')){foodSummary.dataset.foodId=val('food');const food=getRecord('food',val('food'));if(food?.id===defaultFoodId){foodSummary.innerHTML=`<strong>${esc(food.name)}</strong>${mixCalculator(food)}`}
- else foodSummary.textContent=food?food.name+'\n'+(food.composition||food.notes||''):'Selecione um alimento.'}
+ const foodSummary=form.querySelector('#foodSummary');
+ if(foodSummary){
+  const chosen=foodIds([...form.querySelectorAll('[name="food"]:checked')].map(box=>box.value));
+  const fingerprint=JSON.stringify(chosen);
+  if(foodSummary.dataset.foodIds!==fingerprint){
+   foodSummary.dataset.foodIds=fingerprint;
+   foodSummary.innerHTML=chosen.map(key=>{
+    const food=getRecord('food',key);
+    if(!food)return '';
+    const details=food.composition||food.notes;
+    return `<div><strong>${esc(food.name)}</strong>${key===defaultFoodId?mixCalculator(food):details?'\n'+esc(details):''}</div>`;
+   }).join('')||'Selecione pelo menos um alimento.';
+  }
+ }
  const all=form.querySelector('[data-all-birds]');if(all){const boxes=[...form.querySelectorAll('input[name="bird"]')];all.checked=boxes.length>0&&boxes.every(x=>x.checked);all.indeterminate=boxes.some(x=>x.checked)&&!all.checked}
 }
 function parseBRDate(v){if(!v)return '';if(/^\d{8}$/.test(v))v=v.replace(/^(\d{2})(\d{2})(\d{4})$/,'$1/$2/$3');const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);if(!m)return null;const iso=m[3]+'-'+m[2]+'-'+m[1],d=new Date(iso+'T00:00:00Z');return !isNaN(d)&&d.toISOString().slice(0,10)===iso?iso:null}
 function readValues(form,type){const fd=new FormData(form),values={};for(const [key,value]of fd){const el=form.elements.namedItem(key);if(referenceCollections[key])values[key]=getRecord(referenceCollections[key],value)?.id||value;else if(el?.dataset.brDate!==undefined){const parsed=parseBRDate(value);if(parsed===null){formFeedback(form,'Informe uma data válida no formato DD/MM/AAAA.');return null}values[key]=parsed}else values[key]=el?.dataset.stockDecimal?stockDecimal(value):el?.type==='number'?Number(value||0):['date','time'].includes(el?.type)?value:key==='ring'?value.trim():upper(value.trim())}
  if(['tasks','feedings','trips'].includes(type))values.bird=[...new Set(fd.getAll('bird').map(x=>findBird(x)?.id||x))];
+ if(type==='feedings')values.food=foodSelection(fd,'food');
  delete values.birdCage;
  if(type==='nests'){
   for(const [key] of timingFields)delete values[key];
@@ -3418,7 +3448,7 @@ function openBirdExit(birdId){
 function birdTimelineEntries(bird){
  const birdId=bird.id;
  const relatedRows=(collection,title)=>db[collection].filter(r=>birdIds(r.bird).some(id=>sameId(id,birdId)))
-  .map(r=>({date:r.date||r.start,title,detail:r.name||r.title||r.description||r.place||getRecord('food',r.food)?.name||
+  .map(r=>({date:r.date||r.start,title,detail:r.name||r.title||r.description||r.place||(r.food&&foodNames(r.food))||
     getRecord('facilities',r.facility)?.name||r.notes||''}));
  const entries=[
   ...(validFinanceDate(bird.birthDate)?[{date:bird.birthDate,title:'Nascimento',detail:''}]:[]),
