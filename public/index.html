@@ -1809,12 +1809,50 @@ const readPrevious=readValues;
 readValues=function(form,type){const v=readPrevious(form,type);if(!v)return v;if(type==='health'){v.bird=new FormData(form).getAll('bird');v.type=form.elements.type.value}delete v.seriesScope;return v};
 const fieldPrevious=formField;
 formField=function(f,r){if(f[2]==='choices'&&r[f[0]]&&!f[3].includes(r[f[0]]))return fieldPrevious([f[0],f[1],f[2],[...f[3],r[f[0]]]],r);return fieldPrevious(f,r)};
-function annualDates(start,days){if(!/^\d{4}-\d{2}-\d{2}$/.test(start)||!days)return [];const d=new Date(start+'T12:00:00Z');if(isNaN(d)||d.toISOString().slice(0,10)!==start)return [];const year=d.getUTCFullYear(),out=[];while(d.getUTCFullYear()===year){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+days)}return out}
-function taskSummary(form){const el=form.querySelector('#seriesSummary');if(!el)return;const n=form.elements.name.value,days=intervals[n],dates=annualDates(form.elements.date.value,days);el.textContent=editing?.id?'A edição preserva ocorrências concluídas. A conclusão em atraso não desloca as próximas datas.':days?`A cada ${days} dias: ${dates.length} ocorrências até 31/12/${form.elements.date.value.slice(0,4)||'ano selecionado'}. Intervalos de agenda definidos pelo usuário; não substituem cuidados diários.`:'Atividade antiga: sem recorrência automática.'}
+const routineYears=[1,2,3,4,5];
+function routineEnd(start,years){
+ if(!validFinanceDate(start)||!routineYears.includes(years))return '';
+ const date=new Date(start+'T12:00:00Z');
+ const month=date.getUTCMonth();
+ date.setUTCFullYear(date.getUTCFullYear()+years);
+ if(date.getUTCMonth()!==month)date.setUTCDate(0);
+ return date.toISOString().slice(0,10);
+}
+function routineDates(start,days,end){
+ if(!validFinanceDate(start)||!validFinanceDate(end)||!Number.isSafeInteger(days)||days<1)return [];
+ const dates=[];
+ for(const date=new Date(start+'T12:00:00Z');date.toISOString().slice(0,10)<end;date.setUTCDate(date.getUTCDate()+days)){
+  dates.push(date.toISOString().slice(0,10));
+ }
+ return dates;
+}
+function routineYearOptions(years=routineYears){
+ return years.map(year=>`<option value="${year}">${year} ${year===1?'ano':'anos'}</option>`).join('');
+}
+function taskSummary(form){
+ const summary=form.querySelector('#seriesSummary');
+ if(!summary)return;
+ const duration=form.elements.routineYears;
+ if(!duration){
+  summary.textContent='A edição preserva ocorrências concluídas. A conclusão em atraso não desloca as próximas datas.';
+  return;
+ }
+ const interval=intervals[form.elements.name.value];
+ duration.closest('div').hidden=!interval;
+ const start=form.elements.date.value;
+ const dates=routineDates(start,interval,routineEnd(start,Number(duration.value)));
+ summary.textContent=dates.length?`A cada ${interval} dias: ${dates.length} ocorrências, até ${fmtDate(dates.at(-1))}.`:
+  interval?'Informe a data de início.':'Esta atividade será cadastrada como uma ocorrência individual.';
+}
 const openPrevious=openForm;
-openForm=function(type,r=null){openPrevious(type,r);const f=document.getElementById('recordForm');if(type==='tasks'){if(!r){f.elements.date.value=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});f.elements.status.value='PENDENTE'}f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info" id="seriesSummary"></div>');if(r?.seriesId)f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide"><label>Aplicar edição</label><select name="seriesScope"><option value="one">Somente esta ocorrência</option><option value="future">Esta e as próximas pendentes da série</option></select><div class="helper">Para mudar a data ou atividade de toda a série, cancele as próximas e crie uma nova série.</div></div>');f.addEventListener('change',()=>taskSummary(f));taskSummary(f)}if(type==='health'){f.querySelector('[data-all-birds]').parentElement.lastChild.textContent=' Marcar todas as aves cadastradas';f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info">Categorias de registro do usuário. Não geram doses, prescrições ou suplementação automática.</div>')}};
+openForm=function(type,r=null){openPrevious(type,r);const f=document.getElementById('recordForm');if(type==='tasks'){if(!r){f.elements.date.value=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});f.elements.status.value='PENDENTE';
+ f.querySelector('.form-grid').insertAdjacentHTML('beforeend',`<div class="wide"><label for="routineYears">Duração da rotina</label><select id="routineYears" name="routineYears">${routineYearOptions()}</select></div>`);
+ }f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info" id="seriesSummary"></div>');if(r?.seriesId)f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide"><label>Aplicar edição</label><select name="seriesScope"><option value="one">Somente esta ocorrência</option><option value="future">Esta e as próximas pendentes da série</option></select><div class="helper">Para mudar a data ou atividade de toda a série, cancele as próximas e crie uma nova série.</div></div>');f.addEventListener('change',()=>taskSummary(f));taskSummary(f)}if(type==='health'){f.querySelector('[data-all-birds]').parentElement.lastChild.textContent=' Marcar todas as aves cadastradas';f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info">Categorias de registro do usuário. Não geram doses, prescrições ou suplementação automática.</div>')}};
 const submitPrevious=submitRecord;
-submitRecord=function(f){const type=f.dataset.type;if(type==='health'&&!new FormData(f).getAll('bird').length)return toast('SELECIONE AO MENOS UMA AVE.');if(type!=='tasks')return submitPrevious(f);const v=readValues(f,type);if(!v)return;const old=editing?.id?getRecord('tasks',editing.id):null;const err=validateIntegrated(type,v,old);if(err)return toast(err);const dates=annualDates(v.date,intervals[v.name]||1);if(!dates.length)return toast('INFORME UMA DATA VÁLIDA.');const before=JSON.stringify(db),stamp=new Date().toISOString();if(old){const future=f.elements.seriesScope?.value==='future';if(future&&(v.date!==old.date||v.name!==old.name))return toast('PARA ALTERAR DATA OU ATIVIDADE DA SÉRIE, CANCELE AS PRÓXIMAS E CRIE OUTRA.');const rows=future?db.tasks.filter(t=>t.seriesId===old.seriesId&&t.date>=old.date&&!['CONCLUÍDA','CANCELADA'].includes(t.status)):[old];if(!rows.length)return toast('NÃO HÁ OCORRÊNCIAS PENDENTES PARA EDITAR.');if(!confirm(`Salvar alterações em ${rows.length} ocorrência(s)?`))return;rows.forEach(t=>{const date=t.date;Object.assign(t,v,{updatedAt:stamp});if(future)t.date=date;if(v.status==='CONCLUÍDA'&&!t.completedAt){t.completedAt=stamp;t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'})}})}else{const targets=intervals[v.name]?dates:[v.date];const signature=x=>JSON.stringify([x.name,x.date,[...birdIds(x.bird)].sort()]);const known=new Set(db.tasks.filter(x=>x.status!=='CANCELADA').map(signature));const fresh=targets.filter(date=>!known.has(signature({...v,date})));if(!fresh.length)return toast('ESSAS OCORRÊNCIAS JÁ ESTÃO CADASTRADAS.');if(!confirm(`Criar ${fresh.length} ocorrência(s), de ${fmtDate(fresh[0])} até ${fmtDate(fresh.at(-1))}?`))return;const sid=id();fresh.forEach((date,i)=>db.tasks.push({...v,id:id(),date,seriesId:sid,seriesStart:v.date,intervalDays:intervals[v.name]||null,status:i===0?v.status:'PENDENTE',...(i===0&&v.status==='CONCLUÍDA'?{completedAt:stamp,done:v.date}:{}),createdAt:stamp,updatedAt:stamp}))}if(!persist('tasks','SALVAR SÉRIE',{id:old?.id||''})){db=JSON.parse(before);return toast('NÃO FOI POSSÍVEL SALVAR.')}closeModal();render();toast('AGENDA SALVA.')};
+submitRecord=function(f){const type=f.dataset.type;if(type==='health'&&!new FormData(f).getAll('bird').length)return toast('SELECIONE AO MENOS UMA AVE.');if(type!=='tasks')return submitPrevious(f);const v=readValues(f,type);if(!v)return;const old=editing?.id?getRecord('tasks',editing.id):null;const err=validateIntegrated(type,v,old);if(err)return toast(err);if(!validFinanceDate(v.date))return toast('INFORME UMA DATA VÁLIDA.');delete v.routineYears;
+const interval=intervals[v.name];
+const end=interval&&!old?routineEnd(v.date,Number(f.elements.routineYears.value)):'';
+if(interval&&!old&&!end)return toast('SELECIONE UMA DURAÇÃO DE 1 A 5 ANOS.');const before=JSON.stringify(db),stamp=new Date().toISOString();if(old){const future=f.elements.seriesScope?.value==='future';if(future&&(v.date!==old.date||v.name!==old.name))return toast('PARA ALTERAR DATA OU ATIVIDADE DA SÉRIE, CANCELE AS PRÓXIMAS E CRIE OUTRA.');const rows=future?db.tasks.filter(t=>t.seriesId===old.seriesId&&t.date>=old.date&&!['CONCLUÍDA','CANCELADA'].includes(t.status)):[old];if(!rows.length)return toast('NÃO HÁ OCORRÊNCIAS PENDENTES PARA EDITAR.');if(!confirm(`Salvar alterações em ${rows.length} ocorrência(s)?`))return;rows.forEach(t=>{const date=t.date;Object.assign(t,v,{updatedAt:stamp});if(future)t.date=date;if(v.status==='CONCLUÍDA'&&!t.completedAt){t.completedAt=stamp;t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'})}})}else{const targets=interval?routineDates(v.date,interval,end):[v.date];const fresh=unusedRoutineDates(v,targets);if(!fresh.length)return toast('ESSAS OCORRÊNCIAS JÁ ESTÃO CADASTRADAS.');if(!confirm(`Criar ${fresh.length} ocorrência(s), de ${fmtDate(fresh[0])} até ${fmtDate(fresh.at(-1))}?`))return;const sid=id();fresh.forEach((date,i)=>db.tasks.push({...v,id:id(),date,seriesId:sid,seriesStart:v.date,seriesEnd:end,intervalDays:interval||null,status:i===0?v.status:'PENDENTE',...(i===0&&v.status==='CONCLUÍDA'?{completedAt:stamp,done:v.date}:{}),createdAt:stamp,updatedAt:stamp}))}if(!persist('tasks','SALVAR SÉRIE',{id:old?.id||''})){db=JSON.parse(before);return toast('NÃO FOI POSSÍVEL SALVAR.')}closeModal();render();toast('AGENDA SALVA.')};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-complete]');if(!b)return;e.stopImmediatePropagation();const t=getRecord('tasks',b.dataset.complete);if(!t||['CONCLUÍDA','CANCELADA'].includes(t.status))return;const before=JSON.stringify(db);t.status='CONCLUÍDA';t.completedAt=new Date().toISOString();t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});if(!persist('tasks','CONCLUIR',t)){db=JSON.parse(before);return}render();toast('TAREFA CONCLUÍDA.')},true);
 const birdsPrevious=birds;birds=function(){return '<div class="toolbar"><button class="btn secondary" onclick="openPDFImport()">Inserir arquivo · PDF</button></div>'+birdsPrevious()};
 const settingsPrevious=settings;settings=function(){const r=db.settings.reminders||{};return settingsPrevious()+`<div class="panel"><h3>Lembretes no celular</h3><p class="notice">WhatsApp não conectado. Estas preferências não ativam envios. É necessário servidor, agendador, conta oficial, modelos aprovados e webhook de confirmação.</p><form id="reminderForm"><div class="form-grid">${input('phone','Celular com código do país','tel',r.phone||'')}${input('time','Horário do lembrete','time',r.time||'08:00')}${input('advance','Antecedência em dias','number',r.advance||0,false,'min="0" max="30"')}<div><label><input name="consent" type="checkbox" ${r.consent?'checked':''}> Autorizo receber lembretes no WhatsApp</label><label><input name="enabled" type="checkbox" ${r.enabled?'checked':''}> Desejo ativar após a integração</label></div></div><p class="helper">Fuso: ${esc(db.settings.timezone)}. Confirmar execução pelo WhatsApp ficará disponível após a integração; nenhum token deve ser inserido neste arquivo.</p><button class="btn">Salvar preferências</button></form></div>`};
@@ -1889,6 +1927,73 @@ function structuredBirdRows(words){const lines=[];for(const w of words.slice().s
 parseIbamaRows=function(text){const result=[];const lines=text.split(/\r?\n/);for(let i=0;i<lines.length;i++){let line=lines[i].replace(/\|/g,' ').trim();if(!/^(?:\d+\s+)?[A-Z][a-z]+\s+[a-z]+\b/.test(line))continue;while(i+1<lines.length&&/^\s*[\d.,]+(?:\s+\d+)?\s*$/.test(lines[i+1]))line+=' '+lines[++i].trim();const m=line.match(/^(?:\d+\s+)?([A-Z][a-z]+\s+[a-z]+)\s+(.*?)\s+([^\s]+)\s+(\d{2}\/\d{2}\/\d{4})\s+(anilha\s*(?:fechada|aberta))\s*(.*)$/i);if(!m)continue;let tail=m[6].trim(),diam='';const dm=tail.match(/^([\d.,]+)\s+/);if(dm){diam=dm[1];tail=tail.slice(dm[0].length)}if(!tail)continue;const sx=sexValue(m[3]);result.push({scientific:m[1],commonName:m[2],sex:sx==='NÃO IDENTIFICADO'?'':sx,birthDate:parseBRDate(m[4])||'',ringType:m[5].replace(/^anilha\s*/i,'anilha '),ringDiameter:diam,ring:tail,review:sx==='NÃO IDENTIFICADO'?'Sexo incerto: '+m[3]+'. Confira também o diâmetro.':'Conferir espécie e código de anilha.'})}return result};
 readBirdPDF=async function(file){if(!file)return;const status=document.getElementById('pdfProgress');try{status.textContent='Lendo documento…';await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let rows=[],raw='';for(let n=1;n<=pdf.numPages;n++){status.textContent=`Analisando página ${n}/${pdf.numPages}…`;const page=await pdf.getPage(n),tc=await page.getTextContent(),text=tc.items.map(x=>x.str).join(' ');let words,pageText;if(unusablePDFText(text)){await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>window.Tesseract);const vp=page.getViewport({scale:3}),canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;status.textContent=`Reconhecendo colunas por OCR: página ${n}…`;const ocr=await Tesseract.recognize(canvas,'por');pageText=ocr.data.text;words=(ocr.data.words||[]).map(w=>({text:w.text,x:w.bbox.x0,y:w.bbox.y0,w:w.bbox.x1-w.bbox.x0,h:w.bbox.y1-w.bbox.y0}))}else{pageText=text;words=tc.items.map(x=>({text:x.str,x:x.transform[4],y:-x.transform[5],w:x.width,h:x.height||10}))}let found=structuredBirdRows(words);if(!found.length)found=parseIbamaRows(pageText);rows.push(...found);raw+=pageText+'\n'}if(rows.length){showBirdPreview(rows);status.textContent=`${rows.length} ave(s) identificada(s). Confira e confirme para salvar.`}else{status.textContent='Não foi possível identificar com segurança as colunas. Cole uma ave por linha abaixo, separando os campos por |.';document.getElementById('pdfReview').innerHTML='<p>Ordem: nome científico | nome individual | sexo | nascimento | tipo de anilha | diâmetro | código de anilha | situação | condição</p><textarea id="pdfText" style="width:100%;min-height:180px"></textarea><button class="btn" onclick="showBirdPreview(document.getElementById(\'pdfText\').value.split(/\\n/).filter(x=>x.trim()).map(line=>Object.fromEntries(importFields.map(([k],i)=>[k,line.split(\'|\')[i]?.trim()||\'\']))))">Preparar prévia manual</button>';document.getElementById('pdfText').value=raw}}catch(e){status.textContent='Erro ao ler: '+e.message}};
 // Uma linha por série; registros sem série permanecem individuais.
+function unusedRoutineDates(template,dates){
+ const signature=task=>JSON.stringify([task.name,task.date,[...birdIds(task.bird)].sort()]);
+ const known=new Set(db.tasks.filter(task=>task.status!=='CANCELADA'||task.seriesId===template.seriesId).map(signature));
+ return dates.filter(date=>!known.has(signature({...template,date})));
+}
+function routineExtension(group){
+ const first=group[0],last=group.at(-1);
+ if(!first.seriesId||!Number.isSafeInteger(first.intervalDays)||first.intervalDays<1)return null;
+ const start=first.seriesStart||first.date;
+ const days=first.intervalDays;
+ const existingEnd=group.reduce((end,task)=>task.seriesEnd>end?task.seriesEnd:end,'');
+ const today=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});
+ const after=existingEnd>last.date?existingEnd:last.date;
+ const limit=routineEnd(start,5);
+ if(!limit||after>=limit||today>=limit)return null;
+ const dates=routineDates(start,days,limit)
+  .filter(date=>date>last.date&&date>=after&&date>=today);
+ const eligible=unusedRoutineDates(last,dates);
+ const years=routineYears.filter(year=>{
+  const end=routineEnd(start,year);
+  return end>after&&eligible.some(date=>date<end);
+ });
+ return years.length?{start,last,eligible,years}:null;
+}
+function extendRoutine(idValue){
+ const group=taskGroups().find(rows=>rows[0].id===idValue);
+ const extension=group&&routineExtension(group);
+ if(!extension)return toast('Não há novas datas disponíveis dentro do limite de 5 anos.');
+ const {start,last,eligible,years}=extension;
+ modal('Prorrogar rotina',`<form id="routineExtensionForm">
+  <p>Duração total a partir de ${fmtDate(start)}. Última ocorrência cadastrada: ${fmtDate(last.date)}.</p>
+  <label for="extensionYears">Nova duração total</label>
+  <select id="extensionYears" name="extensionYears">${routineYearOptions(years)}</select>
+  <p id="extensionSummary" aria-live="polite"></p>
+  <button type="submit" class="btn">Prorrogar rotina</button>
+ </form>`);
+ const form=document.getElementById('routineExtensionForm');
+ const selection=()=>{
+  const end=routineEnd(start,Number(form.elements.extensionYears.value));
+  return {end,dates:eligible.filter(date=>date<end)};
+ };
+ const describe=()=>{
+  const {dates}=selection();
+  form.querySelector('#extensionSummary').textContent=dates.length?
+   `${dates.length} novas ocorrências de ${fmtDate(dates[0])} até ${fmtDate(dates.at(-1))}.`:'Nenhuma nova ocorrência disponível.';
+ };
+ form.addEventListener('change',describe);
+ describe();
+ form.addEventListener('submit',event=>{
+  event.preventDefault();
+  const current=taskGroups().find(rows=>rows[0].seriesId===last.seriesId);
+  const updated=current&&routineExtension(current);
+  const {end}=selection();
+  const year=Number(form.elements.extensionYears.value);
+  if(!updated?.years.includes(year))return toast('As datas da rotina mudaram. Abra a prorrogação novamente.');
+  const dates=updated.eligible.filter(date=>date<end);
+  const before=JSON.stringify(db),stamp=new Date().toISOString();
+  const {done,completedAt,...template}=updated.last;
+  db.tasks.push(...dates.map(date=>({...template,id:`${template.seriesId}_${date}`,date,seriesStart:start,
+   seriesEnd:end,status:'PENDENTE',createdAt:stamp,updatedAt:stamp})));
+  if(!persist('tasks','PRORROGAR SÉRIE',last)){
+   db=JSON.parse(before);
+   return toast('Não foi possível salvar a prorrogação.');
+  }
+  closeModal();render();toast('Rotina prorrogada.');
+ });
+}
 function taskGroups(){const groups=new Map();for(const t of db.tasks){const key=t.seriesId?'series:'+t.seriesId:'task:'+t.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(t)}return [...groups.values()].map(g=>g.sort((a,b)=>a.date.localeCompare(b.date)))}
 let taskReminderDay='';
 function taskReminderPanel(){
@@ -1903,10 +2008,10 @@ function taskReminderPanel(){
   }).join('')}</ul>`:'<p>Nenhuma atividade registrada nesta data.</p>'}
  </section>`;
 }
-const genericBeforeGroups=generic;generic=function(type){if(type!=='tasks')return genericBeforeGroups(type);const day=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});return header('Rotinas de manejo','Uma linha por rotina. As ocorrências ficam em Ver datas.','Nova rotina','new:tasks')+taskReminderPanel()+table(['Atividade','Aves','Intervalo','Próxima pendente','Pendentes / atrasadas','Ações'],taskGroups().map(g=>{const t=g[0],pending=g.filter(x=>!['CONCLUÍDA','CANCELADA'].includes(x.status)),next=pending[0],ref=next||t;return [esc(t.name),String(new Set(g.flatMap(x=>birdIds(x.bird))).size),t.intervalDays?`A cada ${t.intervalDays} dias`:'Individual',next?fmtDate(next.date):'Sem pendências',`${pending.length} / ${pending.filter(x=>x.date<day).length}`,`<button class="btn small secondary" data-series-view="${esc(t.id)}">Ver datas</button> <button class="btn small secondary" data-edit="tasks" data-id="${esc(ref.id)}">Editar rotina</button> ${next?`<button class="btn small" data-series-complete="${esc(next.id)}">Concluir ${fmtDate(next.date)}</button> <button class="btn small danger" data-series-cancel="${esc(t.id)}">Cancelar próximas</button>`:''}`]}))};
+const genericBeforeGroups=generic;generic=function(type){if(type!=='tasks')return genericBeforeGroups(type);const day=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});return header('Rotinas de manejo','Uma linha por rotina. As ocorrências ficam em Ver datas.','Nova rotina','new:tasks')+taskReminderPanel()+table(['Atividade','Aves','Intervalo','Próxima pendente','Pendentes / atrasadas','Ações'],taskGroups().map(g=>{const t=g[0],pending=g.filter(x=>!['CONCLUÍDA','CANCELADA'].includes(x.status)),next=pending[0],ref=next||t;return [esc(t.name),String(new Set(g.flatMap(x=>birdIds(x.bird))).size),t.intervalDays?`A cada ${t.intervalDays} dias`:'Individual',next?fmtDate(next.date):'Sem pendências',`${pending.length} / ${pending.filter(x=>x.date<day).length}`,`<button class="btn small secondary" data-series-view="${esc(t.id)}">Ver datas</button> ${routineExtension(g)?`<button class="btn small secondary" data-series-extend="${esc(t.id)}">Prorrogar rotina</button>`: ''} <button class="btn small secondary" data-edit="tasks" data-id="${esc(ref.id)}">Editar rotina</button> ${next?`<button class="btn small" data-series-complete="${esc(next.id)}">Concluir ${fmtDate(next.date)}</button> <button class="btn small danger" data-series-cancel="${esc(t.id)}">Cancelar próximas</button>`:''}`]}))};
 function showTaskDates(idValue,month=''){const t=getRecord('tasks',idValue);if(!t)return;const all=db.tasks.filter(x=>t.seriesId?x.seriesId===t.seriesId:x.id===t.id).sort((a,b)=>a.date.localeCompare(b.date));const selected=month||all.find(x=>!['CONCLUÍDA','CANCELADA'].includes(x.status))?.date.slice(0,7)||all[0].date.slice(0,7);modal('Datas da rotina: '+t.name,`<label>Mês <input type="month" value="${esc(selected)}" data-series-month="${esc(t.id)}"></label>`+table(['Data','Situação','Ação'],all.filter(x=>x.date.startsWith(selected)).map(x=>[fmtDate(x.date),esc(x.status||'PENDENTE'),`<button class="btn small secondary" data-edit="tasks" data-id="${esc(x.id)}">Editar ocorrência</button> ${!['CONCLUÍDA','CANCELADA'].includes(x.status)?`<button class="btn small" data-series-complete="${esc(x.id)}">Concluir ${fmtDate(x.date)}</button>`:''}`])))}
 document.addEventListener('change',e=>{if(e.target.dataset.seriesMonth)showTaskDates(e.target.dataset.seriesMonth,e.target.value)});
-document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.seriesView)return showTaskDates(b.dataset.seriesView);if(b.dataset.seriesComplete){const t=getRecord('tasks',b.dataset.seriesComplete);if(!t||['CONCLUÍDA','CANCELADA'].includes(t.status)||!confirm('Confirmar execução de '+t.name+' prevista para '+fmtDate(t.date)+'?'))return;const previous=JSON.stringify(db);t.status='CONCLUÍDA';t.completedAt=new Date().toISOString();t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});if(!persist('tasks','CONCLUIR',t)){db=JSON.parse(previous);return}closeModal();render()}if(b.dataset.seriesCancel){const t=getRecord('tasks',b.dataset.seriesCancel),day=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});const rows=db.tasks.filter(x=>(t.seriesId?x.seriesId===t.seriesId:x.id===t.id)&&x.date>=day&&!['CONCLUÍDA','CANCELADA'].includes(x.status));if(!rows.length)return toast('SEM OCORRÊNCIAS FUTURAS PENDENTES.');if(!confirm('Cancelar '+rows.length+' ocorrências a partir de hoje? Atrasadas e concluídas serão preservadas.'))return;const previous=JSON.stringify(db);rows.forEach(x=>{x.status='CANCELADA';x.updatedAt=new Date().toISOString()});if(!persist('tasks','CANCELAR PRÓXIMAS',t)){db=JSON.parse(previous);return}render()}});
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.seriesExtend)return extendRoutine(b.dataset.seriesExtend);if(b.dataset.seriesView)return showTaskDates(b.dataset.seriesView);if(b.dataset.seriesComplete){const t=getRecord('tasks',b.dataset.seriesComplete);if(!t||['CONCLUÍDA','CANCELADA'].includes(t.status)||!confirm('Confirmar execução de '+t.name+' prevista para '+fmtDate(t.date)+'?'))return;const previous=JSON.stringify(db);t.status='CONCLUÍDA';t.completedAt=new Date().toISOString();t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});if(!persist('tasks','CONCLUIR',t)){db=JSON.parse(previous);return}closeModal();render()}if(b.dataset.seriesCancel){const t=getRecord('tasks',b.dataset.seriesCancel),day=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});const rows=db.tasks.filter(x=>(t.seriesId?x.seriesId===t.seriesId:x.id===t.id)&&x.date>=day&&!['CONCLUÍDA','CANCELADA'].includes(x.status));if(!rows.length)return toast('SEM OCORRÊNCIAS FUTURAS PENDENTES.');if(!confirm('Cancelar '+rows.length+' ocorrências a partir de hoje? Atrasadas e concluídas serão preservadas.'))return;const previous=JSON.stringify(db);rows.forEach(x=>{x.status='CANCELADA';x.updatedAt=new Date().toISOString()});if(!persist('tasks','CANCELAR PRÓXIMAS',t)){db=JSON.parse(previous);return}render()}});
 
 // Recuperação complementar restrita ao formato explícito IBAMA OA.
 // Mantém integralmente o código; sugere conferência quando a coluna não foi lida.
