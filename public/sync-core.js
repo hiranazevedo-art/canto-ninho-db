@@ -1,7 +1,7 @@
 // Funções de sincronização usadas pela PWA e pela API de dados.
 (function () {
   'use strict';
-  const collections = ['birds', 'food', 'feedings', 'couples', 'seasons', 'attempts', 'nests',
+  const collections = ['birds', 'food', 'feedings', 'feedingPreferences', 'couples', 'seasons', 'attempts', 'nests',
     'eggs', 'chicks', 'tasks', 'health', 'trips', 'events', 'stock', 'movements', 'expenses',
     'revenues', 'facilities', 'transfers', 'documents', 'knowledge', 'pedigreeBirds', 'tournaments', 'audit'];
   const recordMap = rows => new Map((rows || []).map(row => [row.id, row]));
@@ -85,6 +85,7 @@
     eggs: { nest: 'nests' },
     chicks: { egg: 'eggs', nest: 'nests', couple: 'couples', plantelBirdId: 'birds' },
     feedings: { bird: 'birds', food: 'food' },
+    feedingPreferences: { bird: 'birds', feeder: 'food', vitaminHolder: 'food' },
     tasks: { bird: 'birds', facility: 'facilities' },
     documents: { bird: 'birds' },
     events: { bird: 'birds', sourceNest: 'nests', sourceChick: 'chicks' },
@@ -170,7 +171,7 @@
       }
     }
     for(const issue of integrityIssues(remote,result)){
-      if(issue.reason!=='egg-outcome')continue;
+      if(!['egg-outcome','feeding-period'].includes(issue.reason))continue;
       const change=localKeys.get(key(issue));
       if(change&&!conflicts.some(existing=>key(existing)===key(change)))
         conflicts.push({...change,label:issue.label});
@@ -231,6 +232,17 @@
       const label='Ovo marcado como não eclodido com filhote vinculado';
       issues.push({collection:'eggs',id:egg.id,label,reason:'egg-outcome'},
         {collection:'chicks',id:chick.id,label,reason:'egg-outcome'});
+    }
+    const periods=(next.feedingPreferences || []).slice().sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    const latestEndByBird=new Map();
+    for(const row of periods){
+      if(typeof row.bird!=='string'||!row.bird||typeof row.start!=='string'||typeof row.end!=='string')continue;
+      const bird=row.bird.toLowerCase(), latest=latestEndByBird.get(bird);
+      if(latest&&latest.end>=row.start){
+        for(const period of [latest,row])issues.push({collection:'feedingPreferences',id:period.id,
+          reason:'feeding-period',label:'Há observações com períodos sobrepostos para a mesma ave'});
+      }
+      if(!latest||row.end>latest.end)latestEndByBird.set(bird,row);
     }
     return issues;
   }

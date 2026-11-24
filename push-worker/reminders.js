@@ -32,14 +32,8 @@ export function remindersForDay(data,day){
   const waiting=data.eggs.filter(egg=>rowKey(egg.nest)===rowKey(nest.id)&&!egg.hatchedAt&&!unavailable.has(egg.status));
   if(waiting.some(egg=>['REGISTRADO','DESCONHECIDO',''].includes(egg.status||'')))
    add(daysFrom(nest.incubationStart,timing.check),'ovoscopy',nest.id,'Ovoscopia');
-  const dates=new Set();
-  for(const egg of waiting){
-   if(!validDate(nest.incubationStart))continue;
-   const start=validDate(egg.date)&&egg.date>nest.incubationStart?egg.date:nest.incubationStart;
-   const expected=daysFrom(start,timing.hatch);
-   if(expected)dates.add(expected);
-  }
-  for(const date of dates)add(daysFrom(date,-1),'hatching',nest.id,'Véspera da eclosão',date);
+  const expected=daysFrom(nest.incubationStart,timing.hatch);
+  if(waiting.length&&expected)add(daysFrom(expected,-1),'hatching',nest.id,'Véspera da eclosão',expected);
  }
  for(const chick of data.chicks){
   if(chick.ring)continue;

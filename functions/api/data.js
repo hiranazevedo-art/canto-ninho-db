@@ -134,10 +134,10 @@ async function writeDelta(db,owner,req){
   const replay=await operation();
   return replay?responseForReplay(replay):conflict(head.revision);
  }
- const protectedCollections=['birds','chicks','pedigreeBirds','eggs'];
+ const protectedCollections=['birds','chicks','pedigreeBirds','eggs','feedingPreferences'];
  if(changes.some(change=>protectedCollections.includes(change.collection))){
   const oldRecords=await db.prepare(`SELECT collection,record_id,value FROM sync_records
-   WHERE owner_id=? AND collection IN ('birds','chicks','pedigreeBirds','eggs') AND value IS NOT NULL`).bind(owner).all();
+   WHERE owner_id=? AND collection IN ('birds','chicks','pedigreeBirds','eggs','feedingPreferences') AND value IS NOT NULL`).bind(owner).all();
   const original=unpack(oldRecords.results);
   const issues=integrityIssues(original,apply(original,changes));
   if(issues.length)return json({error:issues[0].label},422);
@@ -163,7 +163,7 @@ async function writeDelta(db,owner,req){
 
 async function replaceData(db,owner,req){
  const {revision,data}=req;
- const optional=new Set(['revenues','pedigreeBirds','tournaments']);
+ const optional=new Set(['revenues','pedigreeBirds','tournaments','feedingPreferences']);
  if(!validDB(data)||!collections.every(name=>Array.isArray(data[name])||(optional.has(name)&&data[name]===undefined)))
   return json({error:'Dados incompatíveis'},400);
  let rows;
@@ -175,8 +175,9 @@ async function replaceData(db,owner,req){
   if(original.revision!==revision)return conflict(original.revision);
   const issues=integrityIssues(original.data,data);
   if(issues.length)return json({error:issues[0].label},422);
- }else if(integrityIssues(null,data).some(issue=>issue.reason==='egg-outcome')){
-  return json({error:'Há um ovo marcado como não eclodido com filhote vinculado.'},422);
+ }else{
+  const issue=integrityIssues(null,data).find(issue=>['egg-outcome','feeding-period'].includes(issue.reason));
+  if(issue)return json({error:issue.label},422);
  }
  const [, , , updated]=await db.batch([
   appendOperation(db,owner,revision,crypto.randomUUID(),'replacement',null),

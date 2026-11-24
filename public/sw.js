@@ -1,6 +1,6 @@
-const CACHE='canto-ninho-v15-catalogo';
+const CACHE='canto-ninho-v16-observacoes';
 const ASSETS=['./','./index.html','./icon-ninho-192.png','./icon-ninho-512.png','./manifest.webmanifest',
- './images/caboclinho.png','./sync-core.js','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
+ './images/caboclinho.png','./sync-core.js?v=16','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
