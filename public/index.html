@@ -768,7 +768,7 @@ function recordActions(type,record){
 }
 function generic(type){const cfg=configs[type],found=(type==='expenses'?expenseRows():db[type]).filter(x=>!query||Object.values(x).join(' ').includes(upper(query))||(type==='trips'&&birdIds(x.bird).some(ref=>{const bird=findBird(ref);return bird&&birdMatchesSearch(bird,query)})));return `${header(cfg.title,cfg.subtitle,'Novo registro','new:'+type)}<div class="toolbar"><input id="search" class="field" placeholder="Buscar registros..." value="${esc(query)}"></div>${table([...cfg.cols.map(c=>c[0]),'Ações'],found.map(x=>[...cfg.cols.map(c=>cellValue(type,x,c[1])),recordActions(type,x)]))}`}
 const reproTabs={couples:'Casais',seasons:'Temporadas',attempts:'Tentativas',nests:'Ninhadas',eggs:'Ovos',chicks:'Filhotes'};
-const quickReproActions={eggs:'Registrar postura',chicks:'Registrar nascimento',close:'Encerrar ninhada'};
+const quickReproActions={eggs:'Registrar postura',chicks:'Registrar nascimento',ring:'Registrar anilha',close:'Encerrar ninhada'};
 const reproOpenDetails=new Set();
 const nestResults=['Com filhotes','Sem nascimentos','Resultado parcial','Resultado não informado'];
 function pairLabel(couple){
@@ -793,7 +793,7 @@ function reproButton(action,coupleId,nestId='',primary=false){
 }
 function reproChickDetails(chick){
  return `<li><div><strong>${esc(chick.name)}</strong><div class="muted">Nascimento: ${fmtDate(chick.date)} · ${chick.ring?'Anilha: '+esc(chick.ring):'Sem anilha'}${chick.separatedAt?' · Separação: '+fmtDate(chick.separatedAt):''}</div></div>
- <div class="actions">${chick.plantelBirdId?'':`<button type="button" class="btn secondary small" data-repro-chick="${esc(chick.id)}" data-repro-field="ring">${chick.ring?'Editar anilha':'Registrar anilha'}</button>`}
+ <div class="actions">${String(chick.ring||'').trim()&&!chick.plantelBirdId?`<button type="button" class="btn secondary small" data-repro-chick="${esc(chick.id)}" data-repro-field="ring">Editar anilha</button>`:''}
  <button type="button" class="btn secondary small" data-repro-chick="${esc(chick.id)}" data-repro-field="separatedAt">${chick.separatedAt?'Editar separação':'Registrar separação'}</button>${chickPlantelAction(chick)}</div></li>`;
 }
 function reproNestDetails(nest){
@@ -804,8 +804,6 @@ function reproNestDetails(nest){
   ${nestEggRows(nest)}
   ${nest.closedAt?`<p class="muted">Encerrada em ${fmtDate(nest.closedAt)} · ${esc(nest.closeResult||'Resultado não informado')}</p>`:''}
   ${chicks.length?`<details data-repro-details="chicks:${esc(nest.id)}" ${reproOpenDetails.has('chicks:'+nest.id)?'open':''}><summary>Filhotes (${chicks.length})</summary><ul class="repro-chicks">${chicks.map(reproChickDetails).join('')}</ul></details>`:''}
-  ${chicks.some(chick=>!String(chick.ring||'').trim()&&!chick.plantelBirdId)?
-   `<button type="button" class="btn secondary small" data-register-nest-ring="${esc(nest.id)}">Registrar anilha</button>`:''}
   ${renderNestTiming(nest)}
  </section>`;
 }
@@ -846,17 +844,31 @@ function reproPairCard(summary,selected){
   </button></h3>
  </article>`;
 }
+function pairChicksWithoutNest(coupleId){
+ return db.chicks.filter(chick=>{
+  const origin=lineage('chicks',chick);
+  return !origin.nest&&sameId(origin.couple?.id,coupleId);
+ });
+}
+function pairRingCandidates(nests,history){
+ const candidates=new Map();
+ for(const nest of nests){
+  for(const chick of nestChicks(nest.id)){
+   if(!candidates.has(chick.id))candidates.set(chick.id,{chick,nest});
+  }
+ }
+ for(const chick of history)candidates.set(chick.id,{chick});
+ return [...candidates.values()].filter(({chick})=>!String(chick.ring||'').trim()&&!chick.plantelBirdId);
+}
 function reproPairDetails(summary){
  const {couple,nests,open}=summary;
- const history=db.chicks.filter(chick=>{
-  const origin=lineage('chicks',chick);
-  return !origin.nest&&sameId(origin.couple?.id,couple.id);
- });
+ const history=pairChicksWithoutNest(couple.id);
  const suggested=open.length===1&&open[0].quickRepro?open[0].id:'';
  return `<section class="panel repro-card repro-detail" id="reproPairDetails" aria-labelledby="reproDetailsTitle">
   <div class="repro-detail-head"><h3 id="reproDetailsTitle" tabindex="-1">${esc(pairLabel(couple))}</h3>
   <button type="button" class="btn secondary small" data-repro-select="${esc(couple.id)}">Recolher</button></div>
   <div class="actions">${couple.end?'':reproButton('eggs',couple.id,suggested,!open.length)+reproButton('chicks',couple.id,suggested,!!open.length)}
+  ${pairRingCandidates(nests,history).length?reproButton('ring',couple.id):''}
   ${open.length?reproButton('close',couple.id,open.length===1?open[0].id:''):''}
   <button type="button" class="btn secondary small" data-edit="couples" data-id="${esc(couple.id)}">Editar casal</button></div>
   ${open.map(reproNestDetails).join('')}
@@ -1099,12 +1111,13 @@ function openQuickChick(chickId,field){
   closeModal();render();toast('Ficha do filhote atualizada.');
  };
 }
-function openNestRing(nestId){
- const chicks=nestChicks(nestId).filter(chick=>!String(chick.ring||'').trim()&&!chick.plantelBirdId);
- if(!chicks.length)return;
+function openPairRing(coupleId){
+ const candidates=()=>pairRingCandidates(pairNests(coupleId),pairChicksWithoutNest(coupleId));
+ const entries=candidates();
+ if(!entries.length)return;
  modal('Registrar anilha',`<form id="nestRingForm"><div class="form-grid">
   <div><label for="nestRingChick">Filhote *</label><select id="nestRingChick" name="chick" required>
-   <option value="">SELECIONE</option>${chicks.map(chick=>`<option value="${esc(chick.id)}" ${chicks.length===1?'selected':''}>${esc(chick.name||'Filhote')} · ${fmtDate(chick.date)}</option>`).join('')}
+   <option value="">SELECIONE</option>${entries.map(({chick,nest})=>`<option value="${esc(chick.id)}" ${entries.length===1?'selected':''}>${esc(chick.name||'Filhote')} · ${fmtDate(chick.date)} · ${esc(nest?(nest.name||'Ninhada'):'Sem ninhada vinculada')}</option>`).join('')}
   </select></div>
   ${input('ring','Código da anilha','text','',true)}
   </div><p class="form-feedback" role="alert" hidden></p>
@@ -1113,14 +1126,17 @@ function openNestRing(nestId){
  const form=document.getElementById('nestRingForm');
  form.onsubmit=event=>{
   event.preventDefault();
-  const chick=nestChicks(nestId).find(row=>row.id===form.elements.chick.value);
-  if(!chick||String(chick.ring||'').trim()||chick.plantelBirdId)
-   return formFeedback(form,'Selecione um filhote desta ninhada que ainda esteja sem anilha.');
+  const entry=candidates().find(({chick})=>chick.id===form.elements.chick.value);
+  if(!entry)return formFeedback(form,'Selecione um filhote deste casal que ainda esteja sem anilha.');
+  const {chick,nest}=entry;
   const ring=form.elements.ring.value.trim();
   if(!ring)return formFeedback(form,'Informe o código da anilha.');
   const error=saveQuickChick(chick.id,'ring',ring);
   if(error)return formFeedback(form,error);
-  reproOpenDetails.add('chicks:'+nestId);
+  if(nest){
+   reproOpenDetails.add('chicks:'+nest.id);
+   if(nest.closedAt)reproOpenDetails.add('closed:'+coupleId);
+  }else reproOpenDetails.add('legacy:'+coupleId);
   closeModal();render();toast('Anilha registrada.');
  };
 }
@@ -1131,9 +1147,9 @@ document.addEventListener('toggle',event=>{
  else reproOpenDetails.delete(nestId);
 },true);
 document.addEventListener('click',event=>{
- const button=event.target.closest('[data-repro-action],[data-repro-chick],[data-register-nest-ring]');
+ const button=event.target.closest('[data-repro-action],[data-repro-chick]');
  if(!button)return;
- if(button.dataset.registerNestRing)return openNestRing(button.dataset.registerNestRing);
+ if(button.dataset.reproAction==='ring')return openPairRing(button.dataset.reproPair);
  if(button.dataset.reproChick){
   for(const detail of button.closest('.repro-card').querySelectorAll('[data-repro-details][open]')){
    reproOpenDetails.add(detail.dataset.reproDetails);
