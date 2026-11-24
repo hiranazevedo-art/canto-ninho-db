@@ -3174,7 +3174,9 @@ function openNestTiming(nestId){
  const nest=getRecord('nests',nestId);
  if(!nest)return;
  const species=nestSpecies(nest),key=normalizeSpecies(species);
- const existing=nest.timing||db.settings.reproTiming?.[key]||{};
+ const defaults=newNestTiming(species);
+ const existing=nest.timing||defaults||db.settings.reproTiming?.[key]||{};
+ const canReuse=!!species&&!defaults;
  const ctx=lineage('nests',nest);
  const cages=db.facilities.filter(f=>upper(f.type)==='GAIOLA'&&(!cageUnavailable(f)||sameId(f.id,ctx.attempt?.facility)));
  modal('Datas da ninhada',`<form id="nestTimingForm"><p>${esc(nest.name||'Ninhada')}${species?' · '+esc(species):''}</p>
@@ -3183,9 +3185,17 @@ function openNestTiming(nestId){
   <div><label for="nestCage">Gaiola</label><select id="nestCage" name="facility"><option value="">SELECIONE</option>
   ${cages.map(c=>`<option value="${esc(c.id)}" ${sameId(c.id,ctx.attempt?.facility)?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
   ${timingFields.map(([key,label,min])=>input(key,label,'number',existing[key]??'',false,`min="${min}" max="365" step="1"`)).join('')}
-  </div>${species?'<label><input type="checkbox" name="reuse"> Usar estes prazos em novas ninhadas desta espécie</label>':''}
+  </div>${defaults&&timingFields.some(([key])=>existing[key]==null||existing[key]==='')?
+   '<button type="button" class="btn secondary small" data-fill-nest-timing>Preencher campos vazios com os prazos da espécie</button>':''}
+  ${canReuse?'<label><input type="checkbox" name="reuse"> Usar estes prazos em novas ninhadas desta espécie</label>':''}
   <p class="form-feedback" role="alert" hidden></p><div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Cancelar</button><button class="btn">Salvar datas</button></div></form>`);
  const form=document.getElementById('nestTimingForm');
+ form.querySelector('[data-fill-nest-timing]')?.addEventListener('click',()=>{
+  for(const [key] of timingFields){
+   const field=form.elements.namedItem(key);
+   if(field.value===''&&!field.validity.badInput)field.value=defaults[key];
+  }
+ });
  form.onsubmit=event=>{
   event.preventDefault();
   const data=new FormData(form);
@@ -3202,7 +3212,7 @@ function openNestTiming(nestId){
   const previous=JSON.stringify(db);
   Object.assign(current,{incubationStart,timing,updatedAt:new Date().toISOString()});
   if(attempt)attempt.facility=facility;
-  if(key&&data.has('reuse'))db.settings.reproTiming={...db.settings.reproTiming,[key]:timing};
+  if(canReuse&&data.has('reuse'))db.settings.reproTiming={...db.settings.reproTiming,[key]:timing};
   const failure=finishReproChange('nests','ATUALIZAR DATAS REPRODUTIVAS',current,previous);
   if(failure)return formFeedback(form,failure);
   closeModal();render();toast('Datas da ninhada atualizadas.');
