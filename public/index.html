@@ -707,7 +707,10 @@ document.addEventListener('click',event=>{
 
 const stockCatalog=new Map([
  [accessoryCategory,new Map(['COMEDOURO','BEBEDOURO','NINHO','PORTA-VITAMINAS','BANHEIRA','TIGELAS','POLEIROS'].map(name=>[name,'']))],
- [cageCategory,new Map([['GAIOLA INDIVIDUAL',''],['GAIOLA DE CRIAÇÃO',''],['GAIOLA DE TRANSPORTE','']])],
+ [cageCategory,new Map([
+  'GAIOLA INDIVIDUAL','GAIOLA VOADEIRA','VIVEIRO','GAIOLA CAMPEADA',
+  'GAIOLA DE REPRODUÇÃO','GAIOLA DE TRANSPORTE'
+ ].map(name=>[name,'']))],
  [grainStockCategory,new Map([
   ['MISTURA BALANCEADA',''],
   ['PAINÇO COMUM',''],['PAINÇO PORTUGUÊS',''],['PAINÇO VERDE',''],['PAINÇO VERMELHO',''],
