@@ -726,7 +726,7 @@ const stockCatalog=new Map([
  ])]
 ]);
 const configs={
- food:{title:'Catálogo de alimentos',subtitle:'Alimentos disponíveis para registrar fornecimentos.',fields:[['name','Nome','text',true],['category','Categoria','choices',['RAÇÃO EXTRUSADA','FARINHADAS','FARINHA DE OSTRA','VERDURAS','FRUTAS','OUTROS ALIMENTOS']],['notes','Observações','textarea']],cols:[['Alimento','name'],['Categoria','category']]},
+ food:{title:'Catálogo de alimentos',subtitle:'Alimentos disponíveis para registrar fornecimentos.',fields:[['name','Nome','text',true],['category','Categoria','choices',['RAÇÃO EXTRUSADA','FARINHADAS','FARINHA DE OSTRA','VERDURAS','FRUTAS','SEMENTES','OUTROS ALIMENTOS']],['notes','Observações','textarea']],cols:[['Alimento','name'],['Categoria','category']]},
  feedings:{title:'Registros de alimentação',subtitle:'Histórico do que foi oferecido a cada ave.',fields:[['bird','Ave','bird'],['group','Grupo (opcional)','text'],['food','Alimento','food',true],['quantity','Quantidade','number'],['unit','Unidade','choices',['G','KG','ML','UNIDADE','PORÇÃO']],['frequency','Frequência','text'],['date','Data de início','date',true],['end','Data de encerramento','date'],['time','Horário','time'],['notes','Observações / alterações da dieta','textarea']],cols:[['Ave / grupo','bird'],['Alimento','food'],['Quantidade','quantity'],['Início','date'],['Frequência','frequency']]},
  couples:{title:'Casais',subtitle:'Formação e acompanhamento de casais.',fields:[['male','Macho','male',true],['female','Fêmea','female',true],['start','Data de formação','date',true],['end','Separação','date'],['notes','Observações','textarea']],cols:[['Macho','male'],['Fêmea','female'],['Formação','start'],['Situação','end']]},
  seasons:{title:'Temporadas',subtitle:'Controle das temporadas reprodutivas.',fields:[['name','Identificação','text',true],['start','Início','date',true],['end','Encerramento','date'],['notes','Observações','textarea']],cols:[['Temporada','name'],['Início','start'],['Fim','end']]},
@@ -1719,6 +1719,27 @@ for(const t of ['attempts','nests','eggs','chicks'])configs[t].cols.push(['Orige
 configs.food.fields.push(['composition','Composição percentual','textarea']);
 configs.food.cols.push(['Composição','composition']);
 const defaultFoodId='default-sporophila-seed-mix-v1';
+const catalogSeeds=[
+ ['alpiste','ALPISTE'],
+ ['painco-amarelo','PAINÇO COMUM (AMARELO)','PAINÇO COMUM','PAINÇO AMARELO'],
+ ['painco-verde','PAINÇO VERDE'],
+ ['milheto-miudo','MILHETO MIÚDO'],
+ ['painco-vermelho','PAINÇO VERMELHO'],
+ ['painco-preto','PAINÇO PRETO'],
+ ['senha','SENHA'],
+ ['perila-branca','PERILA BRANCA']
+];
+function ensureCatalogSeeds(){
+ const names=new Set(db.food.map(food=>normalizeSpecies(food.name)));
+ const ids=new Set(db.food.map(food=>food.id));
+ const seeds=catalogSeeds.filter(([key,...labels])=>
+  !ids.has('catalog-seed-'+key)&&!labels.some(label=>names.has(normalizeSpecies(label))));
+ if(!seeds.length)return false;
+ db.food.push(...seeds.map(([key,name])=>({id:'catalog-seed-'+key,name,category:'SEMENTES',notes:''})));
+ if(save())return true;
+ db.food.splice(-seeds.length,seeds.length);
+ return false;
+}
 const oldSeedFoods=seedFoods;
 seedFoods=function(){oldSeedFoods();if(!db.food.some(f=>f.id===defaultFoodId)){db.food.push({id:defaultFoodId,name:'MISTURA BALANCEADA PARA PASSERIFORMES SILVESTRES (SPOROPHILA)',category:'OUTROS ALIMENTOS',composition:'Alpiste: 45%\nPainço comum (amarelo): 20%\nPainço verde / milheto miúdo: 10%\nPainço vermelho ou preto: 10%\nSenha: 10%\nPerila branca: 5%',notes:'Composição fornecida pelo usuário; editável no catálogo.',createdAt:new Date().toISOString()});save()}};
 const baseFormField=formField;
@@ -2383,6 +2404,7 @@ function cloudReady(revision){
  cloudState.retry=0;
  if(markCloudMeta(revision,false,false))cloudStatus('Sincronizado','synced');
  else cloudStatus('Dados salvos · confira a sincronização');
+ if(ensureCatalogSeeds())render();
  if(pendingReminderLink)followReminderLink(pendingReminderLink);
 }
 function cloudConflict(conflicts=[]){
@@ -3374,7 +3396,7 @@ async function launchCanto(){
   return;
  }
  if(!localStorage.getItem(LOCAL_JOURNAL_KEY)&&!realLocalSave())return;
- seedFoods();nav();render();
+ seedFoods();ensureCatalogSeeds();nav();render();
  rememberWorkingData();
  if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(console.warn);
  openCageLinkFromAddress();
