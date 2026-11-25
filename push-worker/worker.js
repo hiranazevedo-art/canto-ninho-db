@@ -4,17 +4,14 @@ import {pushEndpoint} from '../functions/lib/push-subscription.js';
 import {localClock,remindersForDay} from './reminders.js';
 
 const configuration=env=>env.VAPID_PUBLIC_KEY&&env.VAPID_PRIVATE_KEY&&env.VAPID_SUBJECT&&env.DB;
-function payload(reminder){
- const params=new URLSearchParams({lembrete:reminder.kind,ref:reminder.id,dia:reminder.date});
- if(reminder.extra)params.set('prev',reminder.extra);
- return {title:'Canto & Ninho',body:reminder.label+(reminder.kind==='management'?'':' · consulte a Agenda.'),tag:reminder.key,hash:params.toString()};
-}
 async function deliver(env,device,message){
  const endpoint=pushEndpoint(device.endpoint);
  if(!endpoint)throw Error('Endpoint inválido.');
  const subscription={endpoint,keys:{p256dh:device.p256dh,auth:device.auth_key}};
  const vapidDetails={subject:env.VAPID_SUBJECT,publicKey:env.VAPID_PUBLIC_KEY,privateKey:env.VAPID_PRIVATE_KEY};
- const details=webPush.generateRequestDetails(subscription,JSON.stringify(message),{vapidDetails,TTL:14400});
+ // Keep lock-screen text generic, including on browsers with a cached service worker.
+ const payload={...message,account:device.owner_id,device:device.device_id};
+ const details=webPush.generateRequestDetails(subscription,JSON.stringify(payload),{vapidDetails,TTL:3600});
  const response=await fetch(endpoint,{method:'POST',headers:details.headers,body:details.body,
   redirect:'manual',signal:AbortSignal.timeout(10000)});
  await response.body?.cancel();
@@ -76,7 +73,7 @@ async function sendScheduled(env,date){
     .bind(reminder.key,date.getTime(),owner,device.device_id,revision).run();
    if(!claim.meta.changes)continue;
    // Keep the claim even after an uncertain response to avoid duplicate notifications.
-   try{if(!await deliver(env,device,payload(reminder)))console.warn('Lembrete recusado pelo serviço push.');}
+   try{if(!await deliver(env,device,{body:'Você tem um lembrete. Consulte a Agenda.',tag:'agenda',hash:'lembrete=agenda'}))console.warn('Lembrete recusado pelo serviço push.');}
    catch(error){console.warn('Falha em envio de lembrete',error?.name);}
   }
  }

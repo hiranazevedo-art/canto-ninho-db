@@ -1,11 +1,11 @@
-import {auth,json,sameOrigin} from './_security.js';
+import {accountMatches,auth,json,sameOrigin} from './_security.js';
 import {pushEndpoint,pushDeviceId,subscriptionKeys} from '../lib/push-subscription.js';
 
 export async function onRequest({request,env}){
  const {DB,PUSH}=env;
  if(!DB||!PUSH)return json({error:'Notificações ainda não configuradas no servidor.'},503);
  const owner=await auth(request,env);
- if(typeof owner!=='string'||!owner)return json({error:'Entre na conta para gerenciar notificações.'},401);
+ if(typeof owner!=='string'||!owner||!accountMatches(request,owner))return json({error:'Entre na conta para gerenciar notificações.'},401);
  try{
   if(request.method==='GET'){
    return await PUSH.fetch('https://push.internal/key');

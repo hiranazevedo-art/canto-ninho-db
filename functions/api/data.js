@@ -1,4 +1,4 @@
-import {json,auth,validDB,sameOrigin,toHex} from './_security.js';
+import {accountMatches,json,auth,validDB,sameOrigin,toHex} from './_security.js';
 import '../../public/sync-core.js';
 
 const {collections,validChanges,integrityIssues,apply}=globalThis.CantoSync;
@@ -205,7 +205,7 @@ async function readBody(request){
 export async function onRequest({request,env}){
  if(!env.DB||!env.SESSION_SECRET)return json({error:'Configuração incompleta'},503);
  const owner=await auth(request,env);
- if(typeof owner!=='string'||!owner)return json({error:'Faça login para sincronizar'},401);
+ if(typeof owner!=='string'||!owner||!accountMatches(request,owner))return json({error:'Faça login para sincronizar'},401);
  const {method}=request;
  const db=env.DB;
  if(!['GET','PATCH','PUT'].includes(method))return json({error:'Método inválido'},405);

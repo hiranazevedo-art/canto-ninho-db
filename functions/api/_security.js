@@ -12,4 +12,9 @@ function sameOrigin(req){const origin=req.headers.get('origin');return !origin||
 const sessionCookie=token=>'canto_session='+encodeURIComponent(token)+'; Path=/api; HttpOnly; Secure; SameSite=Lax; Max-Age=1209600';
 const clearCookie='canto_session=; Path=/api; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
 const validDB=v=>v&&typeof v==='object'&&v.version===4&&v.settings&&Array.isArray(v.birds)&&Array.isArray(v.audit);
-export {json,toHex,sign,auth,derive,validDB,sameOrigin,sessionCookie,clearCookie};
+// Legacy clients operate only on the legacy owner account.
+function accountMatches(request,account){
+ const expected=request.headers.get('x-canto-account');
+ return expected===account||(expected===null&&account==='owner');
+}
+export {accountMatches,json,toHex,sign,auth,derive,validDB,sameOrigin,sessionCookie,clearCookie};

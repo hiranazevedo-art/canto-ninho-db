@@ -239,9 +239,54 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 :root[data-app-palette] .cloud-status[data-status="synced"]{color:var(--accent)}
 :root[data-app-palette] .cloud-status[data-status="conflict"]{background:#9b3d26;color:white}
 :root[data-app-palette] .status{background:var(--cream);color:var(--muted)}
-</style></head><body><div class="app"><aside class="sidebar" id="sidebar"><div class="logo"><img class="menu-logo" src="./icon-ninho-192.png" width="192" height="192" alt=""><strong>Canto &amp; Ninho</strong><button type="button" class="btn secondary mobile-close" id="menuClose" aria-label="Fechar menu">×</button></div><div class="nav-title">GESTÃO DO CRIADOURO</div><nav id="navigation" aria-label="Módulos"></nav><div class="side-foot">🌿 Seus dados são armazenados neste dispositivo. Faça backups regularmente.<br><br>Protótipo local, sem conexão a órgãos oficiais.</div></aside><button type="button" class="menu-backdrop" id="menuBackdrop" tabindex="-1" aria-label="Fechar menu" hidden></button><main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button><div><div class="eyebrow">PAINEL DE GERENCIAMENTO</div><h1 id="pageTitle" tabindex="-1">Início</h1></div></div><div class="topright"><button class="btn secondary small cloud-status" id="cloudButton" type="button" aria-label="Estado dos dados: Verificando nuvem">Verificando nuvem…</button><button class="btn secondary small" id="backupTop">↓ Backup</button></div></header><div id="content" class="content"></div></main><nav id="mobileNav" class="mobile-nav" aria-label="Atalhos principais"><button type="button" data-page="home"><span aria-hidden="true">⌂</span>Início</button><button type="button" data-page="birds"><span aria-hidden="true">♣</span>Plantel</button><button type="button" data-page="reproduction"><span aria-hidden="true">♡</span>Reprodução</button><button type="button" data-page="events"><span aria-hidden="true">▦</span>Agenda</button><button type="button" id="mobileMore" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span>Mais</button></nav></div><div id="modalRoot"></div><div id="toastRoot"></div><div id="welcomeRoot"></div><script src="./sync-core.js?v=16"></script><script src="./vendor/qrcode-generator.js"></script><script src="./vendor/jspdf.umd.min.js"></script><script src="./vendor/jsQR.js"></script><script>
+</style></head><body><div class="app" style="display:none"><aside class="sidebar" id="sidebar"><div class="logo"><img class="menu-logo" src="./icon-ninho-192.png" width="192" height="192" alt=""><strong>Canto &amp; Ninho</strong><button type="button" class="btn secondary mobile-close" id="menuClose" aria-label="Fechar menu">×</button></div><div class="nav-title">GESTÃO DO CRIADOURO</div><nav id="navigation" aria-label="Módulos"></nav><div class="side-foot">🌿 Seus dados são armazenados neste dispositivo. Faça backups regularmente.<br><br>Protótipo local, sem conexão a órgãos oficiais.</div></aside><button type="button" class="menu-backdrop" id="menuBackdrop" tabindex="-1" aria-label="Fechar menu" hidden></button><main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button><div><div class="eyebrow">PAINEL DE GERENCIAMENTO</div><h1 id="pageTitle" tabindex="-1">Início</h1></div></div><div class="topright"><button class="btn secondary small cloud-status" id="cloudButton" type="button" aria-label="Estado dos dados: Verificando nuvem">Verificando nuvem…</button><button class="btn secondary small" id="backupTop">↓ Backup</button></div></header><div id="content" class="content"></div></main><nav id="mobileNav" class="mobile-nav" aria-label="Atalhos principais"><button type="button" data-page="home"><span aria-hidden="true">⌂</span>Início</button><button type="button" data-page="birds"><span aria-hidden="true">♣</span>Plantel</button><button type="button" data-page="reproduction"><span aria-hidden="true">♡</span>Reprodução</button><button type="button" data-page="events"><span aria-hidden="true">▦</span>Agenda</button><button type="button" id="mobileMore" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span>Mais</button></nav></div><div id="modalRoot"></div><div id="toastRoot"></div><div id="welcomeRoot"></div><script src="./sync-core.js?v=16"></script><script src="./vendor/qrcode-generator.js"></script><script src="./vendor/jspdf.umd.min.js"></script><script src="./vendor/jsQR.js"></script><script>
 'use strict';
-const KEY='caboclinho_manager_v04';
+(async function(){
+const ACCOUNT_MARKER='canto_active_account';
+const accountChannel=globalThis.BroadcastChannel?new BroadcastChannel('canto-account'):null;
+const accountPattern=/^(owner|pilot:[a-z0-9][a-z0-9_-]{2,31})$/;
+let loadedAccount=null;
+try{loadedAccount=JSON.parse(localStorage.getItem(ACCOUNT_MARKER)||'null')}catch{}
+function storeAccount(account){
+ if(account)localStorage.setItem(ACCOUNT_MARKER,JSON.stringify({account,until:Date.now()+14*86400000}));
+ else localStorage.removeItem(ACCOUNT_MARKER);
+}
+async function sessionAccount(){
+ const response=await fetch('/api/account',{cache:'no-store',signal:AbortSignal.timeout(8000)});
+ if(!response.ok)throw Error('Sessão indisponível');
+ const {account}=await response.json();
+ return accountPattern.test(account)?account:null;
+}
+let activeAccount=null;
+let sessionVerified=false;
+try{
+ activeAccount=await sessionAccount();
+ sessionVerified=true;
+}catch{
+ if(loadedAccount?.until>Date.now()&&accountPattern.test(loadedAccount.account))activeAccount=loadedAccount.account;
+}
+if(sessionVerified&&(loadedAccount?.account!==activeAccount||(activeAccount&&loadedAccount.until<Date.now()))){
+ try{storeAccount(activeAccount)}catch(error){console.warn('Sessão local indisponível',error.name)}
+}
+function reloadAccount(){
+ document.querySelector('.app').style.display='none';
+ document.getElementById('cloudModal')?.replaceChildren();
+ location.reload();
+}
+window.addEventListener('storage',event=>{
+ if(event.key===ACCOUNT_MARKER||event.key===null){
+  let account=null;
+  try{account=JSON.parse(localStorage.getItem(ACCOUNT_MARKER)||'null')?.account??null}catch{}
+  if(account!==activeAccount)reloadAccount();
+ }
+});
+if(accountChannel)accountChannel.onmessage=event=>{if(event.data!==activeAccount)reloadAccount()};
+window.addEventListener('pageshow',event=>{if(event.persisted)reloadAccount()});
+async function verifyAccount(){
+ try{if(await sessionAccount()!==activeAccount)reloadAccount()}catch{}
+}
+window.addEventListener('online',verifyAccount);
+const KEY='caboclinho_manager_v04'+(activeAccount==='owner'?'':'_'+(activeAccount||'guest'));
 const LOCAL_JOURNAL_KEY=KEY+'_journal';
 const collections=['birds','food','feedings','feedingPreferences','couples','seasons','attempts','nests','eggs','chicks','tasks','health','trips','events','stock','movements','expenses','revenues','facilities','transfers','documents','knowledge','pedigreeBirds','tournaments'];
 const optionalCollections=new Set(['revenues','pedigreeBirds','tournaments','feedingPreferences']);
@@ -1950,7 +1995,7 @@ window.history.replaceState({...window.history.state,cantoPage:page},'',window.l
 window.addEventListener('popstate',e=>{
  if(document.querySelector('#modalRoot .modal'))closeModal();
  if(document.querySelector('#cloudModal .cloud-panel'))cloudClose();
- if(e.state?.cantoPage)go(e.state.cantoPage,{history:false});
+ if(activeAccount&&e.state?.cantoPage)go(e.state.cantoPage,{history:false});
 });document.getElementById('backupTop').onclick=backup;
 // Integração incremental. Mantém KEY, versão e registros legados.
 const referenceCollections={bird:'birds',father:'birds',mother:'birds',male:'birds',female:'birds',food:'food',couple:'couples',season:'seasons',attempt:'attempts',nest:'nests',egg:'eggs',stock:'stock',facility:'facilities'};
@@ -2189,20 +2234,34 @@ const interval=intervals[v.name];
 const end=interval&&!old?routineEnd(v.date,Number(f.elements.routineYears.value)):'';
 if(interval&&!old&&!end)return toast('SELECIONE UMA DURAÇÃO DE 1 A 5 ANOS.');const before=JSON.stringify(db),stamp=new Date().toISOString();if(old){const future=f.elements.seriesScope?.value==='future';if(future&&(v.date!==old.date||v.name!==old.name))return toast('PARA ALTERAR DATA OU ATIVIDADE DA SÉRIE, CANCELE AS PRÓXIMAS E CRIE OUTRA.');const rows=future?db.tasks.filter(t=>t.seriesId===old.seriesId&&t.date>=old.date&&!['CONCLUÍDA','CANCELADA'].includes(t.status)):[old];if(!rows.length)return toast('NÃO HÁ OCORRÊNCIAS PENDENTES PARA EDITAR.');if(!confirm(`Salvar alterações em ${rows.length} ocorrência(s)?`))return;rows.forEach(t=>{const date=t.date;Object.assign(t,v,{updatedAt:stamp});if(future)t.date=date;if(v.status==='CONCLUÍDA'&&!t.completedAt){t.completedAt=stamp;t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'})}})}else{const targets=interval?routineDates(v.date,interval,end):[v.date];const fresh=unusedRoutineDates(v,targets);if(!fresh.length)return toast('ESSAS OCORRÊNCIAS JÁ ESTÃO CADASTRADAS.');if(!confirm(`Criar ${fresh.length} ocorrência(s), de ${fmtDate(fresh[0])} até ${fmtDate(fresh.at(-1))}?`))return;const sid=id();fresh.forEach((date,i)=>db.tasks.push({...v,id:id(),date,seriesId:sid,seriesStart:v.date,seriesEnd:end,intervalDays:interval||null,status:i===0?v.status:'PENDENTE',...(i===0&&v.status==='CONCLUÍDA'?{completedAt:stamp,done:v.date}:{}),createdAt:stamp,updatedAt:stamp}))}if(!persist('tasks','SALVAR SÉRIE',{id:old?.id||''})){db=JSON.parse(before);return toast('NÃO FOI POSSÍVEL SALVAR.')}closeModal();render();toast('AGENDA SALVA.')};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-complete]');if(!b)return;e.stopImmediatePropagation();const t=getRecord('tasks',b.dataset.complete);if(!t||['CONCLUÍDA','CANCELADA'].includes(t.status))return;const before=JSON.stringify(db);t.status='CONCLUÍDA';t.completedAt=new Date().toISOString();t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});if(!persist('tasks','CONCLUIR',t)){db=JSON.parse(before);return}render();toast('TAREFA CONCLUÍDA.')},true);
-const birdsPrevious=birds;birds=function(){return '<div class="toolbar"><button class="btn secondary" onclick="openPDFImport()">Inserir arquivo · PDF</button></div>'+birdsPrevious()};
+const birdsPrevious=birds;birds=function(){return '<div class="toolbar"><button class="btn secondary" data-action="importPDF">Inserir arquivo · PDF</button></div>'+birdsPrevious()};
 const settingsPrevious=settings;settings=function(){const r=db.settings.reminders||{};return settingsPrevious()+`<div class="panel"><h3>Lembretes no celular</h3><p class="notice">WhatsApp não conectado. Estas preferências não ativam envios. É necessário servidor, agendador, conta oficial, modelos aprovados e webhook de confirmação.</p><form id="reminderForm"><div class="form-grid">${input('phone','Celular com código do país','tel',r.phone||'')}${input('time','Horário do lembrete','time',r.time||'08:00')}${input('advance','Antecedência em dias','number',r.advance||0,false,'min="0" max="30"')}<div><label><input name="consent" type="checkbox" ${r.consent?'checked':''}> Autorizo receber lembretes no WhatsApp</label><label><input name="enabled" type="checkbox" ${r.enabled?'checked':''}> Desejo ativar após a integração</label></div></div><p class="helper">Fuso: ${esc(db.settings.timezone)}. Confirmar execução pelo WhatsApp ficará disponível após a integração; nenhum token deve ser inserido neste arquivo.</p><button class="btn">Salvar preferências</button></form></div>`};
 document.addEventListener('submit',e=>{if(e.target.id!=='reminderForm')return;e.preventDefault();const f=new FormData(e.target),before=JSON.stringify(db);db.settings.reminders={phone:String(f.get('phone')).trim(),time:f.get('time'),advance:Number(f.get('advance')),consent:f.has('consent'),enabled:f.has('enabled'),integrationStatus:'NOT_CONFIGURED',updatedAt:new Date().toISOString()};if(!save()){db=JSON.parse(before);return}toast('PREFERÊNCIAS SALVAS. WHATSAPP AINDA NÃO CONECTADO.')});
 let importRows=[];
+document.addEventListener('change',event=>{
+ if(event.target.matches('[data-task-month]')){taskMonth=event.target.value;render()}
+});
+const handleImportAction=handleAction;
+handleAction=function(action){
+ if(action==='importPDF')return openPDFImport();
+ if(action==='preparePDF')return prepareImport();
+ if(action==='commitPDF')return commitImport();
+ if(action==='previewPDF'){
+  const rows=document.getElementById('pdfText').value.split(/\n/).filter(line=>line.trim());
+  return showBirdPreview(rows.map(line=>Object.fromEntries(importFields.map(([key],index)=>[key,line.split('|')[index]?.trim()||'']))));
+ }
+ return handleImportAction(action);
+};
 function openPDFImport(){ibamaSourceRows=[];modal('Importar relação de aves',`<p>Selecione o PDF. A extração ocorre no navegador; o documento não é enviado a terceiros. Bibliotecas de leitura e OCR são baixadas pela internet.</p><input id="birdPDF" type="file" accept="application/pdf"><p id="pdfProgress" role="status"></p><div id="pdfReview"></div>`);document.getElementById('birdPDF').onchange=e=>readBirdPDF(e.target.files[0])}
 function loadLib(src,test){if(test())return Promise.resolve();return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=()=>test()?resolve():reject(Error('Biblioteca indisponível'));s.onerror=()=>reject(Error('Não foi possível baixar a biblioteca. Verifique a conexão.'));document.head.append(s)})}
-async function readBirdPDF(file){if(!file)return;const progress=document.getElementById('pdfProgress');try{progress.textContent='Lendo PDF…';await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let text='';for(let i=1;i<=doc.numPages;i++){progress.textContent=`Lendo página ${i}/${doc.numPages}…`;const page=await doc.getPage(i),content=await page.getTextContent();if(!unusablePDFText(content.items.map(x=>x.str).join(' '))){const lines=new Map();for(const item of content.items){const y=Math.round(item.transform[5]/3)*3;if(!lines.has(y))lines.set(y,[]);lines.get(y).push(item)}text+=[...lines].sort((a,b)=>b[0]-a[0]).map(([,items])=>items.sort((a,b)=>a.transform[4]-b.transform[4]).map(x=>x.str).join(' | ')).join('\n')+'\n'}else{progress.textContent=`Reconhecendo página digitalizada ${i}…`;await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>window.Tesseract);const viewport=page.getViewport({scale:2}),canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;const result=await Tesseract.recognize(canvas,'por');text+=result.data.text+'\n'}}progress.textContent='Extração concluída. Confira o texto e indique as colunas; nenhum registro foi salvo.';document.getElementById('pdfReview').innerHTML=`<p>Texto extraído (editável): mantenha uma ave por linha e separe as colunas com |. Remova cabeçalhos e rodapés. Campos ausentes devem ficar vazios.</p><textarea id="pdfText" style="width:100%;min-height:200px"></textarea><p>Informe a posição de cada coluna (1, 2, 3…). Deixe em branco se não existir.</p><div class="form-grid">${['ring:Anilha','scientific:Nome científico','sex:Sexo','name:Nome','status:Situação cadastral','condition:Condição de manejo'].map(x=>{const [k,l]=x.split(':');return input('map_'+k,l,'number','',false,'min="1"')}).join('')}</div><button class="btn" onclick="prepareImport()">Preparar prévia</button><div id="importPreview"></div>`;document.getElementById('pdfText').value=text;autoIbamaPreview(text)}catch(err){progress.textContent='Falha na leitura: '+err.message}}
-function prepareImport(){const keys=['ring','scientific','sex','name','status','condition'];const mappings=Object.fromEntries(keys.map(k=>[k,Number(document.querySelector('[name="map_'+k+'"]').value)||0]));importRows=document.getElementById('pdfText').value.split(/\r?\n/).filter(x=>x.trim()).map(line=>{const cells=line.split('|').map(x=>x.trim());return Object.fromEntries(keys.map(k=>[k,mappings[k]?cells[mappings[k]-1]||'':'']))});document.getElementById('importPreview').innerHTML='<p>Revise cada ave. Anilha e nome científico são necessários para a importação. Valores desconhecidos não serão inventados.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Importar</th>'+keys.map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr></thead><tbody>'+importRows.map((r,i)=>'<tr><td><input type="checkbox" data-import-row="'+i+'" checked></td>'+keys.map(k=>'<td><input aria-label="'+k+' linha '+(i+1)+'" data-import-key="'+k+'" data-row="'+i+'" value="'+esc(r[k])+'" style="min-width:130px"></td>').join('')+'</tr>').join('')+'</tbody></table></div><button class="btn" onclick="commitImport()">Confirmar importação</button><p id="importResult" role="status"></p>'}
+async function readBirdPDF(file){if(!file)return;const progress=document.getElementById('pdfProgress');try{progress.textContent='Lendo PDF…';await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let text='';for(let i=1;i<=doc.numPages;i++){progress.textContent=`Lendo página ${i}/${doc.numPages}…`;const page=await doc.getPage(i),content=await page.getTextContent();if(!unusablePDFText(content.items.map(x=>x.str).join(' '))){const lines=new Map();for(const item of content.items){const y=Math.round(item.transform[5]/3)*3;if(!lines.has(y))lines.set(y,[]);lines.get(y).push(item)}text+=[...lines].sort((a,b)=>b[0]-a[0]).map(([,items])=>items.sort((a,b)=>a.transform[4]-b.transform[4]).map(x=>x.str).join(' | ')).join('\n')+'\n'}else{progress.textContent=`Reconhecendo página digitalizada ${i}…`;await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>window.Tesseract);const viewport=page.getViewport({scale:2}),canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;const result=await Tesseract.recognize(canvas,'por');text+=result.data.text+'\n'}}progress.textContent='Extração concluída. Confira o texto e indique as colunas; nenhum registro foi salvo.';document.getElementById('pdfReview').innerHTML=`<p>Texto extraído (editável): mantenha uma ave por linha e separe as colunas com |. Remova cabeçalhos e rodapés. Campos ausentes devem ficar vazios.</p><textarea id="pdfText" style="width:100%;min-height:200px"></textarea><p>Informe a posição de cada coluna (1, 2, 3…). Deixe em branco se não existir.</p><div class="form-grid">${['ring:Anilha','scientific:Nome científico','sex:Sexo','name:Nome','status:Situação cadastral','condition:Condição de manejo'].map(x=>{const [k,l]=x.split(':');return input('map_'+k,l,'number','',false,'min="1"')}).join('')}</div><button class="btn" data-action="preparePDF">Preparar prévia</button><div id="importPreview"></div>`;document.getElementById('pdfText').value=text;autoIbamaPreview(text)}catch(err){progress.textContent='Falha na leitura: '+err.message}}
+function prepareImport(){const keys=['ring','scientific','sex','name','status','condition'];const mappings=Object.fromEntries(keys.map(k=>[k,Number(document.querySelector('[name="map_'+k+'"]').value)||0]));importRows=document.getElementById('pdfText').value.split(/\r?\n/).filter(x=>x.trim()).map(line=>{const cells=line.split('|').map(x=>x.trim());return Object.fromEntries(keys.map(k=>[k,mappings[k]?cells[mappings[k]-1]||'':'']))});document.getElementById('importPreview').innerHTML='<p>Revise cada ave. Anilha e nome científico são necessários para a importação. Valores desconhecidos não serão inventados.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Importar</th>'+keys.map(k=>'<th>'+esc(k)+'</th>').join('')+'</tr></thead><tbody>'+importRows.map((r,i)=>'<tr><td><input type="checkbox" data-import-row="'+i+'" checked></td>'+keys.map(k=>'<td><input aria-label="'+k+' linha '+(i+1)+'" data-import-key="'+k+'" data-row="'+i+'" value="'+esc(r[k])+'" style="min-width:130px"></td>').join('')+'</tr>').join('')+'</tbody></table></div><button class="btn" data-action="commitPDF">Confirmar importação</button><p id="importResult" role="status"></p>'}
 function commitImport(){const before=JSON.stringify(db);let added=0,duplicates=0,review=0;const messages=[];document.querySelectorAll('[data-import-row]:checked').forEach(check=>{const i=Number(check.dataset.importRow),r={};document.querySelectorAll('[data-row="'+i+'"]').forEach(el=>r[el.dataset.importKey]=el.value.trim());if(!r.ring||!r.scientific){review++;messages.push('Linha '+(i+1)+': falta anilha ou nome científico');return}if(db.birds.some(b=>upper(b.ring||'').replace(/\s+/g,'')===upper(r.ring).replace(/\s+/g,''))){duplicates++;return}const normalized=sexValue(r.sex);if(r.sex&&normalized==='NÃO IDENTIFICADO'&&!['NÃO IDENTIFICADO','DESCONHECIDO'].includes(upper(r.sex))){review++;messages.push('Linha '+(i+1)+': revisar sexo');return}for(const [k,choices]of [['status',db.settings.statuses],['condition',db.settings.conditions]]){if(r[k]&&!choices.some(x=>upper(x)===upper(r[k]))){review++;messages.push('Linha '+(i+1)+': revisar '+k);return}}db.birds.push({...r,sex:normalized,father:'',mother:'',id:id(),createdAt:new Date().toISOString(),importSource:'PDF conferido pelo usuário',...(ibamaSourceRows[i]?{sourceMetadata:{...ibamaSourceRows[i],needsReview:true}}:{})});added++});if(added&&!persist('birds','IMPORTAR PDF',{count:added})){db=JSON.parse(before);document.getElementById('importResult').textContent='Falha ao salvar; nenhum cadastro foi mantido.';return}render();document.getElementById('importResult').textContent=`Importadas: ${added}. Já cadastradas: ${duplicates}. Revisão: ${review}. ${messages.join('; ')}`}
 // Preserve document text and ring case while reviewing the import.
 document.addEventListener('input',e=>{if(e.target.id==='pdfText'||e.target.hasAttribute('data-import-key'))e.stopImmediatePropagation()},true);
 let taskMonth=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'}).slice(0,7);
 const genericPrevious=generic;
-generic=function(type){const base=genericPrevious(type);if(type!=='tasks')return base;const rows=db.tasks.filter(t=>t.date?.startsWith(taskMonth)).sort((a,b)=>a.date.localeCompare(b.date));return `<div class="panel"><h3>Calendário de manejo</h3><label>Mês <input type="month" class="field" value="${esc(taskMonth)}" onchange="taskMonth=this.value;render()"></label>${table(['Data','Atividade','Situação','Ação'],rows.map(t=>[fmtDate(t.date),esc(t.name),esc(t.status||'PENDENTE'),`<button class="btn small secondary" data-edit="tasks" data-id="${esc(t.id)}">Editar</button> ${!['CONCLUÍDA','CANCELADA'].includes(t.status)?`<button class="btn small" data-complete="${esc(t.id)}">Concluir</button>`:''}`]))}${!rows.length?'<p class="muted">Nenhuma atividade neste mês.</p>':''}</div>`+base};
+generic=function(type){const base=genericPrevious(type);if(type!=='tasks')return base;const rows=db.tasks.filter(t=>t.date?.startsWith(taskMonth)).sort((a,b)=>a.date.localeCompare(b.date));return `<div class="panel"><h3>Calendário de manejo</h3><label>Mês <input type="month" class="field" value="${esc(taskMonth)}" data-task-month></label>${table(['Data','Atividade','Situação','Ação'],rows.map(t=>[fmtDate(t.date),esc(t.name),esc(t.status||'PENDENTE'),`<button class="btn small secondary" data-edit="tasks" data-id="${esc(t.id)}">Editar</button> ${!['CONCLUÍDA','CANCELADA'].includes(t.status)?`<button class="btn small" data-complete="${esc(t.id)}">Concluir</button>`:''}`]))}${!rows.length?'<p class="muted">Nenhuma atividade neste mês.</p>':''}</div>`+base};
 
 function unusablePDFText(text){const bad=(text.match(/[\x00-\x08\x0b\x0e-\x1f\ufffd]/g)||[]).length;return text.trim().length<20||bad/Math.max(text.length,1)>.01}
 function parseIbamaRows(text){const rows=[];for(const raw of text.split(/\r?\n/)){const line=raw.replace(/\|/g,' ').replace(/\s+/g,' ').trim();const m=line.match(/^\d+\s+([A-Z][a-z]+\s+[a-z]+(?:\s+[a-z]+)?)\s+(.+?)\s+(M|F|MACHO|FÊMEA|FEMEA|I|INDETERMINADO)\s+(\d{2}\/\d{2}\/\d{4})\s+(anilha\s+(?:fechada|aberta))\s+([\d.,]+)\s+(.+)$/i);if(!m)continue;rows.push({scientific:m[1],commonName:m[2],sex:sexValue(m[3]),birthDate:parseBRDate(m[4])||'',ringType:m[5],ringDiameter:m[6],ring:m[7],name:'',status:'',condition:'',sourceLine:raw})}return rows}
@@ -2255,12 +2314,12 @@ document.addEventListener('input',event=>{
 });
 document.addEventListener('change',e=>{const f=e.target.closest('form');if(!f)return;if(e.target.matches('[data-bird-birth-picker]'))f.elements.birthDate.value=e.target.value?fmtDate(e.target.value):'';if(e.target.matches('[data-bird-birth]'))f.querySelector('[data-bird-birth-picker]').value=parseBRDate(e.target.value)||''});
 const importFields=[['scientific','Nome científico'],['name','Nome individual'],['sex','Sexo'],['birthDate','Nascimento (DD/MM/AAAA)'],['ringType','Tipo de anilha'],['ringDiameter','Diâmetro'],['ring','Código de anilha'],['status','Situação cadastral'],['condition','Condição de manejo']];
-function showBirdPreview(rows){importRows=rows;document.getElementById('pdfReview').innerHTML='<p>Confira todos os campos. Informações incertas permanecem em branco. O nome comum da espécie não é utilizado como nome individual.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Importar</th>'+importFields.map(x=>'<th>'+x[1]+'</th>').join('')+'<th>Revisão</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-import-row="'+i+'" checked></td>'+importFields.map(([k,l])=>'<td><input data-import-key="'+k+'" data-row="'+i+'" aria-label="'+l+'" value="'+esc(k==='birthDate'&&/^\d{4}-/.test(r[k]||'')?fmtDate(r[k]):r[k]||'')+'" style="min-width:145px"></td>').join('')+'<td>'+esc(r.review||'Conferir leitura, especialmente anilha e espécie.')+'</td></tr>').join('')+'</tbody></table></div><button class="btn" onclick="commitImport()">Confirmar importação</button><p id="importResult" role="status"></p>'}
+function showBirdPreview(rows){importRows=rows;document.getElementById('pdfReview').innerHTML='<p>Confira todos os campos. Informações incertas permanecem em branco. O nome comum da espécie não é utilizado como nome individual.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Importar</th>'+importFields.map(x=>'<th>'+x[1]+'</th>').join('')+'<th>Revisão</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-import-row="'+i+'" checked></td>'+importFields.map(([k,l])=>'<td><input data-import-key="'+k+'" data-row="'+i+'" aria-label="'+l+'" value="'+esc(k==='birthDate'&&/^\d{4}-/.test(r[k]||'')?fmtDate(r[k]):r[k]||'')+'" style="min-width:145px"></td>').join('')+'<td>'+esc(r.review||'Conferir leitura, especialmente anilha e espécie.')+'</td></tr>').join('')+'</tbody></table></div><button class="btn" data-action="commitPDF">Confirmar importação</button><p id="importResult" role="status"></p>'}
 commitImport=function(){const before=JSON.stringify(db);let added=0,duplicates=0,review=0;const errors=[];for(const check of document.querySelectorAll('[data-import-row]:checked')){const i=Number(check.dataset.importRow),r={};document.querySelectorAll('[data-row="'+i+'"]').forEach(el=>r[el.dataset.importKey]=el.value.trim());const birth=parseBRDate(r.birthDate||'');if(!r.scientific||!r.ring||birth===null){review++;errors.push('Linha '+(i+1)+': confira espécie, código e nascimento.');continue}const sx=sexValue(r.sex);if(r.sex&&sx==='NÃO IDENTIFICADO'&&!['NÃO IDENTIFICADO','DESCONHECIDO'].includes(upper(r.sex))){review++;errors.push('Linha '+(i+1)+': sexo incerto.');continue}if(db.birds.some(b=>upper(b.ring||'').replace(/\s/g,'')===upper(r.ring).replace(/\s/g,''))){duplicates++;continue}if([['status',db.settings.statuses],['condition',db.settings.conditions]].some(([k,list])=>r[k]&&!list.some(x=>upper(x)===upper(r[k])))){review++;errors.push('Linha '+(i+1)+': situação ou condição não cadastrada.');continue}db.birds.push({...r,birthDate:birth,sex:sx,father:'',mother:'',id:id(),createdAt:new Date().toISOString(),importSource:'PDF revisado',sourceMetadata:{commonName:importRows[i]?.commonName||'',reviewedAt:new Date().toISOString()}});added++}if(added&&!persist('birds','IMPORTAR PDF',{count:added})){db=JSON.parse(before);return document.getElementById('importResult').textContent='Falha ao salvar. Nenhum registro mantido.'}render();document.getElementById('importResult').textContent=`Importadas: ${added}. Já cadastradas: ${duplicates}. Revisão: ${review}. ${errors.join(' ')}`};
 function normalized(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
 function structuredBirdRows(words){const lines=[];for(const w of words.slice().sort((a,b)=>a.y-b.y||a.x-b.x)){let l=lines.find(l=>Math.abs(l.y-(w.y+w.h/2))<Math.max(6,w.h*.55));if(!l){l={y:w.y+w.h/2,items:[]};lines.push(l)}l.items.push(w)}let columns=null;const result=[];for(const l of lines){l.items.sort((a,b)=>a.x-b.x);const txt=normalized(l.items.map(x=>x.text).join(' '));if(txt.includes('sexo')&&txt.includes('nascimento')){const specs=[['scientific','cient'],['commonName','comum'],['sex','sexo'],['birthDate','nascimento'],['ringType','tipo'],['ringDiameter','diam'],['ring','digo']];columns=specs.map(([key,token])=>{const index=l.items.findIndex(w=>normalized(w.text).includes(token));if(index<0)return null;const word=l.items[index];return {key,x:word.x,right:word.x+word.w}});if(columns.some(x=>!x)){columns=null;continue}columns.forEach((c,i)=>c.left=i?(columns[i-1].right+c.x)/2:-Infinity);continue}if(!columns)continue;if(/aten[cç]|observa/.test(txt))break;const cells={};for(const w of l.items){const c=columns.slice().reverse().find(c=>w.x+w.w/2>=c.left);if(c)cells[c.key]=(cells[c.key]?cells[c.key]+' ':'')+w.text}if(cells.scientific)cells.scientific=cells.scientific.replace(/^\d+\s+/,'');if(cells.scientific&&/^[A-Za-z]+\s+[a-z]+/.test(cells.scientific)&&cells.ring&&(/\d{2}\/\d{2}\/\d{4}/.test(cells.birthDate||'')||/anilha/i.test(cells.ringType||''))){cells.birthDate=parseBRDate((cells.birthDate||'').replace(/\s/g,''))||'';const sex=sexValue(cells.sex);cells.review=sex==='NÃO IDENTIFICADO'?'Sexo não reconhecido; confira a imagem.':'Conferir OCR antes de salvar.';cells.sex=sex==='NÃO IDENTIFICADO'?'':sex;result.push(cells)}}return result}
 parseIbamaRows=function(text){const result=[];const lines=text.split(/\r?\n/);for(let i=0;i<lines.length;i++){let line=lines[i].replace(/\|/g,' ').trim();if(!/^(?:\d+\s+)?[A-Z][a-z]+\s+[a-z]+\b/.test(line))continue;while(i+1<lines.length&&/^\s*[\d.,]+(?:\s+\d+)?\s*$/.test(lines[i+1]))line+=' '+lines[++i].trim();const m=line.match(/^(?:\d+\s+)?([A-Z][a-z]+\s+[a-z]+)\s+(.*?)\s+([^\s]+)\s+(\d{2}\/\d{2}\/\d{4})\s+(anilha\s*(?:fechada|aberta))\s*(.*)$/i);if(!m)continue;let tail=m[6].trim(),diam='';const dm=tail.match(/^([\d.,]+)\s+/);if(dm){diam=dm[1];tail=tail.slice(dm[0].length)}if(!tail)continue;const sx=sexValue(m[3]);result.push({scientific:m[1],commonName:m[2],sex:sx==='NÃO IDENTIFICADO'?'':sx,birthDate:parseBRDate(m[4])||'',ringType:m[5].replace(/^anilha\s*/i,'anilha '),ringDiameter:diam,ring:tail,review:sx==='NÃO IDENTIFICADO'?'Sexo incerto: '+m[3]+'. Confira também o diâmetro.':'Conferir espécie e código de anilha.'})}return result};
-readBirdPDF=async function(file){if(!file)return;const status=document.getElementById('pdfProgress');try{status.textContent='Lendo documento…';await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let rows=[],raw='';for(let n=1;n<=pdf.numPages;n++){status.textContent=`Analisando página ${n}/${pdf.numPages}…`;const page=await pdf.getPage(n),tc=await page.getTextContent(),text=tc.items.map(x=>x.str).join(' ');let words,pageText;if(unusablePDFText(text)){await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>window.Tesseract);const vp=page.getViewport({scale:3}),canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;status.textContent=`Reconhecendo colunas por OCR: página ${n}…`;const ocr=await Tesseract.recognize(canvas,'por');pageText=ocr.data.text;words=(ocr.data.words||[]).map(w=>({text:w.text,x:w.bbox.x0,y:w.bbox.y0,w:w.bbox.x1-w.bbox.x0,h:w.bbox.y1-w.bbox.y0}))}else{pageText=text;words=tc.items.map(x=>({text:x.str,x:x.transform[4],y:-x.transform[5],w:x.width,h:x.height||10}))}let found=structuredBirdRows(words);if(!found.length)found=parseIbamaRows(pageText);rows.push(...found);raw+=pageText+'\n'}if(rows.length){showBirdPreview(rows);status.textContent=`${rows.length} ave(s) identificada(s). Confira e confirme para salvar.`}else{status.textContent='Não foi possível identificar com segurança as colunas. Cole uma ave por linha abaixo, separando os campos por |.';document.getElementById('pdfReview').innerHTML='<p>Ordem: nome científico | nome individual | sexo | nascimento | tipo de anilha | diâmetro | código de anilha | situação | condição</p><textarea id="pdfText" style="width:100%;min-height:180px"></textarea><button class="btn" onclick="showBirdPreview(document.getElementById(\'pdfText\').value.split(/\\n/).filter(x=>x.trim()).map(line=>Object.fromEntries(importFields.map(([k],i)=>[k,line.split(\'|\')[i]?.trim()||\'\']))))">Preparar prévia manual</button>';document.getElementById('pdfText').value=raw}}catch(e){status.textContent='Erro ao ler: '+e.message}};
+readBirdPDF=async function(file){if(!file)return;const status=document.getElementById('pdfProgress');try{status.textContent='Lendo documento…';await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let rows=[],raw='';for(let n=1;n<=pdf.numPages;n++){status.textContent=`Analisando página ${n}/${pdf.numPages}…`;const page=await pdf.getPage(n),tc=await page.getTextContent(),text=tc.items.map(x=>x.str).join(' ');let words,pageText;if(unusablePDFText(text)){await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>window.Tesseract);const vp=page.getViewport({scale:3}),canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;status.textContent=`Reconhecendo colunas por OCR: página ${n}…`;const ocr=await Tesseract.recognize(canvas,'por');pageText=ocr.data.text;words=(ocr.data.words||[]).map(w=>({text:w.text,x:w.bbox.x0,y:w.bbox.y0,w:w.bbox.x1-w.bbox.x0,h:w.bbox.y1-w.bbox.y0}))}else{pageText=text;words=tc.items.map(x=>({text:x.str,x:x.transform[4],y:-x.transform[5],w:x.width,h:x.height||10}))}let found=structuredBirdRows(words);if(!found.length)found=parseIbamaRows(pageText);rows.push(...found);raw+=pageText+'\n'}if(rows.length){showBirdPreview(rows);status.textContent=`${rows.length} ave(s) identificada(s). Confira e confirme para salvar.`}else{status.textContent='Não foi possível identificar com segurança as colunas. Cole uma ave por linha abaixo, separando os campos por |.';document.getElementById('pdfReview').innerHTML='<p>Ordem: nome científico | nome individual | sexo | nascimento | tipo de anilha | diâmetro | código de anilha | situação | condição</p><textarea id="pdfText" style="width:100%;min-height:180px"></textarea><button class="btn" data-action="previewPDF">Preparar prévia manual</button>';document.getElementById('pdfText').value=raw}}catch(e){status.textContent='Erro ao ler: '+e.message}};
 // Uma linha por série; registros sem série permanecem individuais.
 function unusedRoutineDates(template,dates){
  const signature=task=>JSON.stringify([task.name,task.date,[...birdIds(task.bird)].sort()]);
@@ -2620,7 +2679,7 @@ document.addEventListener('change',e=>{if(speciesDraft&&e.target.name==='feature
 // Sincronização automática Cloudflare D1. Os dados legados permanecem sob a mesma chave.
 const CLOUD_META_KEY=KEY+'_cloud_meta_v2';
 function readCloudMeta(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY))||null}catch{return null}}
-const cloudState={token:sessionStorage.getItem('canto_cloud_token')||'',revision:null,ready:false,pending:false,busy:false,sequence:0,timer:null,conflict:false,meta:readCloudMeta(),retry:0,checking:false,reading:false,importing:false,needsLogin:false};
+const cloudState={revision:null,ready:false,pending:false,busy:false,sequence:0,timer:null,conflict:false,meta:readCloudMeta(),retry:0,checking:false,reading:false,importing:false,needsLogin:false};
 const cloudButton=document.getElementById('cloudButton');
 const cloudModal=document.createElement('div');
 cloudModal.id='cloudModal';
@@ -2659,6 +2718,7 @@ function cloudStatus(message,status=''){
  if(statusText)statusText.textContent=message;
 }
 function cloudClose(){
+ if(!activeAccount)return;
  cloudModal.innerHTML='';
  setBackgroundInert();
  focusAfterClose(cloudButton);
@@ -2671,25 +2731,101 @@ function cloudDialog(html){
 function cloudNeedsLogin(message='Salvo neste aparelho · entrar'){
  cloudState.ready=false;
  cloudState.needsLogin=true;
- cloudState.token='';
- sessionStorage.removeItem('canto_cloud_token');
+ void verifyAccount();
  cloudStatus(message);
 }
-function cloudShow(mode='login',message=''){
- const isSignup=mode==='register';cloudDialog(`<h2 id="cloudTitle">Acesso ao Canto &amp; Ninho</h2><p>A conexão será automática nos próximos acessos neste navegador. O primeiro acesso exige a senha do criadouro. Registros locais existentes nunca são substituídos sem conferência.</p><form id="cloudForm"><label for="cloudPassword">Senha do criadouro (mínimo 12 caracteres)</label><input id="cloudPassword" name="password" type="password" minlength="12" maxlength="128" autocomplete="${isSignup?'new-password':'current-password'}" required>
- <button type="button" class="btn secondary small password-visibility" id="cloudShowPassword" aria-controls="cloudPassword">Mostrar senha</button>${isSignup?'<label for="cloudSetupCode">Código de ativação cadastrado no Cloudflare</label><input id="cloudSetupCode" name="setupCode" type="password" required autocomplete="off">':''}<div class="error" id="cloudError" role="alert">${esc(message)}</div><div class="cloud-actions"><button class="btn secondary" type="button" id="cloudDismiss">Agora não</button><button class="btn" type="submit">${isSignup?'Criar acesso':'Entrar'}</button></div></form><p>Primeiro acesso? <button type="button" class="btn secondary small" id="cloudSwitch">${isSignup?'Já tenho uma senha':'Criar conta inicial'}</button></p>`);
- const showPassword=document.getElementById('cloudShowPassword');
- const password=document.getElementById('cloudPassword');
+function withPushLock(operation){
+ return navigator.locks?navigator.locks.request('canto-push-context',operation):operation();
+}
+async function currentPushRegistration(){
+ return navigator.serviceWorker?.getRegistration();
+}
+async function finishAccountSwitch(registration,subscription,account){
+ try{storeAccount(account)}catch(error){console.warn('Sessão local indisponível',error.name)}
+ accountChannel?.postMessage(account);
+ try{
+  if(subscription)await subscription.unsubscribe();
+  for(const notification of await registration?.getNotifications()||[])notification.close();
+ }catch(error){console.warn('Não foi possível limpar a inscrição de notificações',error.name)}
+ reloadAccount();
+}
+function cloudShow(mode='login',message='',inviteToken=''){
+ const isSignup=mode==='register', invited=mode==='redeem', creating=isSignup||invited;
+ cloudDialog(`<h2 id="cloudTitle">${invited?'Ativar convite':'Acesso ao Canto &amp; Ninho'}</h2>
+ <p>${invited?'Defina sua senha pessoal para entrar no seu criadouro.':'Entre para acessar os registros do seu criadouro.'}</p>
+ <form id="cloudForm">
+ ${!creating?'<label for="cloudLogin">Identificador recebido no convite (a conta proprietária deixa em branco)</label><input id="cloudLogin" name="login" maxlength="32" autocomplete="username" autocapitalize="none">':''}
+ <label for="cloudPassword">Senha ${creating?'(mínimo 12 caracteres)':''}</label><input id="cloudPassword" name="password" type="password" ${creating?'minlength="12"':''} maxlength="128" autocomplete="${creating?'new-password':'current-password'}" required>
+ <button type="button" class="btn secondary small password-visibility" id="cloudShowPassword" aria-controls="cloudPassword">Mostrar senha</button>
+ ${invited?'<label for="cloudConfirm">Confirme a senha</label><input id="cloudConfirm" name="confirmation" type="password" autocomplete="new-password" maxlength="128" required>':''}
+ ${isSignup?'<label for="cloudSetupCode">Código de ativação cadastrado no Cloudflare</label><input id="cloudSetupCode" name="setupCode" type="password" required autocomplete="off">':''}
+ <div class="error" id="cloudError" role="alert">${esc(message)}</div><div class="cloud-actions">
+ ${activeAccount?'<button class="btn secondary" type="button" id="cloudDismiss">Voltar</button>':''}
+ <button class="btn" type="submit">${creating?'Criar acesso':'Entrar'}</button></div></form>
+ <p><button type="button" class="btn secondary small" id="cloudSwitch">${creating?'Voltar para entrar':'Configurar conta proprietária'}</button></p>`);
+ const showPassword=document.getElementById('cloudShowPassword'), password=document.getElementById('cloudPassword');
  showPassword.onclick=()=>{
   const show=password.type==='password';
   password.type=show?'text':'password';
   showPassword.textContent=show?'Ocultar senha':'Mostrar senha';
  };
- document.getElementById('cloudDismiss').onclick=cloudClose;
- document.getElementById('cloudSwitch').onclick=()=>cloudShow(isSignup?'login':'register');
- document.getElementById('cloudForm').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,btn=form.querySelector('button[type=submit]');btn.disabled=true;try{const values=Object.fromEntries(new FormData(form));await cloudAPI('/api/account','POST',{action:isSignup?'register':'login',...values},'');cloudState.token='';sessionStorage.removeItem('canto_cloud_token');cloudState.needsLogin=false;await cloudInitialize();if(form.isConnected)cloudClose()}catch(err){const error=form.querySelector('#cloudError');if(error&&form.isConnected)error.textContent=err.message}finally{btn.disabled=false}}
+ const dismiss=document.getElementById('cloudDismiss');
+ if(dismiss)dismiss.onclick=cloudShowStatus;
+ document.getElementById('cloudSwitch').onclick=()=>cloudShow(creating?'login':'register');
+ document.getElementById('cloudForm').onsubmit=async event=>{
+  event.preventDefault();
+  const form=event.currentTarget, button=form.querySelector('[type=submit]');
+  const {confirmation,...values}=Object.fromEntries(new FormData(form));
+  const error=form.querySelector('#cloudError');
+  if(invited&&confirmation!==values.password){error.textContent='As senhas são diferentes.';return}
+  button.disabled=true;
+  try{
+   await withPushLock(async()=>{
+    const registration=await currentPushRegistration();
+    const subscription=await registration?.pushManager?.getSubscription();
+    const {account}=await cloudAPI('/api/account','POST',{action:mode,...values,...(invited?{token:inviteToken}:{})});
+    if(invited)history.replaceState(null,'',location.pathname+location.search);
+    await finishAccountSwitch(registration,activeAccount===account?null:subscription,account);
+   });
+  }catch(err){error.textContent=err.message}
+  finally{button.disabled=false}
+ };
 }
-async function cloudAPI(path,method='GET',body=null,token=cloudState.token){const res=await fetch(path,{method,credentials:'same-origin',headers:{...(body?{'content-type':'application/json'}:{}),...(token?{authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});let data;try{data=await res.json()}catch{throw Error('API da Cloudflare não respondeu com JSON.')}if(!res.ok){const err=Error(data.error||'Erro HTTP '+res.status);err.status=res.status;throw err}return data}
+async function cloudAPI(path,method='GET',body=null){
+ const headers=body?{'content-type':'application/json'}:{};
+ if(activeAccount)headers['x-canto-account']=activeAccount;
+ const res=await fetch(path,{method,credentials:'same-origin',headers,body:body?JSON.stringify(body):undefined,cache:'no-store'});
+ let data;
+ try{data=await res.json()}catch{throw Error('API da Cloudflare não respondeu com JSON.')}
+ if(!res.ok){const err=Error(data.error||'Erro HTTP '+res.status);err.status=res.status;throw err}
+ return data;
+}
+function cloudShowInvites(){
+ cloudDialog(`<h2 id="cloudTitle">Convites do piloto</h2><p>Crie um convite por criador. Cada link pode ser usado uma vez em até sete dias. O piloto tem três vagas.</p>
+ <form id="pilotInviteForm"><label for="pilotLogin">Identificador do criador</label>
+ <input id="pilotLogin" name="login" required minlength="3" maxlength="32" placeholder="Ex.: criadouro-azul" autocapitalize="none">
+ <p id="pilotFeedback" role="status"></p><div id="pilotLink"></div>
+ <div class="cloud-actions"><button type="button" class="btn secondary" id="pilotBack">Voltar</button>
+ <button class="btn" type="submit">Gerar convite</button></div></form>`);
+ document.getElementById('pilotBack').onclick=cloudShowStatus;
+ document.getElementById('pilotInviteForm').onsubmit=async event=>{
+  event.preventDefault();
+  const form=event.currentTarget, button=form.querySelector('[type=submit]');
+  const result=document.getElementById('pilotLink'), feedback=document.getElementById('pilotFeedback');
+  button.disabled=true;result.replaceChildren();feedback.textContent='';
+  try{
+   const {login,token,expiresAt}=await cloudAPI('/api/account','POST',{action:'createInvite',login:form.login.value});
+   const url=new URL(location.pathname,location.origin);
+   url.hash=new URLSearchParams({convite:token});
+   feedback.textContent='Identificador: '+login+' · Válido até '+new Date(expiresAt*1000).toLocaleString('pt-BR')+'. Envie o link e o identificador ao criador.';
+   const link=document.createElement('input');
+   link.readOnly=true;link.value=url.href;link.setAttribute('aria-label','Link do convite');
+   link.onclick=()=>link.select();
+   result.append(link);link.select();
+  }catch(error){feedback.textContent=error.message}
+  finally{button.disabled=false}
+ };
+}
 function hasRealRecords(data){return !!(data.settings?.setupComplete||collections.some(c=>c!=='food'&&Array.isArray(data[c])&&data[c].length))}
 function cloudLocalSafetyCopy(){
  const key=KEY+'_reserva_nuvem_recente';
@@ -2741,7 +2877,7 @@ let syncBase=null, incrementalCloud=false, syncConflicts=[];
 function syncLocalDatabase(){
  if(!storageHandle)storageHandle=new Promise((resolve,reject)=>{
   if(!globalThis.indexedDB)return reject(Error('IndexedDB indisponível'));
-  const request=indexedDB.open('canto_ninho_local',2);
+  const request=indexedDB.open('canto_ninho_local'+(activeAccount==='owner'?'':'_'+activeAccount),2);
   request.onupgradeneeded=()=>{
    const database=request.result;
    if(!database.objectStoreNames.contains('sync'))database.createObjectStore('sync');
@@ -2827,7 +2963,7 @@ async function readWorkingData(){
      [col,ids.map(id=>byKey.get(JSON.stringify([col,id])))]));
     if(Object.values(lists).some(rows=>rows.includes(undefined)))return resolve(null);
     const data={...state.extra,version:state.version,settings:state.settings,...lists};
-    mirroredData=data;
+    mirroredData=copySyncData(data);
     resolve({data,meta:state.meta,token:state.token});
    };
    tx.onerror=tx.onabort=()=>resolve(null);
@@ -2899,6 +3035,7 @@ async function rebaseCloud(remote){
  return true;
 }
 async function cloudInitialize(){
+ if(!activeAccount)return;
  if(cloudState.checking||cloudState.reading||cloudState.busy||cloudState.importing||cloudState.conflict)return;
  if(cloudState.meta?.localOnly){cloudStatus('Backup restaurado · salvo neste aparelho');return}
  cloudState.checking=true;
@@ -3077,7 +3214,7 @@ async function cloudRecover(){
 }
 function cloudShowStatus(){
  const entry=cloudState.needsLogin?'Entrar':'Verificar sincronização';
- cloudDialog(`<h2 id="cloudTitle">Dados do criadouro</h2><p role="status" data-cloud-status>${esc(cloudButton.textContent)}</p>
+ cloudDialog(`<h2 id="cloudTitle">Dados do criadouro</h2><p role="status" data-cloud-status>${esc(cloudButton.textContent)}</p>${new URLSearchParams(location.hash.slice(1)).has('convite')?'<p>Saia da conta ativa para usar o convite neste aparelho.</p>':''}<p>${activeAccount==='owner'?'Conta proprietária':esc(activeAccount?.slice(6))}</p>
   ${cloudState.ready?`<p class="helper">${incrementalCloud?'Sincronização por registro':'Sincronização por cópia integral'}</p>`:''}
   ${cloudState.conflict?`<p>Há versões diferentes. Baixe um backup dos registros locais antes de carregar a versão da nuvem.</p>
   ${syncConflicts.length?`<ul>${syncConflicts.slice(0,12).map(item=>`<li>${esc(configs[item.collection]?.title||labels[item.collection]?.[0]||(item.collection==='pedigreeBirds'?'Ancestrais externos':'Configurações'))} · ${esc(item.label)}</li>`).join('')}${syncConflicts.length>12?'<li>Há outros registros afetados.</li>':''}</ul>`:''}`:''}
@@ -3085,9 +3222,12 @@ function cloudShowStatus(){
    <button type="button" class="btn secondary" id="cloudDone">Fechar</button>
    <button type="button" class="btn secondary" id="cloudBackup">Baixar backup</button>
    ${cloudState.conflict?'<button type="button" class="btn" id="cloudRecover">Carregar versão da nuvem</button>':`<button type="button" class="btn" id="cloudCheck">${entry}</button>`}
-   ${cloudState.ready?'<button type="button" class="btn secondary" id="cloudLogout">Sair da conta</button>':''}
+   ${activeAccount==='owner'?'<button type="button" class="btn secondary" id="cloudInvites">Convites do piloto</button>':''}
+   <button type="button" class="btn secondary" id="cloudLogout">Sair da conta</button>
   </div>`);
  document.getElementById('cloudDone').onclick=cloudClose;
+ const invites=document.getElementById('cloudInvites');
+ if(invites)invites.onclick=cloudShowInvites;
  document.getElementById('cloudBackup').onclick=backup;
  const recover=document.getElementById('cloudRecover'), check=document.getElementById('cloudCheck'), logout=document.getElementById('cloudLogout');
  if(recover)recover.onclick=cloudRecover;
@@ -3107,14 +3247,16 @@ function cloudShowStatus(){
  };
  if(logout)logout.onclick=async()=>{
   if(cloudState.busy||cloudState.reading||cloudState.checking||cloudState.importing)return;
-  if(cloudState.pending&&!confirm('Há alterações aguardando envio. Deseja sair mesmo assim?'))return;
+  if((cloudState.pending||cloudState.meta?.dirty)&&!confirm('Há alterações locais aguardando envio. Deseja sair e mantê-las guardadas para esta conta?'))return;
   cloudState.checking=true;
   try{
-   await cloudAPI('/api/account','POST',{action:'logout'});
-   cloudState.revision=null;
-   cloudNeedsLogin();
-   cloudClose();
-  }catch(e){toast('Não foi possível encerrar a sessão.')}
+   await withPushLock(async()=>{
+    const registration=await currentPushRegistration();
+    const subscription=await registration?.pushManager?.getSubscription();
+    await cloudAPI('/api/account','POST',{action:'logout',endpoint:subscription?.endpoint});
+    await finishAccountSwitch(registration,subscription,null);
+   });
+  }catch(e){toast(e.message||'Não foi possível encerrar a sessão.')}
   finally{cloudState.checking=false}
  };
 }
@@ -3123,6 +3265,7 @@ window.addEventListener('offline',()=>{
  if(!cloudState.conflict)cloudStatus(cloudState.pending?'Offline · aguardando envio':'Offline · salvo neste aparelho');
 });
 function cloudResume(){
+ if(!activeAccount)return;
  if(!navigator.onLine||document.hidden||cloudState.conflict||cloudState.needsLogin||cloudState.meta?.localOnly)return;
  if(cloudState.ready&&cloudState.pending)cloudUpload();
  else if(cloudState.ready)cloudRefresh();
@@ -3709,6 +3852,11 @@ async function launchCanto(){
    restored={...defaultDB(),...localExtra(restored),...latest,...journal.extra};
    for(const key of Object.keys(localExtra(restored)))if(!Object.hasOwn(journal.extra||{},key))delete restored[key];
   }
+  if(journal&&!restored&&!journal.changes&&cloudState.meta?.dirty===false){
+   // Repair an incomplete mirror only from a confirmed, matching sync baseline.
+   await restoreSyncBase();
+   restored=syncBase?.data;
+  }
   if(journal&&!restored)throw Error('O armazenamento do navegador não pôde ser aberto. Reabra o aplicativo antes de gravar.');
   if(restored?.version===4&&validRecordCollections(restored)){
    const baseline=defaultDB();
@@ -3727,7 +3875,6 @@ async function launchCanto(){
  if(!localStorage.getItem(LOCAL_JOURNAL_KEY)&&!realLocalSave())return;
  seedFoods();ensureCatalogSeeds();nav();render();
  rememberWorkingData();
- if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(console.warn);
  openCageLinkFromAddress();
  void cloudInitialize();
 }
@@ -4704,7 +4851,7 @@ document.addEventListener('click',async event=>{
  const feedback=document.getElementById('pushFeedback');
  const controls=[...button.parentElement.querySelectorAll('button')];
  controls.forEach(control=>control.disabled=true);
- try{feedback.textContent=await managePush(button.dataset.pushAction);}
+ try{feedback.textContent=await withPushLock(()=>managePush(button.dataset.pushAction));}
  catch(error){feedback.textContent=error.message||'Não foi possível gerenciar notificações.';}
  finally{controls.forEach(control=>control.disabled=false);}
 });
@@ -4712,6 +4859,7 @@ let pendingReminderLink='';
 function followReminderLink(hash=location.hash.slice(1)){
  const params=new URLSearchParams(hash);
  const kind=params.get('lembrete'), ref=params.get('ref');
+ if(kind==='agenda'&&activeAccount){go('events');return}
  if(kind==='management'){
   const day=params.get('dia');
   if(!validFinanceDate(day))return;
@@ -4751,11 +4899,32 @@ function followReminderLink(hash=location.hash.slice(1)){
   target.focus({preventScroll:true});
  }
 }
-window.addEventListener('hashchange',()=>followReminderLink());
+window.addEventListener('hashchange',()=>{
+ const invite=new URLSearchParams(location.hash.slice(1)).get('convite');
+ if(invite){
+  if(activeAccount)cloudShowStatus();
+  else cloudShow('redeem','',invite);
+ }else if(activeAccount)followReminderLink();
+});
 navigator.serviceWorker?.addEventListener('message',event=>{
- if(typeof event.data?.reminder==='string')followReminderLink(event.data.reminder);
+ if(event.data?.account===activeAccount&&typeof event.data?.reminder==='string')followReminderLink(event.data.reminder);
 });
 
-void launchCanto().then(()=>followReminderLink());
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(console.warn);
+const inviteToken=new URLSearchParams(location.hash.slice(1)).get('convite');
+if(activeAccount){
+ document.querySelector('.app').style.display='';
+ await launchCanto();
+ followReminderLink();
+ if(inviteToken)cloudShowStatus();
+}else{
+ cloudShow(inviteToken?'redeem':'login','',inviteToken||'');
+}
+})().catch(error=>{
+ console.error(error);
+ const message=document.createElement('p');
+ message.textContent='Não foi possível abrir o Canto & Ninho. Reabra o aplicativo.';
+ document.body.append(message);
+});
 
 </script></body></html>
