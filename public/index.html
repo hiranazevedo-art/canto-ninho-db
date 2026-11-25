@@ -1598,7 +1598,11 @@ function setupStockForm(type,record,form){
   category.required=!(record&&!oldCategory);
   const unit=form.elements.unit;
   const setStockUnit=()=>{
-   if([cageCategory,accessoryCategory].includes(category.value))unit.value='UN';
+   const fixedUnit=[cageCategory,accessoryCategory].includes(category.value);
+   if(!record){
+    for(const option of unit.options)option.disabled=fixedUnit&&option.value!=='UN';
+    unit.value=fixedUnit?'UN':'';
+   }else if(fixedUnit)unit.value='UN';
   };
   category.addEventListener('change',setStockUnit);
   if(!record||category.value===accessoryCategory)setStockUnit();
@@ -1620,7 +1624,31 @@ function setupStockForm(type,record,form){
   updateProducts(originalName);
   category.addEventListener('change',()=>updateProducts(''));
   name.addEventListener('change',updateNote);
-  acquisitionQuantity.insertAdjacentHTML('afterend','<div class="helper">Em novo cadastro, use o saldo inicial como quantidade adquirida ou informe a quantidade aqui.</div>');
+  if(!record){
+   quantity.readOnly=true;
+   unit.required=true;
+   acquisitionQuantity.required=true;
+   quantity.insertAdjacentHTML('afterend','<div class="helper" id="stockBalanceHelp" role="status"></div>');
+   quantity.setAttribute('aria-describedby','stockBalanceHelp');
+   const help=form.querySelector('#stockBalanceHelp');
+   const refreshBalance=()=>{
+    quantity.value='';
+    if(!name.value){help.textContent='Selecione o produto para consultar o saldo.';return}
+    if(!unit.value){help.textContent='Selecione a unidade para consultar o saldo.';return}
+    const sameProduct=db.stock.filter(item=>
+     upper(item.category).trim()===category.value&&upper(item.name).trim()===name.value);
+    const balance=sameProduct.reduce((sum,item)=>{
+     const itemUnit=upper(item.unit).trim()||([cageCategory,accessoryCategory].includes(category.value)?'UN':'');
+     const amount=stockDecimal(item.quantity);
+     return itemUnit===unit.value&&Number.isFinite(amount)?sum+amount:sum;
+    },0);
+    quantity.value=new Intl.NumberFormat('pt-BR',{useGrouping:false,maximumSignificantDigits:15}).format(balance);
+    help.textContent='Saldo cadastrado: '+quantity.value+' '+unit.value+'.';
+   };
+   for(const field of [category,name,unit])field.addEventListener('change',refreshBalance);
+   refreshBalance();
+   acquisitionQuantity.insertAdjacentHTML('afterend','<div class="helper">Informe somente a quantidade desta entrada.</div>');
+  }
  }else{
   const {type:kind}=form.elements;
   kind.required=true;
@@ -1653,7 +1681,7 @@ function setupStockForm(type,record,form){
   }
   const qty=stockDecimal(quantity.value);
   const acquired=acquisitionQuantity?.value;
-  const purchaseQty=type==='movements'?qty:acquired?stockDecimal(acquired):record?stockAcquisitionQuantity(record):qty;
+  const purchaseQty=type==='movements'?qty:acquired?stockDecimal(acquired):record?stockAcquisitionQuantity(record):0;
   if(stockDecimal(cost.value)===0||cost.dataset.stockCalculated){
    const calculated=stockExpenseValue(type,{quantity:qty,acquisitionQuantity:purchaseQty??0,
     unitCost:stockDecimal(unitCost.value),type:form.elements.type?.value});
@@ -1683,6 +1711,12 @@ function setupStockForm(type,record,form){
  }
 }
 function prepareStockSave(type,record,old,form){
+ if(type==='stock'&&!old){
+  if(!record.unit)return 'SELECIONE A UNIDADE.';
+  if(!(record.acquisitionQuantity>0))return 'Informe uma quantidade adquirida maior que zero.';
+  // The existing balance is only a preview. This stock row represents the new entry.
+  record.quantity=record.acquisitionQuantity;
+ }
  for(const key of ['quantity','acquisitionQuantity','cost','unitCost']){
   if(form.elements[key]?.dataset?.stockDecimal&&!Number.isFinite(record[key])&&!form.elements[key].disabled)return 'Informe um valor numérico válido.';
  }
