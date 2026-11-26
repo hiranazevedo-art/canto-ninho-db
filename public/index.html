@@ -49,7 +49,7 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 /* Galeria de imagens verificadas: cartões e banner adaptáveis */
 .species-thumb{width:51px;height:46px;object-fit:cover;border-radius:8px;flex:0 0 51px;background:#f1ebe1}
 .species-preview img.species-preview-photo{object-fit:cover}
-.species-preview img[src="./images/azulao.png"],.bird-form-photo img{object-fit:contain}
+.species-preview img[src="./images/azulao.png"]{object-fit:contain}
 .hero-photo[src="./images/azulao.png"]{-webkit-mask-image:none;mask-image:none}
 .photo-credit{display:block;font-size:10px;color:#73665a;line-height:1.5;margin-top:5px}
 .photo-credit a{color:#675a4e;text-decoration:underline;text-underline-offset:2px}
@@ -2310,19 +2310,6 @@ function autoIbamaPreview(text){ibamaSourceRows=parseIbamaRows(text);if(!ibamaSo
 const birdExtraFields=[['birthDate','Data de nascimento'],['ringType','Tipo de anilha'],['ringDiameter','Diâmetro da anilha']];
 const openBeforeExpansion=openForm;
 openForm=function(type,record=null){openBeforeExpansion(type,record);if(type!=='birds')return;const form=document.getElementById('recordForm');const label=form.elements.ring.parentElement.querySelector('label');if(label)label.textContent='Código de anilha';form.querySelector('.notice').textContent='Confira a identificação e os dados da anilha. Campos ausentes podem permanecer vazios.';for(const [k,l]of birdExtraFields){const value=record?.[k]||record?.sourceMetadata?.[k]||'';form.querySelector('.form-grid').insertAdjacentHTML('beforeend',k==='birthDate'?`<div><label for="birdBirthText">${l}</label><div class="date-dual"><input id="birdBirthText" name="birthDate" aria-describedby="birdBirthHelp" data-bird-birth placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric" value="${esc(value?fmtDate(value):'')}"><input type="date" data-bird-birth-picker value="${esc(value)}" aria-label="Selecionar nascimento no calendário"></div><small class="helper" id="birdBirthHelp">Use o calendário ou digite os 8 números, como 19052024.</small></div>`:input(k,l,'text',value))}if(record?.sourceMetadata)form.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide helper">Dados de origem sugeridos apenas nos campos vazios. Confira antes de salvar.</div>');
- if(!record){
-  const scientific=form.elements.scientific;
-  const preview=document.createElement('div');
-  scientific.closest('div').after(preview);
-  function updatePhotoPreview(){
-   const bird={scientific:scientific.value};
-   preview.innerHTML=matchedBirdSpecies(bird)
-    ? '<div class="species-preview bird-form-photo">'+birdPhotoImg(bird,'')+'<strong>Foto inicial no Plantel</strong></div>'
-    : '';
-  }
-  scientific.addEventListener('input',updatePhotoPreview);
-  updatePhotoPreview();
- }
  const amount=record?.acquisitionValue?brl(record.acquisitionValue).replace(/^R\$\s*/,'').replace(/\./g,''):'';
  form.querySelector('.form-grid').insertAdjacentHTML('beforeend',`<fieldset class="wide bird-acquisition">
   <legend>Aquisição da ave</legend>
