@@ -160,6 +160,39 @@ async function main() {
   const choices=page.locator('#treeSelect option');
   assert.deepEqual(await choices.evaluateAll(options=>options.map(option=>option.value)),['','ave-legada']);
   await page.getByText('PAI FORA DO PLANTEL',{exact:true}).first().waitFor();
+  assert.deepEqual(await page.locator('.pedigree-parents h4').allTextContents(),['Ramo paterno','Ramo materno']);
+  assert.equal(await page.getByRole('button',{name:'Baixar pedigree em PDF'}).count(),1);
+  await page.locator('#navigation [data-page="settings"]').click();
+  assert.equal(await page.locator('input[name=appPalette]').count(),10);
+  await page.locator('input[name=appPalette][value=petroleum]').check();
+  await appReady(page);
+  await page.reload();
+  await appReady(page);
+  assert.equal(await page.locator('html').getAttribute('data-app-palette'),'petroleum');
+  await page.locator('#navigation [data-page="tree"]').click();
+  const pedigree=page.locator('.pedigree-visual');
+  const readLayout=()=>pedigree.evaluate(el=>{
+   const [paternal,maternal]=el.querySelectorAll('.pedigree-parent');
+   return {
+    fits:el.scrollWidth<=el.clientWidth+1,
+    sideBySide:paternal.offsetTop===maternal.offsetTop,
+    paternal:getComputedStyle(paternal).backgroundColor,
+    maternal:getComputedStyle(maternal).backgroundColor,
+    accent:getComputedStyle(el.querySelector('.pedigree-root')).borderTopColor
+   };
+  });
+  const desktop=await readLayout();
+  assert.equal(desktop.fits,true);
+  assert.equal(desktop.sideBySide,true);
+  assert.equal(desktop.paternal,desktop.maternal);
+  assert.equal(desktop.accent,'rgb(23, 73, 83)');
+  for(const width of [360,390]){
+   await page.setViewportSize({width,height:820});
+   const mobile=await readLayout();
+   assert.equal(mobile.fits,true);
+   assert.equal(mobile.sideBySide,true);
+  }
+  await page.setViewportSize({width:1280,height:820});
   await page.locator('#navigation [data-page="birds"]').click();
   await page.locator('[data-action="new:birds"]').click();
   assert.equal(await page.locator('#recordForm #birdCageSearch').count(),0);

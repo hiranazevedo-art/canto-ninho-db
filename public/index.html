@@ -225,6 +225,30 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 .pedigree-facts dd{margin:0}
 #treeSelect{flex:1;max-width:100%;min-width:0}
 @media(max-width:760px){.pedigree-pair{grid-template-columns:minmax(0,1fr)}}
+.pedigree-page,.pedigree-descendants{--pedigree-border:color-mix(in srgb,var(--accent) 42%,white);--pedigree-tint:color-mix(in srgb,var(--cream) 65%,white)}
+.pedigree-page,.pedigree-descendants,.pedigree-page #treeSelect{border-color:var(--pedigree-border)}
+.pedigree-visual .pedigree-root,.pedigree-visual .pedigree-card,.pedigree-descendants .tree-card{
+ border-color:var(--pedigree-border);background:#fff;color:var(--text)
+}
+.pedigree-visual .pedigree-root{max-width:560px;margin-inline:auto;border-top:4px solid var(--accent);padding:clamp(12px,2vw,20px)}
+.pedigree-visual .pedigree-root h3{color:var(--accent);font-size:1.45rem}
+.pedigree-visual .breeder-summary{margin:12px 0 0;padding:10px 0 0;background:none;border-radius:0;border-top:1px solid var(--pedigree-border)}
+.pedigree-visual .pedigree-card{padding:10px}
+.pedigree-visual .pedigree-card summary,.pedigree-visual .pedigree-branch summary,.pedigree-descendants h3{color:var(--accent)}
+.pedigree-visual .pedigree-missing{border-style:dashed;background:var(--pedigree-tint)}
+.pedigree-connector{height:20px;width:0;margin-inline:auto;border-left:2px solid var(--pedigree-border)}
+.pedigree-parents{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:18px}
+.pedigree-parents::before{content:'';position:absolute;top:0;left:25%;right:25%;border-top:2px solid var(--pedigree-border)}
+.pedigree-parent{position:relative;min-width:0;padding:12px;border-radius:12px;background:var(--pedigree-tint);overflow-wrap:anywhere}
+.pedigree-parent::before{content:'';position:absolute;bottom:100%;left:50%;height:18px;border-left:2px solid var(--pedigree-border)}
+.pedigree-parent h4{margin:0 0 7px;color:var(--accent);font-size:.9rem}
+.pedigree-visual .pedigree-facts dd{overflow-wrap:anywhere}
+.pedigree-descendants .tree-card .sub{color:var(--muted)}
+@media(max-width:760px){
+ .pedigree-parents{gap:8px}
+ .pedigree-parent{padding:8px}
+}
+
 
 .palette-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px}
 .palette-option{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px;min-height:48px;cursor:pointer}
@@ -497,20 +521,22 @@ function genealogy(){
  const bird=findAncestor(treeBird)||choices[0];
  treeBird=bird?.id||'';
  return `${header('Árvore genealógica','Consulte a linhagem paterna, materna e os descendentes da ave.')}
- <div class="panel"><div class="toolbar">
+ <div class="panel pedigree-page"><div class="toolbar">
   <select class="field" id="treeSelect" aria-label="Ave ativa para consultar a genealogia" ${choices.length?'':'disabled'}>
    <option value="">${choices.length?'SELECIONE UMA AVE ATIVA':'NENHUMA AVE ATIVA NO PLANTEL'}</option>
    ${choices.map(item=>`<option value="${esc(item.id)}" ${sameId(item.id,treeBird)?'selected':''}>${esc(birdName(item))} · ${esc(item.ring||'SEM ANILHA')}</option>`).join('')}
   </select>
   ${bird?`<button class="btn secondary" data-pedigree-pdf="${esc(bird.id)}">Baixar pedigree em PDF</button>`:''}
  </div>
- ${bird?`<div class="pedigree-root">
+ ${bird?`<div class="pedigree-visual"><div class="pedigree-root">
   <h3>${esc(birdName(bird))}</h3>
   ${pedigreeFacts(bird)}
   ${bird.externalAncestor?`<button class="btn secondary small" data-edit-ancestor="${esc(bird.id)}">Editar ancestral externo</button>`:''}
- </div>${breederSummary(bird)}${profilePedigree(bird)}`:'<p class="empty">Nenhuma ave ativa no plantel para consultar.</p>'}
+  ${breederSummary(bird)}
  </div>
- ${bird?`<section class="panel"><div class="toolbar"><h3>Filhos e descendentes</h3>
+ ${visualPedigree(bird)}</div>`:'<p class="empty">Nenhuma ave ativa no plantel para consultar.</p>'}
+ </div>
+ ${bird?`<section class="panel pedigree-descendants"><div class="toolbar"><h3>Filhos e descendentes</h3>
   <button class="btn secondary" data-action="toggleDesc">${expandedChildren?'Recolher gerações seguintes':'Expandir até 3 gerações'}</button>
  </div>${descendants(bird)}</section>`:''}`;
 }
@@ -1922,7 +1948,13 @@ const appPalettes={
  current:{name:'Padrão atual',colors:['#f3ebdd','#eee6d9','#493426']},
  sage:{name:'Verde sálvia',colors:['#f1f5ee','#e0e9dc','#264838'],hover:'#365b49',selection:'#cbdcc5',line:'#c6d5c1'},
  ocean:{name:'Azul oceano',colors:['#edf4f8','#dceaf3','#234762'],hover:'#345b78',selection:'#c7dceb',line:'#bed0de'},
- plum:{name:'Ameixa',colors:['#f7f0f6','#eee0ee','#593755'],hover:'#694766',selection:'#e7cfe3',line:'#d8c4d7'}
+ plum:{name:'Ameixa',colors:['#f7f0f6','#eee0ee','#593755'],hover:'#694766',selection:'#e7cfe3',line:'#d8c4d7'},
+ petroleum:{name:'Azul petróleo',colors:['#eaf3f4','#d8e9ea','#174953'],hover:'#235b66',selection:'#c0dfe0',line:'#aecdd0'},
+ forest:{name:'Verde floresta',colors:['#edf5ed','#d9e9dc','#214b2e'],hover:'#2c5e3b',selection:'#c3dec7',line:'#b4cdb8'},
+ terracotta:{name:'Terracota',colors:['#fbf1ea','#f1dfd3','#803d2d'],hover:'#914e3d',selection:'#efd0c0',line:'#dec0af'},
+ wine:{name:'Vinho',colors:['#faf0f3','#f0dee5','#67253f'],hover:'#7c3651',selection:'#eac8d6',line:'#dcb9c8'},
+ mustard:{name:'Mostarda',colors:['#fbf5e5','#f2e8cb','#624912'],hover:'#795c1f',selection:'#eddfa9',line:'#d9c990'},
+ slate:{name:'Cinza ardósia',colors:['#f0f3f5','#e0e7ec','#354650'],hover:'#445761',selection:'#d0dde4',line:'#bccbd4'}
 };
 function appPaletteKey(){
  const key=db.settings.appPalette;
@@ -4595,7 +4627,7 @@ function pedigreeFacts(bird){
  return `<dl class="pedigree-facts">${facts.map(([label,value])=>
   `<div><dt>${label}</dt><dd>${esc(value||'Não informado')}</dd></div>`).join('')}</dl>`;
 }
-function pedigreeBranch(rows,depth,index){
+function pedigreeBranch(rows,depth,index,compact=false){
  const {bird,side}=rows[depth][index];
  const next=rows[depth+1]?.slice(index*2,index*2+2);
  const label=depth===1?side:depth===2?(side==='Pai'?'Avô':'Avó'):pedigreeHeadings[depth]+' · '+side;
@@ -4606,9 +4638,9 @@ function pedigreeBranch(rows,depth,index){
   ${bird.breeder||bird.externalAncestor?`<p class="helper">${esc(bird.breeder||'Outro criadouro')}</p>`:''}
   <button class="btn small secondary" data-tree="${esc(bird.id)}">Ver árvore desta ave</button>
  </details>`:`<div class="pedigree-card pedigree-missing"><small>${label}</small>Não informado</div>`}
- ${next&&(depth===1||next.some(entry=>entry.bird))?`<details class="pedigree-branch" ${depth===1?'open':''}>
+ ${next&&(next.some(entry=>entry.bird)||depth===1&&!compact)?`<details class="pedigree-branch" ${depth===1&&!compact?'open':''}>
   <summary>${pedigreeHeadings[depth+1]}</summary>
-  <div class="pedigree-pair">${pedigreeBranch(rows,depth+1,index*2)}${pedigreeBranch(rows,depth+1,index*2+1)}</div>
+  <div class="pedigree-pair">${pedigreeBranch(rows,depth+1,index*2,compact)}${pedigreeBranch(rows,depth+1,index*2+1,compact)}</div>
  </details>`:''}</div>`;
 }
 function profilePedigree(bird){
@@ -4616,6 +4648,12 @@ function profilePedigree(bird){
  return `<div class="pedigree-pair">${['Paterno','Materno'].map((label,i)=>`
   <details class="pedigree-lineage" open><summary>Ramo ${label.toLowerCase()}</summary>
   ${pedigreeBranch(rows,1,i)}</details>`).join('')}</div>`;
+}
+function visualPedigree(bird){
+ const rows=pedigreeRows(bird);
+ return `<div class="pedigree-connector" aria-hidden="true"></div>
+  <div class="pedigree-parents">${['Ramo paterno','Ramo materno'].map((label,index)=>`
+   <section class="pedigree-parent"><h4>${label}</h4>${pedigreeBranch(rows,1,index,true)}</section>`).join('')}</div>`;
 }
 function pedigreePDF(bird,jsPDF){
  const pdf=new jsPDF({orientation:'landscape',format:'a4'});
