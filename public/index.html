@@ -305,9 +305,13 @@ const fmtDate=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'—';
 const brl=n=>(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const birdName=b=>b?(b.name||b.ring||'AVE SEM NOME'):'DESCONHECIDO';
 const getRecord=(col,x)=>db[col].find(r=>r.id===x)||(()=>{const matches=db[col].filter(r=>x&&String(r.id).toLowerCase()===String(x).toLowerCase());return matches.length===1?matches[0]:undefined})();
+const nameCollator=new Intl.Collator('pt-BR',{sensitivity:'base',numeric:true});
+const compareNames=(a,b)=>nameCollator.compare(String(a??'').trim(),String(b??'').trim());
+const byName=(rows,label=row=>row.name)=>rows.slice().sort((a,b)=>compareNames(label(a),label(b)));
+const byBirdName=rows=>rows.slice().sort((a,b)=>compareNames(birdName(a),birdName(b))||compareNames(a.ring,b.ring));
 const findBird=x=>getRecord('birds',x);
 const sexValue=x=>({M:'MACHO',MACHO:'MACHO',F:'FÊMEA',FEMEA:'FÊMEA'}[upper(x).trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]||'NÃO IDENTIFICADO');
-const birdSelect=(name,gender='',selected='',optional=true)=>`<select name="${name}" class="field" ${optional?'':'required'}><option value="">${optional?'NÃO INFORMADO':'SELECIONE'}</option>${db.birds.filter(b=>!gender||sexValue(b.sex)===gender).map(b=>`<option value="${esc(b.id)}" ${b.id===(findBird(selected)?.id||selected)?'selected':''}>${esc(birdName(b))} ${b.ring?'· '+esc(b.ring):''}</option>`).join('')}</select>`;
+const birdSelect=(name,gender='',selected='',optional=true)=>`<select name="${name}" class="field" ${optional?'':'required'}><option value="">${optional?'NÃO INFORMADO':'SELECIONE'}</option>${byBirdName(db.birds.filter(b=>!gender||sexValue(b.sex)===gender)).map(b=>`<option value="${esc(b.id)}" ${b.id===(findBird(selected)?.id||selected)?'selected':''}>${esc(birdName(b))} ${b.ring?'· '+esc(b.ring):''}</option>`).join('')}</select>`;
 const options=(choices,selected='')=>choices.map(x=>`<option ${x===selected?'selected':''} value="${esc(x)}">${esc(x)}</option>`).join('');
 const input=(name,label,type='text',value='',required=false,more='')=>`<div><label for="f_${name}">${label}${required?' *':''}</label><input id="f_${name}" name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''} ${more}></div>`;
 const select=(name,label,choices,value='',required=false)=>`<div><label for="f_${name}">${label}${required?' *':''}</label><select id="f_${name}" name="${name}" ${required?'required':''}><option value="">SELECIONE</option>${options(choices,value)}</select></div>`;
@@ -437,7 +441,7 @@ function birds(){
  const sold=filteredMode==='birdsSold';
  const outside=new Set(db.revenues.filter(sale=>sale.kind==='bird'&&saleOutside(sale)).map(sale=>sale.itemId));
  const out=filteredMode==='birdsOut';
- const found=db.birds.filter(b=>(sold?outside.has(b.id):out?!!b.exit:!birdOutOfPlantel(b))&&plantelMatches(b)&&birdMatchesSearch(b,query));
+ const found=byBirdName(db.birds.filter(b=>(sold?outside.has(b.id):out?!!b.exit:!birdOutOfPlantel(b))&&plantelMatches(b)&&birdMatchesSearch(b,query)));
  const provisional=provisionalChicks();
  const rows=found.map(b=>[`${birdIdentity(b)}${birdDetails(b)}`,esc(b.ring||'—'),esc(b.sex),
   `${esc(birdName(findAncestor(b.father)))} / ${esc(birdName(findAncestor(b.mother)))}`,`<span class="tag">${esc(b.status)}</span>`,esc([b.condition,birdCage(b.id)?.name].filter(Boolean).join(' · ')),birdActions(b)]);
@@ -463,7 +467,7 @@ function descendants(root,depth=0,seen=new Set()){if(depth>=3)return '';const ch
 function genealogy(){
  if(!treeBird&&db.birds.length)treeBird=db.birds[0].id;
  const bird=findAncestor(treeBird);
- const choices=bird?.externalAncestor?[...db.birds,bird]:db.birds;
+ const choices=byBirdName(bird?.externalAncestor?[...db.birds,bird]:db.birds);
  return `${header('Árvore genealógica','Consulte a linhagem paterna, materna e os descendentes da ave.')}
  <div class="panel"><div class="toolbar">
   <select class="field" id="treeSelect" aria-label="Ave para consultar a genealogia">
@@ -569,9 +573,10 @@ function saleItems(kind,old){
   :db.stock.filter(item=>cageProduct(item)&&(Number(item.quantity)>stockReserved(item.id)||item.id===old?.itemId));
 }
 function openSale(kind,itemId='',old=null,deliver=false){
- const available=saleItems(kind,old);
- if(!available.length)return toast(kind==='bird'?'Nenhuma ave cadastrada e disponível para venda.':'Cadastre uma gaiola com saldo no Estoque.');
  const cage=kind==='cage';
+ const items=saleItems(kind,old);
+ const available=cage?byName(items):byBirdName(items);
+ if(!available.length)return toast(kind==='bird'?'Nenhuma ave cadastrada e disponível para venda.':'Cadastre uma gaiola com saldo no Estoque.');
  modal(old?'Editar venda':saleCategory(kind),`<form id="saleForm">
  <div class="form-grid"><div><label for="saleItem">${cage?'Gaiola':'Ave'} *</label><select name="itemId" id="saleItem" required ${old?'disabled':''}>
  <option value="">SELECIONE</option>${available.map(item=>`<option value="${esc(item.id)}" ${item.id===(old?.itemId||itemId)?'selected':''}>${esc(cage?item.name:birdName(item)+' · '+(item.ring||'SEM ANILHA'))}</option>`).join('')}</select></div>
@@ -602,7 +607,7 @@ function openSale(kind,itemId='',old=null,deliver=false){
   if(cagePicker.dataset.key===key)return;
   cagePicker.dataset.key=key;
   const available=cageUnits(stockId).filter(unit=>!cageUnavailable(unit)&&!cageInUse(unit,date));
-  cagePicker.querySelector('.bird-checks').innerHTML=available.map(unit=>`<label><input type="checkbox" name="cagePick" value="${esc(unit.id)}"> ${esc(unit.name)}</label>`).join('')
+  cagePicker.querySelector('.bird-checks').innerHTML=byName(available).map(unit=>`<label><input type="checkbox" name="cagePick" value="${esc(unit.id)}"> ${esc(unit.name)}</label>`).join('')
    ||'<p class="helper">Nenhuma unidade livre identificada para seleção.</p>';
  };
  const update=()=>{
@@ -828,7 +833,19 @@ function recordActions(type,record){
   :type==='chicks'?chickPlantelAction(record):'';
  return extra+act(type,record);
 }
-function generic(type){const cfg=configs[type],found=(type==='expenses'?expenseRows():db[type]).filter(x=>!query||Object.values(x).join(' ').includes(upper(query))||(type==='trips'&&birdIds(x.bird).some(ref=>{const bird=findBird(ref);return bird&&birdMatchesSearch(bird,query)})));return `${header(cfg.title,cfg.subtitle,'Novo registro','new:'+type)}<div class="toolbar"><input id="search" class="field" placeholder="Buscar registros..." value="${esc(query)}"></div>${table([...cfg.cols.map(c=>c[0]),'Ações'],found.map(x=>[...cfg.cols.map(c=>cellValue(type,x,c[1])),recordActions(type,x)]))}`}
+const nameOrderedCatalogs=new Set(['stock','food','facilities','documents','knowledge']);
+function generic(type){
+ const cfg=configs[type], orderByName=nameOrderedCatalogs.has(type);
+ const term=orderByName?normalizeSpecies(query):upper(query);
+ const found=(type==='expenses'?expenseRows():db[type]).filter(record=>{
+  if(!query)return true;
+  const text=Object.values(record).join(' ');
+  return (orderByName?normalizeSpecies(text):text).includes(term)||
+   (type==='trips'&&birdIds(record.bird).some(ref=>{const bird=findBird(ref);return bird&&birdMatchesSearch(bird,query)}));
+ });
+ const rows=orderByName?byName(found):found;
+ return `${header(cfg.title,cfg.subtitle,'Novo registro','new:'+type)}<div class="toolbar"><input id="search" class="field" placeholder="Buscar registros..." value="${esc(query)}"></div>${table([...cfg.cols.map(c=>c[0]),'Ações'],rows.map(x=>[...cfg.cols.map(c=>cellValue(type,x,c[1])),recordActions(type,x)]))}`
+}
 const reproTabs={couples:'Casais',seasons:'Temporadas',attempts:'Tentativas',nests:'Ninhadas',eggs:'Ovos',chicks:'Filhotes'};
 const quickReproActions={eggs:'Registrar postura',chicks:'Registrar nascimento',ring:'Registrar anilha',close:'Encerrar ninhada'};
 const reproOpenDetails=new Set();
@@ -955,7 +972,8 @@ function reproductionCards(){
    eggCounts,date))
   .filter(summary=>reproFilter==='all'||(reproFilter==='breeding'&&summary.breeding)||
    (reproFilter==='active'&&!summary.couple.end)||(reproFilter==='closed'&&summary.couple.end))
-  .sort((a,b)=>Number(b.breeding)-Number(a.breeding)||Number(Boolean(a.couple.end))-Number(Boolean(b.couple.end)));
+  .sort((a,b)=>Number(b.breeding)-Number(a.breeding)||Number(Boolean(a.couple.end))-Number(Boolean(b.couple.end))
+   ||compareNames(pairLabel(a.couple),pairLabel(b.couple)));
  const current=couples.find(summary=>summary.couple.id===reproSelection);
  const detail=current?reproPairDetails(current):'';
  const cards=couples.map(summary=>{
@@ -1087,7 +1105,7 @@ function openQuickRepro(action,coupleId,nestId){
  if(!couple||!Object.hasOwn(quickReproActions,action))return;
  const nests=pairNests(coupleId).filter(nest=>!nest.closedAt);
  const selected=nestId||(!nests.length&&!closing?'new':'');
- const choices=[...(closing?[]:[['new','Abrir nova ninhada']]),...nests.map(nest=>[nest.id,(nest.name||'Ninhada')+' · '+nestSummary(nest)])];
+ const choices=[...(closing?[]:[['new','Abrir nova ninhada']]),...byName(nests,nest=>nest.name||'Ninhada').map(nest=>[nest.id,(nest.name||'Ninhada')+' · '+nestSummary(nest)])];
  const help=closing?'O encerramento mantém o histórico e os desfechos registrados de cada ovo.'
   :action==='chicks'?'Se os ovos ainda não foram registrados, o nascimento será salvo com os pais e sem preencher a quantidade de ovos nem a origem individual.'
   :'Informe os ovos desta postura. Selecione uma ninhada aberta para acrescentar ovos ou abra uma nova.';
@@ -1175,7 +1193,7 @@ function openQuickChick(chickId,field){
 }
 function openPairRing(coupleId){
  const candidates=()=>pairRingCandidates(pairNests(coupleId),pairChicksWithoutNest(coupleId));
- const entries=candidates();
+ const entries=byName(candidates(),({chick})=>chick.name||'Filhote');
  if(!entries.length)return;
  modal('Registrar anilha',`<form id="nestRingForm"><div class="form-grid">
   <div><label for="nestRingChick">Filhote *</label><select id="nestRingChick" name="chick" required>
@@ -1347,7 +1365,7 @@ function openCageLink(facilityId){
  modal('Vincular gaiola ao Estoque',`<form id="cageLinkForm"><p>${esc(unit.name)}</p>
  <p class="helper">Vincule esta ficha à unidade disponível correspondente. Os registros de ocupação desta ficha serão preservados.</p>
  <label for="cageLinkStock">Produto no Estoque</label>
- <select class="field" id="cageLinkStock" name="stock" required><option value="">SELECIONE</option>${choices.map(item=>`<option value="${esc(item.id)}">${esc(item.name)} · ${esc(item.quantity)} un.</option>`).join('')}</select>
+ <select class="field" id="cageLinkStock" name="stock" required><option value="">SELECIONE</option>${byName(choices).map(item=>`<option value="${esc(item.id)}">${esc(item.name)} · ${esc(item.quantity)} un.</option>`).join('')}</select>
  <p class="form-feedback" role="alert" hidden></p>
  <div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Cancelar</button><button class="btn" type="submit">Vincular</button></div></form>`);
  const form=document.getElementById('cageLinkForm');
@@ -1386,7 +1404,7 @@ function foodChecks(key,label,value){
  const selected=foodIds(value);
  const choices=[...db.food,...selected.filter(id=>!getRecord('food',id)).map(id=>({id,name:'Alimento indisponível: '+id}))];
  return `<fieldset class="wide food-checks"><legend>${esc(label)} *</legend>
-  <div class="bird-checks">${choices.map(food=>`<label><input type="checkbox" name="${key}" value="${esc(food.id)}" ${selected.includes(food.id)?'checked':''}> ${esc(food.name)}</label>`).join('')}</div></fieldset>`;
+  <div class="bird-checks">${byName(choices).map(food=>`<label><input type="checkbox" name="${key}" value="${esc(food.id)}" ${selected.includes(food.id)?'checked':''}> ${esc(food.name)}</label>`).join('')}</div></fieldset>`;
 }
 function foodSelection(formData,key){
  const selected=foodIds(formData.getAll(key));
@@ -1580,7 +1598,7 @@ function stockExpenseReview(){
 function stockProducts(category,record){
  const list=[...(stockCatalog.get(category)?.keys()||[])];
  if(record?.name&&upper(record.category)===upper(category)&&!list.includes(upper(record.name)))list.push(upper(record.name));
- return list;
+ return list.sort(compareNames);
 }
 function stockDecimal(value){
  const text=String(value??'').trim();
@@ -1834,7 +1852,7 @@ document.addEventListener('change',event=>{
  applyAppPalette();
 });
 function render(){applyAppPalette();const html={home, birds,tree:genealogy,reproduction,tasks:()=>generic('tasks'),feedings:feedingPage,health:()=>generic('health'),events:agendaWithCalendar,stock:stockPage,expenses:()=>generic('expenses'),revenues:salesPage,reports,facilities:facilitiesPage,trips:()=>generic('trips'),tournaments:tournamentPage,documents:()=>generic('documents'),knowledge:()=>generic('knowledge'),settings}[page]();document.getElementById('content').innerHTML=html+(page==='settings'?appPalettePanel():'');}
-function makeSelect(kind,value=''){let entries=[];if(kind==='bird'||kind==='male'||kind==='female')entries=db.birds.filter(b=>kind==='bird'||sexValue(b.sex)===(kind==='male'?'MACHO':'FÊMEA')).map(b=>[b.id,birdName(b)+' · '+(b.ring||'SEM ANILHA')]);else{const mapping={food:'food',season:'seasons',couple:'couples',attempt:'attempts',nest:'nests',egg:'eggs',stock:'stock',facility:'facilities'};entries=db[mapping[kind]].filter(r=>kind!=='facility'||!cageUnavailable(r)||r.id===value).map(r=>[r.id,kind==='couple'?birdName(findBird(r.male))+' + '+birdName(findBird(r.female)):kind==='attempt'?'TENTATIVA '+(r.start||r.id.slice(0,5)):r.name||'SEM IDENTIFICAÇÃO'])}return `<select name="${kind}" ${['bird','male','female'].includes(kind)?'':' '}><option value="">SELECIONE</option>${entries.map(([k,v])=>`<option value="${esc(k)}" ${k===value?'selected':''}>${esc(v)}</option>`).join('')}</select>`}
+function makeSelect(kind,value=''){let entries=[];if(kind==='bird'||kind==='male'||kind==='female')entries=db.birds.filter(b=>kind==='bird'||sexValue(b.sex)===(kind==='male'?'MACHO':'FÊMEA')).map(b=>[b.id,birdName(b)+' · '+(b.ring||'SEM ANILHA')]);else{const mapping={food:'food',season:'seasons',couple:'couples',attempt:'attempts',nest:'nests',egg:'eggs',stock:'stock',facility:'facilities'};entries=db[mapping[kind]].filter(r=>kind!=='facility'||!cageUnavailable(r)||r.id===value).map(r=>[r.id,kind==='couple'?birdName(findBird(r.male))+' + '+birdName(findBird(r.female)):kind==='attempt'?'TENTATIVA '+(r.start||r.id.slice(0,5)):r.name||'SEM IDENTIFICAÇÃO'])}return `<select name="${kind}" ${['bird','male','female'].includes(kind)?'':' '}><option value="">SELECIONE</option>${(kind==='attempt'?entries:byName(entries,entry=>entry[1])).map(([k,v])=>`<option value="${esc(k)}" ${k===value?'selected':''}>${esc(v)}</option>`).join('')}</select>`}
 function formField(f,r){const [k,title,type,extra]=f,val=r[k]??'',required=extra===true?'required':'';if(type==='textarea')return textarea(k,title,val);if(type==='stockProduct')return select(k,title,[], '',true);if(type==='choices')return select(k,title,extra,val,required==='required');if(['bird','male','female','food','season','couple','attempt','nest','egg','stock','facility'].includes(type))return `<div><label for="f_${k}">${title}${required?' *':''}</label>${makeSelect(type,val).replace(/name="[^"]*"/,`id="f_${k}" name="${k}" ${required}`)}</div>`;return input(k,title,type,val,required==='required',type==='number'?'step="any" min="0"':'')}
 let modalTrigger=null;
 function modal(title,html){
@@ -2120,7 +2138,7 @@ formField=function(f,r){const [key,label,type]=f;
  if(type==='foodsMulti')return foodChecks(key,label,r[key]??defaultFoodId);
  if(type==='birdsMulti'){
   const ids=birdIds(r[key]), isManejo=editing?.type==='tasks';
-  const active=db.birds.filter(b=>!isManejo||!birdOutOfPlantel(b));
+  const active=byBirdName(db.birds.filter(b=>!isManejo||!birdOutOfPlantel(b)));
   const historical=ids.filter(ref=>!active.some(b=>b.id===ref));
   const option=(ref,label,history=false)=>`<label><input type="checkbox" name="${key}" value="${esc(ref)}" ${ids.includes(ref)?'checked':''} ${history?'data-historical-bird':''}> ${esc(label)}</label>`;
   const options=active.map(b=>option(b.id,birdName(b)+' · '+(b.ring||'SEM ANILHA'))).join('');
@@ -2551,7 +2569,7 @@ function knownBirdSuggestions(){const values=[...new Set(db.birds.map(b=>String(
 function startSpeciesSetup(force=false){if(!force&&db.settings.setupComplete)return;speciesDraft={selected:[...(db.settings.speciesSelected||[])],featured:db.settings.speciesFeatured||'',custom:(db.settings.speciesCustom||[]).map(x=>({...x})),profile:{owner:db.settings.owner||'',name:db.settings.name==='MEU CRIADOURO'?'':db.settings.name||'',municipality:db.settings.municipality||'',state:db.settings.state||'',phone:db.settings.phone||'',email:db.settings.email||'',environmentalRegistration:db.settings.environmentalRegistration||'',ctf:db.settings.ctf||''},edit:force};speciesSearch='';renderSpeciesSetup()}
 function draftSpecies(){return [...SPECIES_CATALOG,...speciesDraft.custom]}
 function selectedEntry(key){return draftSpecies().find(s=>s.id===key)}
-function speciesOptions(){const q=normalizeSpecies(speciesSearch);return draftSpecies().filter(s=>!q||[s.common,s.scientific,...(s.alternate||[]),...(s.synonyms||[])].some(x=>normalizeSpecies(x).includes(q)))}
+function speciesOptions(){const q=normalizeSpecies(speciesSearch);return byName(draftSpecies().filter(s=>!q||[s.common,s.scientific,...(s.alternate||[]),...(s.synonyms||[])].some(x=>normalizeSpecies(x).includes(q))),s=>s.common)}
 function speciesProfileField(key,label,type='text',extra=''){return `<div><label for="setup_${key}">${label}</label><input id="setup_${key}" data-profile="${key}" type="${type}" ${extra} value="${esc(speciesDraft.profile[key]||'')}"></div>`}
 function renderSpeciesSetup(preserveSearch=false){if(!speciesDraft)return;
  const entries=draftSpecies(), selected=speciesDraft.selected.map(selectedEntry).filter(Boolean);
@@ -3527,7 +3545,7 @@ function openNestTiming(nestId){
   <p class="helper">Use os prazos que você acompanha para esta espécie. Campos em branco ficam pendentes de confirmação.</p><div class="form-grid">
   ${input('incubationStart','Início observado da incubação','date',nest.incubationStart||'')}
   <div><label for="nestCage">Gaiola</label><select id="nestCage" name="facility"><option value="">SELECIONE</option>
-  ${cages.map(c=>`<option value="${esc(c.id)}" ${sameId(c.id,ctx.attempt?.facility)?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+  ${byName(cages).map(c=>`<option value="${esc(c.id)}" ${sameId(c.id,ctx.attempt?.facility)?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
   ${timingFields.map(([key,label,min])=>input(key,label,'number',existing[key]??'',false,`min="${min}" max="365" step="1"`)).join('')}
   </div>${defaults&&timingFields.some(([key])=>existing[key]==null||existing[key]==='')?
    '<button type="button" class="btn secondary small" data-fill-nest-timing>Preencher campos vazios com os prazos da espécie</button>':''}
@@ -3997,7 +4015,7 @@ function findAncestor(ref,pending=[]){
 }
 function parentField(role,record){
  const {key,label,sex}=role;
- const group=rows=>rows.filter(b=>!sameId(b.id,record.id)&&sexValue(b.sex)===sex).map(b=>
+ const group=rows=>byBirdName(rows.filter(b=>!sameId(b.id,record.id)&&sexValue(b.sex)===sex)).map(b=>
   `<option value="${esc(b.id)}" ${sameId(record[key],b.id)?'selected':''}>${esc(birdName(b))}
   ${b.ring&&b.name?' · '+esc(b.ring):''}${b.breeder?' · '+esc(b.breeder):''}</option>`).join('');
  const plantel=group(db.birds),external=group(db.pedigreeBirds);
@@ -4200,7 +4218,7 @@ function openEggHatch(eggId){
  modal('Registrar eclosão',`<form id="eggHatchForm"><p>${esc(egg.name)} · ${esc(nest.name)}</p>
  ${input('hatchDate','Data da eclosão','date',egg.hatchedAt||today(),true)}
  ${candidates.length?`<div><label for="hatchCandidate">Filhote</label><select id="hatchCandidate" name="chick">
- <option value="">Criar ficha provisória</option>${candidates.map(c=>`<option value="${esc(c.id)}">${esc(c.name)} · ${fmtDate(c.date)}</option>`).join('')}</select></div>`:''}
+ <option value="">Criar ficha provisória</option>${byName(candidates).map(c=>`<option value="${esc(c.id)}">${esc(c.name)} · ${fmtDate(c.date)}</option>`).join('')}</select></div>`:''}
  <p class="form-feedback" role="alert" hidden></p><div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Cancelar</button>
  <button type="submit" class="btn">Salvar eclosão</button></div></form>`);
  const form=document.getElementById('eggHatchForm');
@@ -4267,7 +4285,7 @@ function birdCage(birdId){
 function setupBirdCageField(form,bird){
  const current=birdCage(bird?.id);
  const units=db.facilities.filter(unit=>upper(unit.type)==='GAIOLA'&&!cageUnavailable(unit))
-  .sort((a,b)=>String(a.name).localeCompare(String(b.name),'pt-BR',{numeric:true}));
+  .sort((a,b)=>compareNames(a.name,b.name));
  form.querySelector('.form-grid').insertAdjacentHTML('beforeend',`<div class="wide">
   <label for="birdCageSearch">Buscar gaiola</label>
   <input type="search" id="birdCageSearch" placeholder="Nome da gaiola">
@@ -4326,7 +4344,7 @@ function provisionalChicks(){
  const records=db.chicks.filter(c=>!c.plantelBirdId&&!db.birds.some(b=>sameId(b.sourceChick,c.id))&&
   birdMatchesSearch({...c,scientific:lineage('chicks',c).female?.scientific},query));
  return records.length?`<section class="panel"><h3>Filhotes de Reprodução</h3><ul class="mini-list">
- ${records.map(c=>`<li><span><strong>${esc(c.name||'Filhote')}</strong> · ${fmtDate(c.date)}
+ ${byName(records,c=>c.name||'Filhote').map(c=>`<li><span><strong>${esc(c.name||'Filhote')}</strong> · ${fmtDate(c.date)}
  ${c.ring?' · '+esc(c.ring):''}</span>${chickPlantelAction(c)}</li>`).join('')}</ul></section>`:'';
 }
 const pedigreeHeadings=['Ave','Pais','Avós','Bisavós','Trisavós'];
@@ -4658,7 +4676,7 @@ function openCageScanner(){
   <video muted playsinline hidden></video><p id="cageScanMessage" role="status"></p>
   <button type="button" class="btn" id="startCageCamera">Ativar câmera</button>
   ${units.length?`<form id="cageManualForm"><label for="cageManual">Selecionar gaiola pelo nome</label>
-  <select id="cageManual" required><option value="">Selecione</option>${units.map(unit=>
+  <select id="cageManual" required><option value="">Selecione</option>${byName(units).map(unit=>
     `<option value="${esc(unit.id)}">${esc(unit.name)}</option>`).join('')}</select>
   <button class="btn secondary" type="submit">Abrir gaiola</button></form>`:''}
   <div class="modal-foot"><button class="btn secondary" data-action="close">Fechar</button></div></div>`);
@@ -4841,7 +4859,7 @@ function addTournamentBird(tournament){
  const candidates=db.birds.filter(bird=>!birdOutOfPlantel(bird)&&!entries.some(entry=>sameId(entry.birdId,bird.id)));
  if(!candidates.length)return toast('Nenhuma ave ativa disponível para inscrição.');
  tournamentForm('Inscrever ave',`<div class="wide"><label for="tournamentBird">Ave do plantel</label><select id="tournamentBird" name="birdId" required>
- <option value="">Selecione</option>${candidates.map(bird=>`<option value="${esc(bird.id)}">${esc(tournamentPerson({name:birdName(bird),ring:bird.ring}))}</option>`).join('')}</select></div>`,values=>{
+ <option value="">Selecione</option>${byBirdName(candidates).map(bird=>`<option value="${esc(bird.id)}">${esc(tournamentPerson({name:birdName(bird),ring:bird.ring}))}</option>`).join('')}</select></div>`,values=>{
   const bird=findBird(values.birdId);
   if(!bird||birdOutOfPlantel(bird)||entries.some(entry=>sameId(entry.birdId,bird.id)))return 'Selecione uma ave ativa ainda não inscrita.';
   const updated={...tournament,participants:[...entries,{birdId:bird.id,name:birdName(bird),ring:bird.ring||''}]};
@@ -4902,7 +4920,7 @@ function tournamentReportPanel(){
  const birdOptions=new Map(db.tournaments.flatMap(tournament=>tournamentPeople(tournament).map(entry=>[entry.birdId,tournamentPerson(entry)])));
  return `<section class="panel"><h3>Desempenho em torneios</h3><form id="tournamentReport" class="form-grid">
  <div class="wide"><label for="tournamentReportBird">Ave</label><select id="tournamentReportBird" name="birdId">
- <option value="">Todas as aves</option>${[...birdOptions].sort((a,b)=>a[1].localeCompare(b[1],'pt-BR')).map(([key,label])=>`<option value="${esc(key)}">${esc(label)}</option>`).join('')}</select></div>
+ <option value="">Todas as aves</option>${byName([...birdOptions],entry=>entry[1]).map(([key,label])=>`<option value="${esc(key)}">${esc(label)}</option>`).join('')}</select></div>
  ${input('from','Data inicial','date')}${input('to','Data final','date')}
  <div class="actions wide"><button class="btn" type="submit" value="view">Mostrar resultados</button>
  <button class="btn secondary" type="submit" value="csv">Exportar CSV</button><button class="btn secondary" type="submit" value="pdf">Baixar PDF</button></div>
