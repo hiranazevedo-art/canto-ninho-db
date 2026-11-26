@@ -164,6 +164,39 @@ async function main() {
   assert.equal(await page.getByRole('button',{name:'Baixar pedigree em PDF'}).count(),1);
   await page.locator('#navigation [data-page="settings"]').click();
   assert.equal(await page.locator('input[name=appPalette]').count(),10);
+  const paletteIds=await page.locator('input[name=appPalette]').evaluateAll(inputs=>inputs.map(input=>input.value));
+  for(const paletteId of paletteIds){
+   await page.locator(`input[name=appPalette][value=${paletteId}]`).check();
+   await page.locator('#navigation [data-page="tasks"]').click();
+   await page.locator('[data-action="new:tasks"]').click();
+   for(const width of [1280,390]){
+    await page.setViewportSize({width,height:820});
+    const colors=await page.evaluate(()=>{
+     const probe=document.createElement('span');
+     document.body.append(probe);
+     function color(variable){
+      probe.style.color=`var(${variable})`;
+      return getComputedStyle(probe).color;
+     }
+     const header=getComputedStyle(document.querySelector('.data-table th'));
+     const picker=getComputedStyle(document.querySelector('#recordForm select'));
+     const result={
+      headerColor:header.color, accent:color('--accent'),
+      headerFill:header.backgroundColor, expectedFill:color('--table-header'),
+      fieldBorder:picker.borderTopColor, expectedBorder:color('--control-border')
+     };
+     probe.remove();
+     return result;
+    });
+    assert.equal(colors.headerColor,colors.accent,paletteId);
+    assert.equal(colors.headerFill,colors.expectedFill,paletteId);
+    assert.equal(colors.fieldBorder,colors.expectedBorder,paletteId);
+    if(paletteId==='slate')assert.equal(colors.headerFill,'rgb(232, 238, 242)');
+   }
+   await page.setViewportSize({width:1280,height:820});
+   await page.locator('#modalRoot button.close').click();
+   await page.locator('#navigation [data-page="settings"]').click();
+  }
   await page.locator('input[name=appPalette][value=petroleum]').check();
   await appReady(page);
   await page.reload();
