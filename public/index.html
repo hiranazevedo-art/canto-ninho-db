@@ -2303,7 +2303,7 @@ openForm=function(type,record=null){
  if(type==='feedings')form.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info" id="foodSummary" style="white-space:pre-line"></div>');
  // Preserve a legacy invalid parent visibly so editing never silently erases it.
  if(type==='birds')for(const key of ['father','mother']){const value=record?.[key];if(value){const el=form.elements[key],b=findBird(value);if(!el.value){const opt=new Option((b?birdName(b):value)+' — REVISAR CADASTRO',b?.id||value,true,true);el.add(opt)}}}
- if(type==='birds'&&record)setupBirdCageField(form,record);
+ if(type==='birds')setupBirdCageField(form,record);
  if(type==='trips')setupTripBirdSearch(form);
  if(type==='nests'&&!record)form.querySelector('.form-grid').insertAdjacentHTML('beforeend',
   '<div class="form-grid wide" data-new-nest-dates hidden></div>');
@@ -4505,20 +4505,20 @@ function setupBirdCageField(form,bird){
  const units=db.facilities.filter(unit=>upper(unit.type)==='GAIOLA'&&!cageUnavailable(unit))
   .sort((a,b)=>compareNames(a.name,b.name));
  form.querySelector('.form-grid').insertAdjacentHTML('beforeend',`<div class="wide">
-  <label for="birdCageSearch">Buscar gaiola</label>
-  <input type="search" id="birdCageSearch" placeholder="Nome da gaiola">
+  ${bird?`<label for="birdCageSearch">Buscar gaiola</label>
+  <input type="search" id="birdCageSearch" placeholder="Nome da gaiola">`:''}
   <label for="birdCage">Gaiola atual (opcional)</label>
   <select id="birdCage" name="birdCage"></select></div>`);
  const picker=form.elements.birdCage;
  const search=form.querySelector('#birdCageSearch');
  const redraw=(selected)=>{
-  const term=normalizeSpecies(search.value.trim());
+  const term=normalizeSpecies(search?.value.trim());
   picker.innerHTML='<option value="">Sem gaiola vinculada</option>'+units
    .filter(unit=>unit.id===selected||normalizeSpecies(unit.name).includes(term))
    .map(unit=>`<option value="${esc(unit.id)}"${unit.id===selected?' selected':''}>${esc(unit.name)}${cageTransfers(unit).some(t=>!sameId(t.bird,bird?.id))?' · Em uso':''}</option>`).join('');
  };
  redraw(current?.id||'');
- search.addEventListener('input',()=>redraw(picker.value));
+ search?.addEventListener('input',()=>redraw(picker.value));
 }
 function planBirdCage(bird,facility){
  const current=birdCage(bird.id);

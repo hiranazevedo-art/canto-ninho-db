@@ -162,16 +162,20 @@ async function main() {
   await page.getByText('PAI FORA DO PLANTEL',{exact:true}).first().waitFor();
   await page.locator('#navigation [data-page="birds"]').click();
   await page.locator('[data-action="new:birds"]').click();
-  assert.equal(await page.locator('#recordForm #birdCageSearch, #recordForm [name=birdCage]').count(),0);
+  assert.equal(await page.locator('#recordForm #birdCageSearch').count(),0);
+  await page.getByLabel('Gaiola atual (opcional)').selectOption('carrier-one');
   await page.locator('#recordForm [name=name]').fill('AVE NOVA DE TESTE');
   await page.locator('#recordForm [name=scientific]').fill('Sporophila bouvreuil');
   await page.locator('#recordForm [type=submit]').click();
   await page.locator('#recordForm').waitFor({state:'detached'});
   await appReady(page);
-  const bird=(await api('data',null,'owner')).data.data.birds.find(row=>row.name==='AVE NOVA DE TESTE');
+  const registered=(await api('data',null,'owner')).data.data;
+  const bird=registered.birds.find(row=>row.name==='AVE NOVA DE TESTE');
   assert.ok(bird);
+  assert.ok(registered.transfers.some(row=>row.bird===bird.id&&row.facility==='carrier-one'&&!row.end));
   await page.locator(`[data-edit="birds"][data-id="${bird.id}"]`).click();
   await page.getByLabel('Buscar gaiola').waitFor();
+  assert.equal(await page.getByLabel('Gaiola atual (opcional)').inputValue(),'carrier-one');
   await page.locator('#modalRoot button.close').click();
   for (const width of [360,390,1280]) {
    await page.setViewportSize({width,height:820});
@@ -201,7 +205,7 @@ async function main() {
   });
   assert.equal(overlapping.status,422);
   assert.match(overlapping.data.error,/ocupação/);
-  assert.equal((await api('data',null,'owner')).data.data.transfers.length,0);
+  assert.equal((await api('data',null,'owner')).data.data.transfers.length,registered.transfers.length);
   const navigateAgenda=tab=>tab.locator('#navigation [data-page="events"]').click();
   const saveEvent=async(tab,title,eventId)=>{
    const button=eventId?`[data-edit="events"][data-id="${eventId}"]`:'[data-action="new:events"]';
