@@ -1,4 +1,4 @@
-const CACHE='canto-ninho-v25-azulao';
+const CACHE='canto-ninho-v26-cadastro-ave';
 const ASSETS=['./','./index.html','./icon-ninho-192.png','./icon-ninho-512.png','./manifest.webmanifest',
  './images/caboclinho.png','./images/azulao.png','./sync-core.js?v=16','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
 self.addEventListener('install',event=>{
