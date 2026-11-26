@@ -241,6 +241,30 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
 :root[data-app-palette] .cloud-status[data-status="synced"]{color:var(--accent)}
 :root[data-app-palette] .cloud-status[data-status="conflict"]{background:#9b3d26;color:white}
 :root[data-app-palette] .status{background:var(--cream);color:var(--muted)}
+</style><style>
+.facility-search .field{width:min(100%,28rem)}
+.facility-group{margin-bottom:16px}
+.facility-group h3{margin:0 0 10px;font-size:1rem}
+.facility-group table{width:100%;table-layout:fixed}
+.facility-group th:first-child{width:29%}
+.facility-group th:last-child{width:36%}
+.facility-group td{overflow-wrap:anywhere}
+.facility-group th:last-child{text-align:right}
+.facility-group .facility-actions,.facility-group .facility-actions .actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.facility-group td:last-child .actions{margin:0}
+.facility-group .facility-available{background:#e6f1e7;color:#245435}
+.facility-group .facility-occupied{background:#e3edf8;color:#244c75}
+@media(max-width:760px){
+ .facility-group .table-wrap{overflow:visible}
+ .facility-group table,.facility-group tbody{display:block;min-width:0}
+ .facility-group thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ .facility-group tr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:6px 10px;padding:12px;border:1px solid var(--line);border-radius:10px}
+ .facility-group tr+tr{margin-top:8px}
+ .facility-group td{padding:0;border:0;min-width:0}
+ .facility-group td:nth-child(n+3){grid-column:1/-1}
+ .facility-group .facility-actions,.facility-group .facility-actions .actions{justify-content:flex-start}
+ .facility-group .btn{min-height:40px}
+}
 </style></head><body><div class="app" style="display:none"><aside class="sidebar" id="sidebar"><div class="logo"><img class="menu-logo" src="./icon-ninho-192.png" width="192" height="192" alt=""><strong>Canto &amp; Ninho</strong><button type="button" class="btn secondary mobile-close" id="menuClose" aria-label="Fechar menu">×</button></div><div class="nav-title">GESTÃO DO CRIADOURO</div><nav id="navigation" aria-label="Módulos"></nav><div class="side-foot">🌿 Seus dados são armazenados neste dispositivo. Faça backups regularmente.<br><br>Protótipo local, sem conexão a órgãos oficiais.</div></aside><button type="button" class="menu-backdrop" id="menuBackdrop" tabindex="-1" aria-label="Fechar menu" hidden></button><main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button><div><div class="eyebrow">PAINEL DE GERENCIAMENTO</div><h1 id="pageTitle" tabindex="-1">Início</h1></div></div><div class="topright"><button class="btn secondary small cloud-status" id="cloudButton" type="button" aria-label="Estado dos dados: Verificando nuvem">Verificando nuvem…</button><button class="btn secondary small" id="backupTop">↓ Backup</button></div></header><div id="content" class="content"></div></main><nav id="mobileNav" class="mobile-nav" aria-label="Atalhos principais"><button type="button" data-page="home"><span aria-hidden="true">⌂</span>Início</button><button type="button" data-page="birds"><span aria-hidden="true">♣</span>Plantel</button><button type="button" data-page="reproduction"><span aria-hidden="true">♡</span>Reprodução</button><button type="button" data-page="events"><span aria-hidden="true">▦</span>Agenda</button><button type="button" id="mobileMore" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span>Mais</button></nav></div><div id="modalRoot"></div><div id="toastRoot"></div><div id="welcomeRoot"></div><script src="./sync-core.js?v=16"></script><script src="./vendor/qrcode-generator.js"></script><script src="./vendor/jspdf.umd.min.js"></script><script src="./vendor/jsQR.js"></script><script>
 'use strict';
 (async function(){
@@ -1783,7 +1807,83 @@ function prepareStockSave(type,record,old,form){
 }
 
 function stockPage(){const chosen=['stock','movements'].includes(filteredMode)?filteredMode:'stock';return `${header('Estoque','Saldos, aquisições e movimentações.')}<div class="toolbar"><button data-sub="stock" class="btn ${chosen==='stock'?'':'secondary'}">Produtos</button><button data-sub="movements" class="btn ${chosen==='movements'?'':'secondary'}">Movimentações</button></div><div class="quick-actions"><button class="btn secondary" data-action="quickPurchase">Registrar compra</button><button class="btn secondary" data-action="quickConsumption">Registrar consumo</button></div>${generic(chosen)}${stockExpenseReview()}`}
-function facilitiesPage(){const chosen=['facilities','transfers'].includes(filteredMode)?filteredMode:'facilities';return `${header('Instalações','Cadastro e histórico de ocupação.')}<div class="toolbar"><button data-sub="facilities" class="btn ${chosen==='facilities'?'':'secondary'}">Instalações</button><button data-sub="transfers" class="btn ${chosen==='transfers'?'':'secondary'}">Ocupações</button></div>${generic(chosen)}`}
+const cageGroups=[
+ {key:'INDIVIDUAL',label:'Gaiolas individuais',match:/\bindividua(?:l|is)\b/},
+ {key:'TRANSPORTE',label:'Gaiolas de transporte',match:/\btransporte\b/},
+ {key:'VOADEIRA',label:'Gaiolas voadeiras',match:/\bvoadeiras?\b/},
+ {key:'CAMPEADA',label:'Gaiolas de campeada',match:/\bcampeadas?\b/},
+ {key:'REPRODUÇÃO',label:'Gaiolas de reprodução',match:/\breproducao\b/},
+ {key:'VIVEIRO',label:'Viveiros',match:/\bviveiros?\b/},
+ {key:'OUTRO',label:'Outras gaiolas'}
+];
+function inferredCageGroup(unit){
+ const product=normalizeSpecies(getRecord('stock',unit?.cageStockId)?.name);
+ const name=normalizeSpecies(unit?.name);
+ return cageGroups.find(group=>group.match?.test(product))||
+  cageGroups.find(group=>group.match?.test(name));
+}
+function facilityGroup(unit){
+ const type=upper(unit.type).trim();
+ if(type==='GAIOLA'){
+  return (cageGroups.find(group=>group.key===unit.cageType)||inferredCageGroup(unit)||cageGroups.at(-1)).label;
+ }
+ return ({VIVEIRO:'Viveiros',NINHO:'Ninhos',AMBIENTE:'Ambientes'})[type]||'Outras instalações';
+}
+function facilityStatus(unit,occupied){
+ if(unit.cageSaleId)return {label:'Entregue em venda',style:''};
+ if(cageUnavailable(unit))return {label:'Fora do estoque',style:''};
+ return occupied?{label:'Ocupada',style:'facility-occupied'}:{label:'Disponível',style:'facility-available'};
+}
+function facilityCatalog(){
+ const labels=[...cageGroups.map(group=>group.label),'Ninhos','Ambientes','Outras instalações'];
+ const groups=new Map(labels.map(label=>[label,[]]));
+ const term=normalizeSpecies(query);
+ for(const unit of byName(db.facilities)){
+  const label=facilityGroup(unit);
+  const birds=cageTransfers(unit).map(transfer=>birdName(findBird(transfer.bird)));
+  if(term&&![unit.name,unit.type,unit.notes,label,...birds].some(text=>normalizeSpecies(text).includes(term)))continue;
+  groups.get(label).push({unit,birds});
+ }
+ return `<div class="toolbar facility-search"><input id="search" class="field" type="search"
+  aria-label="Buscar por instalação ou ave" placeholder="Buscar por instalação ou ave" value="${esc(query)}"></div>
+  ${[...groups].filter(([,rows])=>rows.length).map(([label,rows])=>`<section class="panel facility-group">
+   <h3>${esc(label)}</h3>
+   <div class="table-wrap"><table class="data-table" role="table" aria-label="${esc(label)}">
+    <thead role="rowgroup"><tr role="row">${['Instalação','Situação','Ave','Ações'].map(title=>`<th role="columnheader" scope="col">${title}</th>`).join('')}</tr></thead>
+    <tbody role="rowgroup">${rows.map(({unit,birds})=>{
+     const status=facilityStatus(unit,birds.length>0);
+     return `<tr role="row"><td role="cell"><strong>${esc(unit.name)}</strong></td>
+      <td role="cell"><span class="tag ${status.style}">${status.label}</span></td>
+      <td role="cell">${birds.length?birds.map(esc).join(', '):'—'}</td>
+      <td role="cell"><div class="facility-actions">${recordActions('facilities',unit)}</div></td></tr>`;
+    }).join('')}</tbody>
+   </table></div></section>`).join('')||'<p class="panel empty">Nenhuma instalação encontrada.</p>'}`;
+}
+function facilitiesPage(){
+ const history=filteredMode==='transfers';
+ return `${header('Instalações','Cadastro e histórico de ocupação.',history?'':'Nova instalação','new:facilities')}
+ <div class="toolbar" role="group" aria-label="Visualização de instalações">
+  <button data-sub="facilities" class="btn ${history?'secondary':''}" aria-pressed="${!history}">Cadastro</button>
+  <button data-sub="transfers" class="btn ${history?'':'secondary'}" aria-pressed="${history}">Histórico de ocupações</button>
+ </div>${history?generic('transfers'):facilityCatalog()}`;
+}
+function setupFacilityForm(form,record){
+ const {type,name}=form.elements;
+ const field=document.createElement('div');
+ field.innerHTML=select('cageType','Tipo de gaiola',cageGroups.map(group=>group.key),record?.cageType||'');
+ const control=field.querySelector('select');
+ type.parentElement.after(field);
+ const refresh=()=>{
+  const isCage=upper(type.value)==='GAIOLA';
+  field.hidden=!isCage;
+  control.disabled=!isCage;
+  const suggested=inferredCageGroup({...record,name:name.value});
+  control.options[0].textContent=suggested?`Automático · ${suggested.key}`:'Automático · Outras gaiolas';
+ };
+ type.addEventListener('change',refresh);
+ name.addEventListener('input',refresh);
+ refresh();
+}
 const moduleNames={
  birds:'Aves',food:'Alimentos',feedings:'Fornecimentos de alimentos',feedingPreferences:'Observações de preferência',
  couples:'Casais',seasons:'Temporadas',attempts:'Tentativas reprodutivas',nests:'Ninhadas',eggs:'Ovos',
@@ -1867,6 +1967,7 @@ function openForm(type,record=null){editing={type,id:record?.id||null};let field
  fields=`${input('name','Nome (opcional)','text',r.name)}${input('scientific','Nome científico','text',scientific,true)}${input('ring','Anilha completa','text',r.ring)}${select('sex','Sexo',['MACHO','FÊMEA','NÃO IDENTIFICADO'],sexValue(r.sex),true)}${parentRoles.map(role=>parentField(role,r)).join('')}${select('status','Situação cadastral',db.settings.statuses,r.status||db.settings.statuses[0],true)}${select('condition','Condição de manejo',db.settings.conditions,r.condition||db.settings.conditions[0],true)}`}
 else fields=configs[type].fields.map(f=>formField(f,record||{})).join('');const hint=type==='birds'?'<div class="notice info">Cadastro simplificado com exatamente oito campos. A anilha preserva zeros à esquerda e caracteres especiais. Nenhum registro confirma regularidade oficial.</div>':'';modal((record?'Editar: ':'Novo registro: ')+(type==='birds'?'AVE':configs[type].title),`<form id="recordForm" data-type="${type}"><div class="form-grid">${fields}</div>${hint}<p class="form-feedback" role="alert" hidden></p><div class="modal-foot"><button type="button" class="btn secondary" data-action="close">Cancelar</button><button type="submit" class="btn">Salvar registro</button></div></form>`);
  if(type==='stock'||type==='movements')setupStockForm(type,record,document.getElementById('recordForm'));
+ if(type==='facilities')setupFacilityForm(document.getElementById('recordForm'),record);
  if(type==='expenses')document.querySelector('#recordForm .form-grid').insertAdjacentHTML('beforeend',expensePaymentFields(record));
  if(type==='couples'){
   const form=document.getElementById('recordForm');
@@ -2219,6 +2320,7 @@ function parseBRDate(v){if(!v)return '';if(/^\d{8}$/.test(v))v=v.replace(/^(\d{2
 function readValues(form,type){const fd=new FormData(form),values={};for(const [key,value]of fd){const el=form.elements.namedItem(key);if(referenceCollections[key])values[key]=getRecord(referenceCollections[key],value)?.id||value;else if(el?.dataset.brDate!==undefined){const parsed=parseBRDate(value);if(parsed===null){formFeedback(form,'Informe uma data válida no formato DD/MM/AAAA.');return null}values[key]=parsed}else values[key]=el?.dataset.stockDecimal?stockDecimal(value):el?.type==='number'?Number(value||0):['date','time'].includes(el?.type)?value:key==='ring'?value.trim():upper(value.trim())}
  if(['tasks','feedings','trips'].includes(type))values.bird=[...new Set(fd.getAll('bird').map(x=>findBird(x)?.id||x))];
  if(type==='feedings')values.food=foodSelection(fd,'food');
+ if(type==='facilities'&&upper(values.type)!=='GAIOLA')values.cageType='';
  delete values.birdCage;
  if(type==='nests'){
   for(const [key] of timingFields)delete values[key];
