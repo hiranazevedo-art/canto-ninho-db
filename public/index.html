@@ -493,13 +493,13 @@ function birds(){
 function ancestors(b,level=0,side=''){if(!b)return `<div class="tree-card unknown">DESCONHECIDO<div class="sub">${side}</div></div>`;return `<button class="tree-card ${level===0?'primary':''}" data-tree="${b.id}">${birdPhotoImg(b,'tree-species-photo')}<strong>${esc(birdName(b))}</strong><div class="sub">${esc(b.ring||'SEM ANILHA')} · ${esc(b.sex||'')}</div>${b.externalAncestor?`<span class="tag">Outro criadouro</span>${b.breeder?`<div class="sub">${esc(b.breeder)}</div>`:''}`:''}</button>`}
 function descendants(root,depth=0,seen=new Set()){if(depth>=3)return '';const children=ancestryBirds().filter(b=>sameId(b.father,root.id)||sameId(b.mother,root.id)).filter(b=>!seen.has(b.id));if(!children.length)return depth===0?'<div class="empty">Sem descendentes registrados.</div>':'';const next=new Set(seen);next.add(root.id);return `<div class="tree-level">${children.map(b=>`<div>${ancestors(b,depth+1)}${expandedChildren?descendants(b,depth+1,next):''}</div>`).join('')}</div>`}
 function genealogy(){
- if(!treeBird&&db.birds.length)treeBird=db.birds[0].id;
- const bird=findAncestor(treeBird);
- const choices=byBirdName(bird?.externalAncestor?[...db.birds,bird]:db.birds);
+ const choices=byBirdName(db.birds.filter(bird=>!birdOutOfPlantel(bird)));
+ const bird=findAncestor(treeBird)||choices[0];
+ treeBird=bird?.id||'';
  return `${header('Árvore genealógica','Consulte a linhagem paterna, materna e os descendentes da ave.')}
  <div class="panel"><div class="toolbar">
-  <select class="field" id="treeSelect" aria-label="Ave para consultar a genealogia">
-   <option value="">SELECIONE UMA AVE</option>
+  <select class="field" id="treeSelect" aria-label="Ave ativa para consultar a genealogia" ${choices.length?'':'disabled'}>
+   <option value="">${choices.length?'SELECIONE UMA AVE ATIVA':'NENHUMA AVE ATIVA NO PLANTEL'}</option>
    ${choices.map(item=>`<option value="${esc(item.id)}" ${sameId(item.id,treeBird)?'selected':''}>${esc(birdName(item))} · ${esc(item.ring||'SEM ANILHA')}</option>`).join('')}
   </select>
   ${bird?`<button class="btn secondary" data-pedigree-pdf="${esc(bird.id)}">Baixar pedigree em PDF</button>`:''}
@@ -508,7 +508,7 @@ function genealogy(){
   <h3>${esc(birdName(bird))}</h3>
   ${pedigreeFacts(bird)}
   ${bird.externalAncestor?`<button class="btn secondary small" data-edit-ancestor="${esc(bird.id)}">Editar ancestral externo</button>`:''}
- </div>${breederSummary(bird)}${profilePedigree(bird)}`:'<p class="empty">Cadastre uma ave para visualizar sua genealogia.</p>'}
+ </div>${breederSummary(bird)}${profilePedigree(bird)}`:'<p class="empty">Nenhuma ave ativa no plantel para consultar.</p>'}
  </div>
  ${bird?`<section class="panel"><div class="toolbar"><h3>Filhos e descendentes</h3>
   <button class="btn secondary" data-action="toggleDesc">${expandedChildren?'Recolher gerações seguintes':'Expandir até 3 gerações'}</button>
@@ -2059,7 +2059,7 @@ if(type==='nests'&&!old){
  if(dates)Object.assign(updated,dates);
 }
 if(type==='stock'||type==='movements'){const stockError=prepareStockSave(type,updated,old,form);if(stockError)return formFeedback(form,stockError)}
-const cage=type==='birds'?planBirdCage(updated,form.elements.birdCage.value):null;
+const cage=type==='birds'&&form.elements.birdCage?planBirdCage(updated,form.elements.birdCage.value):null;
 if(cage?.error)return formFeedback(form,cage.error);
 const parents=type==='birds'?prepareParents(updated,readParentFields(form)):{pending:[]};
 if(parents.error)return formFeedback(form,parents.error);
@@ -2303,7 +2303,7 @@ openForm=function(type,record=null){
  if(type==='feedings')form.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info" id="foodSummary" style="white-space:pre-line"></div>');
  // Preserve a legacy invalid parent visibly so editing never silently erases it.
  if(type==='birds')for(const key of ['father','mother']){const value=record?.[key];if(value){const el=form.elements[key],b=findBird(value);if(!el.value){const opt=new Option((b?birdName(b):value)+' — REVISAR CADASTRO',b?.id||value,true,true);el.add(opt)}}}
- if(type==='birds')setupBirdCageField(form,record);
+ if(type==='birds'&&record)setupBirdCageField(form,record);
  if(type==='trips')setupTripBirdSearch(form);
  if(type==='nests'&&!record)form.querySelector('.form-grid').insertAdjacentHTML('beforeend',
   '<div class="form-grid wide" data-new-nest-dates hidden></div>');

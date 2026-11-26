@@ -58,6 +58,12 @@ async function main() {
  sqlite.prepare('INSERT INTO accounts(id,password_salt,password_hash) VALUES (?,?,?)').run('owner', salt, legacyHash);
  const legacyRows = { ...legacyData, ...Object.fromEntries(globalThis.CantoSync.collections.map(name =>
   [name, legacyData[name] || []])) };
+ legacyRows.birds=[
+  {...legacyData.birds[0],father:'former-parent'},
+  {id:'former-parent',name:'PAI FORA DO PLANTEL',exit:{date:'2026-11-01',reason:'Óbito'}},
+  {id:'sold-bird',name:'AVE VENDIDA'}
+ ];
+ legacyRows.revenues=[{id:'sale',kind:'bird',itemId:'sold-bird',deliveryDate:'2026-11-01'}];
  legacyRows.facilities=[
   {id:'carrier-one',name:'GAIOLA DE TRANSPORTE 1',type:'GAIOLA'},
   {id:'individual-ten',name:'GAIOLA INDIVIDUAL 10',type:'GAIOLA'},
@@ -150,6 +156,23 @@ async function main() {
   };
   await login();
   assert.equal((await api('data', null, 'owner')).data.data.birds[0].name, legacyData.birds[0].name);
+  await page.locator('#navigation [data-page="tree"]').click();
+  const choices=page.locator('#treeSelect option');
+  assert.deepEqual(await choices.evaluateAll(options=>options.map(option=>option.value)),['','ave-legada']);
+  await page.getByText('PAI FORA DO PLANTEL',{exact:true}).first().waitFor();
+  await page.locator('#navigation [data-page="birds"]').click();
+  await page.locator('[data-action="new:birds"]').click();
+  assert.equal(await page.locator('#recordForm #birdCageSearch, #recordForm [name=birdCage]').count(),0);
+  await page.locator('#recordForm [name=name]').fill('AVE NOVA DE TESTE');
+  await page.locator('#recordForm [name=scientific]').fill('Sporophila bouvreuil');
+  await page.locator('#recordForm [type=submit]').click();
+  await page.locator('#recordForm').waitFor({state:'detached'});
+  await appReady(page);
+  const bird=(await api('data',null,'owner')).data.data.birds.find(row=>row.name==='AVE NOVA DE TESTE');
+  assert.ok(bird);
+  await page.locator(`[data-edit="birds"][data-id="${bird.id}"]`).click();
+  await page.getByLabel('Buscar gaiola').waitFor();
+  await page.locator('#modalRoot button.close').click();
   for (const width of [360,390,1280]) {
    await page.setViewportSize({width,height:820});
    const target=page.locator('#navigation [data-page="facilities"]');
