@@ -2252,13 +2252,21 @@ function routineEnd(start,years){
 function routineDates(start,days,end){
  if(!validFinanceDate(start)||!validFinanceDate(end)||!Number.isSafeInteger(days)||days<1)return [];
  const dates=[];
- for(const date=new Date(start+'T12:00:00Z');date.toISOString().slice(0,10)<end;date.setUTCDate(date.getUTCDate()+days)){
+ const limit=Date.parse(end+'T12:00:00Z');
+ const date=new Date(start+'T12:00:00Z');
+ while(date.getTime()<limit){
   dates.push(date.toISOString().slice(0,10));
+  if(days>=(limit-date.getTime())/86400000)break;
+  date.setUTCDate(date.getUTCDate()+days);
  }
  return dates;
 }
 function routineYearOptions(years=routineYears){
  return years.map(year=>`<option value="${year}">${year} ${year===1?'ano':'anos'}</option>`).join('');
+}
+function taskInterval(form){
+ const days=form.elements.routineInterval?.valueAsNumber;
+ return Number.isSafeInteger(days)&&days>0?days:null;
 }
 function taskSummary(form){
  const summary=form.querySelector('#seriesSummary');
@@ -2268,16 +2276,34 @@ function taskSummary(form){
   summary.textContent='A edição preserva ocorrências concluídas. A conclusão em atraso não desloca as próximas datas.';
   return;
  }
- const interval=intervals[form.elements.name.value];
- duration.closest('div').hidden=!interval;
+ const interval=taskInterval(form);
+ const recurring=Object.hasOwn(intervals,form.elements.name.value);
+ if(!recurring){
+  summary.textContent='Esta atividade será cadastrada como uma ocorrência individual.';
+  return;
+ }
+ if(!interval){
+  summary.textContent='Informe um intervalo de pelo menos 1 dia inteiro.';
+  return;
+ }
  const start=form.elements.date.value;
  const dates=routineDates(start,interval,routineEnd(start,Number(duration.value)));
- summary.textContent=dates.length?`A cada ${interval} dias: ${dates.length} ocorrências, até ${fmtDate(dates.at(-1))}.`:
-  interval?'Informe a data de início.':'Esta atividade será cadastrada como uma ocorrência individual.';
+ summary.textContent=dates.length?`A cada ${interval} ${interval===1?'dia':'dias'}: ${dates.length} ocorrências, até ${fmtDate(dates.at(-1))}.`:
+  'Informe a data de início.';
 }
 const openPrevious=openForm;
 openForm=function(type,r=null){openPrevious(type,r);const f=document.getElementById('recordForm');if(type==='tasks'){if(!r){f.elements.date.value=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});f.elements.status.value='PENDENTE';
- f.querySelector('.form-grid').insertAdjacentHTML('beforeend',`<div class="wide"><label for="routineYears">Duração da rotina</label><select id="routineYears" name="routineYears">${routineYearOptions()}</select></div>`);
+ f.querySelector('.form-grid').insertAdjacentHTML('beforeend',`<div><label for="routineInterval">Repetir a cada (dias)</label><input id="routineInterval" name="routineInterval" type="number" min="1" step="1" inputmode="numeric" required></div><div><label for="routineYears">Duração da rotina</label><select id="routineYears" name="routineYears">${routineYearOptions()}</select></div>`);
+ const activity=f.elements.name, interval=f.elements.routineInterval, duration=f.elements.routineYears;
+ function setDefaultInterval(){
+  const days=Object.hasOwn(intervals,activity.value)?intervals[activity.value]:null;
+  interval.value=days??'';
+  interval.disabled=duration.disabled=days===null;
+  interval.parentElement.hidden=duration.parentElement.hidden=days===null;
+ }
+ activity.addEventListener('change',setDefaultInterval);
+ interval.addEventListener('input',()=>taskSummary(f));
+ setDefaultInterval();
  }f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info" id="seriesSummary"></div>');if(r?.seriesId)f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide"><label>Aplicar edição</label><select name="seriesScope"><option value="one">Somente esta ocorrência</option><option value="future">Esta e as próximas pendentes da série</option></select><div class="helper">Para mudar a data ou atividade de toda a série, cancele as próximas e crie uma nova série.</div></div>');f.addEventListener('change',()=>taskSummary(f));taskSummary(f)}if(type==='health'){f.querySelector('[data-all-birds]').parentElement.lastChild.textContent=' Marcar todas as aves cadastradas';f.querySelector('.form-grid').insertAdjacentHTML('beforeend','<div class="wide notice info">Categorias de registro do usuário. Não geram doses, prescrições ou suplementação automática.</div>')}};
 const submitPrevious=submitRecord;
 submitRecord=function(f){const type=f.dataset.type;if(type==='health'&&!new FormData(f).getAll('bird').length)return toast('SELECIONE AO MENOS UMA AVE.');if(type!=='tasks')return submitPrevious(f);const v=readValues(f,type);if(!v)return;const old=editing?.id?getRecord('tasks',editing.id):null;
@@ -2285,7 +2311,10 @@ const historical=new Set(birdIds(old?.bird));
 const unavailable=ref=>{const bird=findBird(ref);return !bird||birdOutOfPlantel(bird)};
 if(v.bird.some(ref=>unavailable(ref)&&!historical.has(ref)))return toast('Selecione somente aves ativas no plantel.');
 const err=validateIntegrated(type,v,old);if(err)return toast(err);if(!validFinanceDate(v.date))return toast('INFORME UMA DATA VÁLIDA.');delete v.routineYears;
-const interval=intervals[v.name];
+delete v.routineInterval;
+const recurring=!old&&Object.hasOwn(intervals,v.name);
+const interval=recurring?taskInterval(f):null;
+if(recurring&&!interval)return toast('INFORME UM INTERVALO EM DIAS INTEIROS A PARTIR DE 1.');
 const end=interval&&!old?routineEnd(v.date,Number(f.elements.routineYears.value)):'';
 if(interval&&!old&&!end)return toast('SELECIONE UMA DURAÇÃO DE 1 A 5 ANOS.');const before=JSON.stringify(db),stamp=new Date().toISOString();if(old){const future=f.elements.seriesScope?.value==='future';if(future&&(v.date!==old.date||v.name!==old.name))return toast('PARA ALTERAR DATA OU ATIVIDADE DA SÉRIE, CANCELE AS PRÓXIMAS E CRIE OUTRA.');const rows=future?db.tasks.filter(t=>t.seriesId===old.seriesId&&t.date>=old.date&&!['CONCLUÍDA','CANCELADA'].includes(t.status)):[old];if(!rows.length)return toast('NÃO HÁ OCORRÊNCIAS PENDENTES PARA EDITAR.');if(!confirm(`Salvar alterações em ${rows.length} ocorrência(s)?`))return;rows.forEach(t=>{const date=t.date;const linked=new Set(birdIds(t.bird));const birds=v.bird.filter(ref=>linked.has(ref)||!unavailable(ref));Object.assign(t,v,{bird:birds,updatedAt:stamp});if(future)t.date=date;if(v.status==='CONCLUÍDA'&&!t.completedAt){t.completedAt=stamp;t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'})}})}else{const targets=interval?routineDates(v.date,interval,end):[v.date];const fresh=unusedRoutineDates(v,targets);if(!fresh.length)return toast('ESSAS OCORRÊNCIAS JÁ ESTÃO CADASTRADAS.');if(!confirm(`Criar ${fresh.length} ocorrência(s), de ${fmtDate(fresh[0])} até ${fmtDate(fresh.at(-1))}?`))return;const sid=id();fresh.forEach((date,i)=>db.tasks.push({...v,id:id(),date,seriesId:sid,seriesStart:v.date,seriesEnd:end,intervalDays:interval||null,status:i===0?v.status:'PENDENTE',...(i===0&&v.status==='CONCLUÍDA'?{completedAt:stamp,done:v.date}:{}),createdAt:stamp,updatedAt:stamp}))}if(!persist('tasks','SALVAR SÉRIE',{id:old?.id||''})){db=JSON.parse(before);return toast('NÃO FOI POSSÍVEL SALVAR.')}closeModal();render();toast('AGENDA SALVA.')};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-complete]');if(!b)return;e.stopImmediatePropagation();const t=getRecord('tasks',b.dataset.complete);if(!t||['CONCLUÍDA','CANCELADA'].includes(t.status))return;const before=JSON.stringify(db);t.status='CONCLUÍDA';t.completedAt=new Date().toISOString();t.done=new Date().toLocaleDateString('en-CA',{timeZone:db.settings.timezone||'America/Fortaleza'});if(!persist('tasks','CONCLUIR',t)){db=JSON.parse(before);return}render();toast('TAREFA CONCLUÍDA.')},true);
