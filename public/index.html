@@ -2492,14 +2492,14 @@ const speciesKey=s=>normalizeSpecies(s.scientific).replace(/\s+/g,' ');
 function configuredSpecies(){return (db.settings.speciesSelected||[]).map(x=>speciesById(x)).filter(Boolean)}
 function speciesById(key){return [...SPECIES_CATALOG,...(db.settings.speciesCustom||[])].find(x=>x.id===key)}
 function knownBirdSuggestions(){const values=[...new Set(db.birds.map(b=>String(b.scientific||b.scientificName||b.species||'').trim()).filter(Boolean))];return values.map(raw=>({raw,species:SPECIES_CATALOG.find(s=>[s.scientific,...s.synonyms].some(n=>normalizeSpecies(n)===normalizeSpecies(raw)))}))}
-function startSpeciesSetup(force=false){if(!force&&db.settings.setupComplete)return;speciesDraft={selected:[...(db.settings.speciesSelected||[])],featured:db.settings.speciesFeatured||'',custom:(db.settings.speciesCustom||[]).map(x=>({...x})),profile:{owner:db.settings.owner||'',name:db.settings.name==='MEU CRIADOURO'?'':db.settings.name||'',municipality:db.settings.municipality||'',state:db.settings.state||'',phone:db.settings.phone||'',email:db.settings.email||'',environmentalRegistration:db.settings.environmentalRegistration||''},edit:force};speciesSearch='';renderSpeciesSetup()}
+function startSpeciesSetup(force=false){if(!force&&db.settings.setupComplete)return;speciesDraft={selected:[...(db.settings.speciesSelected||[])],featured:db.settings.speciesFeatured||'',custom:(db.settings.speciesCustom||[]).map(x=>({...x})),profile:{owner:db.settings.owner||'',name:db.settings.name==='MEU CRIADOURO'?'':db.settings.name||'',municipality:db.settings.municipality||'',state:db.settings.state||'',phone:db.settings.phone||'',email:db.settings.email||'',environmentalRegistration:db.settings.environmentalRegistration||'',ctf:db.settings.ctf||''},edit:force};speciesSearch='';renderSpeciesSetup()}
 function draftSpecies(){return [...SPECIES_CATALOG,...speciesDraft.custom]}
 function selectedEntry(key){return draftSpecies().find(s=>s.id===key)}
 function speciesOptions(){const q=normalizeSpecies(speciesSearch);return draftSpecies().filter(s=>!q||[s.common,s.scientific,...(s.alternate||[]),...(s.synonyms||[])].some(x=>normalizeSpecies(x).includes(q)))}
 function speciesProfileField(key,label,type='text',extra=''){return `<div><label for="setup_${key}">${label}</label><input id="setup_${key}" data-profile="${key}" type="${type}" ${extra} value="${esc(speciesDraft.profile[key]||'')}"></div>`}
 function renderSpeciesSetup(preserveSearch=false){if(!speciesDraft)return;
  const entries=draftSpecies(), selected=speciesDraft.selected.map(selectedEntry).filter(Boolean);
- const body=`<div class="welcome-screen"><div class="welcome-card"><div class="welcome-head"><div style="font-size:12px;letter-spacing:2px">CANTO & NINHO · CONFIGURAÇÃO DO CRIADOURO</div><h2>${speciesDraft.edit?'Meu criadouro':'Bem-vindo ao Canto & Ninho!'}</h2><p>Selecione as espécies do seu criadouro e personalize sua experiência. Os dados do responsável são opcionais.</p></div><div class="welcome-body"><div class="setup-columns"><section class="setup-section"><h3>1. Dados do responsável <span class="muted">(opcionais)</span></h3><p class="muted">Você pode continuar sem preencher e editar depois em Configurações → Meu criadouro. Nada aqui ativa mensagens ou notificações.</p><div class="setup-grid">${speciesProfileField('owner','Nome do responsável')}${speciesProfileField('name','Nome do criadouro')}${speciesProfileField('municipality','Município')}${speciesProfileField('state','Estado / UF','text','maxlength="2" placeholder="UF"')}${speciesProfileField('phone','Telefone / WhatsApp','tel')}${speciesProfileField('email','E-mail','email')}${speciesProfileField('environmentalRegistration','Registro no órgão ambiental (se houver)')}</div></section><section class="setup-section"><h3>2. Espécies criadas <span style="color:#a25b38">*</span></h3><p class="muted">Selecione pelo menos uma espécie. A escolha não cria aves no plantel e não representa autorização ambiental.</p><input class="field" style="width:100%;margin:8px 0" id="speciesSearch" placeholder="Buscar nome comum, científico ou sinônimo" value="${esc(speciesSearch)}" aria-label="Pesquisar espécies"><div class="species-list" id="speciesResults">${renderSpeciesResults()}</div><div style="margin-top:12px"><strong style="font-size:12px">Selecionadas (${selected.length})</strong><div id="selectedSpeciesChips">${selected.length?selected.map(x=>`<span class="species-chip">${esc(x.common)} <button data-species-remove="${esc(x.id)}" aria-label="Remover ${esc(x.common)}">×</button></span>`).join(''):'<p class="muted">Nenhuma espécie selecionada.</p>'}</div></div><div class="species-unknown"><button class="btn secondary small" data-species-unknown="toggle" type="button">Não encontrei a espécie</button><div id="speciesUnknownFields" hidden style="margin-top:10px"><p class="muted">Cadastro provisório para revisão taxonômica, não validado pelo catálogo.</p><div class="setup-grid"><div><label for="newSpeciesCommon">Nome comum</label><input class="field" id="newSpeciesCommon" style="width:100%"></div><div><label for="newSpeciesScientific">Nome científico informado</label><input class="field" id="newSpeciesScientific" style="width:100%"></div></div><button class="btn small" data-species-add-custom="1" type="button" style="margin-top:8px">Adicionar para revisão</button></div></div><div style="margin-top:15px"><h3>Espécie de destaque</h3><p class="muted">${selected.length>1?'Escolha uma espécie para o banner inicial.':'Com apenas uma espécie, ela será destacada automaticamente.'}</p><div id="speciesHighlightChoices">${selected.map(s=>`<label class="species-highlight"><input type="radio" name="featuredSpecies" value="${esc(s.id)}" ${speciesDraft.featured===s.id?'checked':''} ${selected.length===1?'disabled':''}><span>${esc(s.common)} — <i>${esc(s.scientific)}</i></span></label>`).join('')}</div></div><div id="speciesPreview">${renderSpeciesPreview()}</div></section></div><div class="notice info">Os créditos das fotografias do catálogo estão em Configurações. Quando a fotografia estiver indisponível, aparece uma ilustração neutra. O catálogo não certifica a regularidade da criação. Fontes: diagnóstico IBAMA/SisPass e Lista das Aves do Brasil (CBRO). Consulta em 12/11/2026.</div>${renderExistingBirdSuggestions()}<div class="setup-bottom"><div class="backup-import-card"><h3>Já possui um backup do Canto &amp; Ninho?</h3><p>Importe um arquivo JSON de um dispositivo anterior antes de concluir a configuração inicial. Nada será substituído antes da sua confirmação.</p><button class="btn secondary" type="button" data-backup-choose="1">↑ Importar backup existente</button></div><div class="setup-error" id="speciesError" role="alert"></div><div class="actions"><button type="button" class="btn secondary" data-species-cancel="1">Voltar ao início</button><button type="button" class="btn" data-species-save="1">${speciesDraft.edit?'Salvar alterações':'Salvar e começar'}</button></div></div></div></div></div>`;
+ const body=`<div class="welcome-screen"><div class="welcome-card"><div class="welcome-head"><div style="font-size:12px;letter-spacing:2px">CANTO & NINHO · CONFIGURAÇÃO DO CRIADOURO</div><h2>${speciesDraft.edit?'Meu criadouro':'Bem-vindo ao Canto & Ninho!'}</h2><p>Selecione as espécies do seu criadouro e personalize sua experiência. Os dados do responsável são opcionais.</p></div><div class="welcome-body"><div class="setup-columns"><section class="setup-section"><h3>1. Dados do responsável <span class="muted">(opcionais)</span></h3><p class="muted">Você pode continuar sem preencher e editar depois em Configurações → Meu criadouro. Nada aqui ativa mensagens ou notificações.</p><div class="setup-grid">${speciesProfileField('owner','Nome do responsável')}${speciesProfileField('name','Nome do criadouro')}${speciesProfileField('municipality','Município')}${speciesProfileField('state','Estado / UF','text','maxlength="2" placeholder="UF"')}${speciesProfileField('phone','Telefone / WhatsApp','tel')}${speciesProfileField('email','E-mail','email')}${speciesProfileField('environmentalRegistration','Registro no órgão ambiental (se houver)')}${speciesProfileField('ctf','CTF para o crachá (opcional)','text','maxlength="40"')}</div></section><section class="setup-section"><h3>2. Espécies criadas <span style="color:#a25b38">*</span></h3><p class="muted">Selecione pelo menos uma espécie. A escolha não cria aves no plantel e não representa autorização ambiental.</p><input class="field" style="width:100%;margin:8px 0" id="speciesSearch" placeholder="Buscar nome comum, científico ou sinônimo" value="${esc(speciesSearch)}" aria-label="Pesquisar espécies"><div class="species-list" id="speciesResults">${renderSpeciesResults()}</div><div style="margin-top:12px"><strong style="font-size:12px">Selecionadas (${selected.length})</strong><div id="selectedSpeciesChips">${selected.length?selected.map(x=>`<span class="species-chip">${esc(x.common)} <button data-species-remove="${esc(x.id)}" aria-label="Remover ${esc(x.common)}">×</button></span>`).join(''):'<p class="muted">Nenhuma espécie selecionada.</p>'}</div></div><div class="species-unknown"><button class="btn secondary small" data-species-unknown="toggle" type="button">Não encontrei a espécie</button><div id="speciesUnknownFields" hidden style="margin-top:10px"><p class="muted">Cadastro provisório para revisão taxonômica, não validado pelo catálogo.</p><div class="setup-grid"><div><label for="newSpeciesCommon">Nome comum</label><input class="field" id="newSpeciesCommon" style="width:100%"></div><div><label for="newSpeciesScientific">Nome científico informado</label><input class="field" id="newSpeciesScientific" style="width:100%"></div></div><button class="btn small" data-species-add-custom="1" type="button" style="margin-top:8px">Adicionar para revisão</button></div></div><div style="margin-top:15px"><h3>Espécie de destaque</h3><p class="muted">${selected.length>1?'Escolha uma espécie para o banner inicial.':'Com apenas uma espécie, ela será destacada automaticamente.'}</p><div id="speciesHighlightChoices">${selected.map(s=>`<label class="species-highlight"><input type="radio" name="featuredSpecies" value="${esc(s.id)}" ${speciesDraft.featured===s.id?'checked':''} ${selected.length===1?'disabled':''}><span>${esc(s.common)} — <i>${esc(s.scientific)}</i></span></label>`).join('')}</div></div><div id="speciesPreview">${renderSpeciesPreview()}</div></section></div><div class="notice info">Os créditos das fotografias do catálogo estão em Configurações. Quando a fotografia estiver indisponível, aparece uma ilustração neutra. O catálogo não certifica a regularidade da criação. Fontes: diagnóstico IBAMA/SisPass e Lista das Aves do Brasil (CBRO). Consulta em 12/11/2026.</div>${renderExistingBirdSuggestions()}<div class="setup-bottom"><div class="backup-import-card"><h3>Já possui um backup do Canto &amp; Ninho?</h3><p>Importe um arquivo JSON de um dispositivo anterior antes de concluir a configuração inicial. Nada será substituído antes da sua confirmação.</p><button class="btn secondary" type="button" data-backup-choose="1">↑ Importar backup existente</button></div><div class="setup-error" id="speciesError" role="alert"></div><div class="actions"><button type="button" class="btn secondary" data-species-cancel="1">Voltar ao início</button><button type="button" class="btn" data-species-save="1">${speciesDraft.edit?'Salvar alterações':'Salvar e começar'}</button></div></div></div></div></div>`;
  document.getElementById('welcomeRoot').innerHTML=body;
  if(preserveSearch){const el=document.getElementById('speciesSearch');el.focus();el.setSelectionRange(el.value.length,el.value.length)} }
 function renderSpeciesResults(){return speciesOptions().map(s=>`<button class="species-option ${speciesDraft.selected.includes(s.id)?'selected':''}" data-species-toggle="${esc(s.id)}" type="button"><span class="tick">${speciesDraft.selected.includes(s.id)?'✓':'+'}</span>${speciesPhotoImg(s,'species-thumb',customSpeciesPhoto(s))}<span><strong>${esc(s.common)}</strong> — <i>${esc(s.scientific)}</i>${s.review?'<small> · EM REVISÃO</small>':''}</span></button>`).join('')||'<p class="muted" style="padding:10px">Nenhuma correspondência. Use “Não encontrei a espécie”.</p>'}
@@ -2507,7 +2507,7 @@ function renderSpeciesPreview(){const s=selectedEntry(speciesDraft.featured);ret
 function renderExistingBirdSuggestions(){const suggestions=knownBirdSuggestions();if(!suggestions.length)return '';return `<div class="notice"><strong>Espécies encontradas no plantel existente (conferir manualmente)</strong><div style="margin-top:7px">${suggestions.map(v=>v.species?`<button class="btn secondary small" style="margin:3px" type="button" data-species-suggest="${esc(v.species.id)}">+ ${esc(v.species.common)} (${esc(v.raw)})</button>`:`<span class="species-chip">${esc(v.raw)} · SEM CORRESPONDÊNCIA VERIFICADA</span>`).join('')}</div><div class="muted">Aves existentes não serão modificadas; as sugestões não são selecionadas automaticamente.</div></div>`}
 function toggleSpecies(key){if(!speciesDraft)return;const i=speciesDraft.selected.indexOf(key);if(i>=0){speciesDraft.selected.splice(i,1);if(speciesDraft.featured===key)speciesDraft.featured=''}else if(selectedEntry(key))speciesDraft.selected.push(key);if(speciesDraft.selected.length===1)speciesDraft.featured=speciesDraft.selected[0];renderSpeciesSetup()}
 function saveSpeciesSetup(){if(!speciesDraft)return;const selected=[...new Set(speciesDraft.selected)].filter(x=>selectedEntry(x));const error=document.getElementById('speciesError');if(!selected.length){error.textContent='Selecione pelo menos uma espécie.';return}if(selected.length===1)speciesDraft.featured=selected[0];if(!selected.includes(speciesDraft.featured)){error.textContent='Escolha uma espécie de destaque entre as selecionadas.';return}const email=speciesDraft.profile.email.trim();if(email&& !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error.textContent='Confira o e-mail informado ou deixe o campo vazio.';return}
- const oldSettings=structuredClone(db.settings);Object.assign(db.settings,{...speciesDraft.profile,name:speciesDraft.profile.name.trim()?upper(speciesDraft.profile.name):oldSettings.name||'MEU CRIADOURO',owner:upper(speciesDraft.profile.owner),municipality:upper(speciesDraft.profile.municipality),state:upper(speciesDraft.profile.state),environmentalRegistration:upper(speciesDraft.profile.environmentalRegistration),speciesSelected:selected,speciesFeatured:speciesDraft.featured,speciesCustom:speciesDraft.custom,setupComplete:true,setupSavedAt:new Date().toISOString()});if(!save()){db.settings=oldSettings;error.textContent='Não foi possível salvar neste dispositivo. Faça backup e libere espaço.';return}speciesDraft=null;document.getElementById('welcomeRoot').innerHTML='';persist('settings','CONFIGURAÇÃO DAS ESPÉCIES',{});nav();render();toast('CONFIGURAÇÃO DO CRIADOURO SALVA.') }
+ const oldSettings=structuredClone(db.settings);Object.assign(db.settings,{...speciesDraft.profile,name:speciesDraft.profile.name.trim()?upper(speciesDraft.profile.name):oldSettings.name||'MEU CRIADOURO',owner:upper(speciesDraft.profile.owner),municipality:upper(speciesDraft.profile.municipality),state:upper(speciesDraft.profile.state),environmentalRegistration:upper(speciesDraft.profile.environmentalRegistration),ctf:speciesDraft.profile.ctf.trim(),speciesSelected:selected,speciesFeatured:speciesDraft.featured,speciesCustom:speciesDraft.custom,setupComplete:true,setupSavedAt:new Date().toISOString()});if(!save()){db.settings=oldSettings;error.textContent='Não foi possível salvar neste dispositivo. Faça backup e libere espaço.';return}speciesDraft=null;document.getElementById('welcomeRoot').innerHTML='';persist('settings','CONFIGURAÇÃO DAS ESPÉCIES',{});nav();render();toast('CONFIGURAÇÃO DO CRIADOURO SALVA.') }
 // Extend existing settings view rather than rebuilding the original one.
 function speciesPhotoGallery(){
  const list=[...new Map([...configuredSpecies(),...db.birds.map(matchedBirdSpecies).filter(Boolean)].map(s=>[s.id,s])).values()];
@@ -4394,6 +4394,89 @@ function birdProfilePDF(bird,pedigree){
  }
  download(pdf.output('blob'),'ave-'+filename);
 }
+async function loadBadgePhoto(src){
+ const image=new Image();
+ if(src.startsWith('https://'))image.crossOrigin='anonymous';
+ return new Promise(resolve=>{
+  const timer=setTimeout(()=>done(null),4000);
+  function done(result){
+   clearTimeout(timer);
+   image.onload=image.onerror=null;
+   resolve(result);
+  }
+  image.onload=()=>done(image);
+  image.onerror=()=>done(null);
+  image.src=src;
+ });
+}
+async function birdBadgePDF(bird,jsPDF,profile){
+ const species=matchedBirdSpecies(bird);
+ const personal=photoData(bird.photo)||customSpeciesPhoto(species);
+ const catalog=speciesPhoto(species);
+ const source=personal||catalog?.url||NEUTRAL_BIRD_IMAGE;
+ let image=await loadBadgePhoto(source);
+ const credit=image&&!personal&&!catalog?.providedByUser?catalog:null;
+ if(!image&&source!==NEUTRAL_BIRD_IMAGE)image=await loadBadgePhoto(NEUTRAL_BIRD_IMAGE);
+
+ const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:[100,70]});
+ const dark='#172c29', green='#25463b', muted='#52675b';
+ function fit(value,x,y,width,size,{color=dark,family='helvetica',style='bold'}={}){
+  const label=String(value??'').trim().replace(/\s+/g,' ')||'—';
+  pdf.setFont(family,style);
+  pdf.setFontSize(size);
+  const measured=pdf.getTextWidth(label);
+  if(measured>width)pdf.setFontSize(size*width/measured);
+  pdf.setTextColor(color);
+  pdf.text(label,x,y);
+ }
+ function field(label,value,x,y,width,size=10,options){
+  fit(label,x,y,width,6.3,{color:muted});
+  fit(value,x,y+4.4,width,size,options);
+ }
+ pdf.setFillColor('#fffcf3');pdf.rect(0,0,100,70,'F');
+ pdf.setFillColor(green);pdf.rect(0,0,34.5,70,'F');
+ if(image){
+  const canvas=document.createElement('canvas');
+  canvas.width=414;
+  canvas.height=645;
+  const ctx=canvas.getContext('2d');
+  const scale=Math.max(canvas.width/image.naturalWidth,canvas.height/image.naturalHeight);
+  const width=image.naturalWidth*scale,height=image.naturalHeight*scale;
+  ctx.drawImage(image,(canvas.width-width)*0.36,(canvas.height-height)/2,width,height);
+  pdf.addImage(canvas.toDataURL('image/jpeg',0.88),'JPEG',0,0,34.5,53.75);
+ }
+ fit(species?.common||'ESPÉCIE',3,59.2,28.5,10,{color:'#ffffff'});
+ fit(bird.scientific||bird.scientificName||species?.scientific,3,64.6,28.5,8,{color:'#e4e9d5',style:'italic'});
+ if(credit?.author){
+  const label=credit.author+' · '+credit.license;
+  fit(label,3,68,28.5,4.8,{color:'#e4e9d5',style:'normal'});
+  if(credit.page)pdf.link(3,65.8,28.5,3.3,{url:credit.page});
+ }
+ fit('NOME DA AVE',38.5,6,57.5,6.3,{color:muted});
+ fit(birdName(bird),38.2,14.2,57.8,21,{family:'times'});
+ pdf.setDrawColor('#bdc7b8');pdf.line(38.5,18,96,18);
+ field('PROPRIETÁRIO',profile.owner,38.5,23,57.5);
+ pdf.setFillColor('#e7ede2');pdf.roundedRect(37.7,30,59,11.2,1.3,1.3,'F');
+ field('ANILHA',bird.ring,40,33.5,54.5,12,{family:'courier'});
+ field('NASCIMENTO',fmtDate(bird.birthDate),38.5,47.5,31);
+ field('SEXO',sexValue(bird.sex),73,47.5,23,9);
+ if(profile.ctf)field('CTF',profile.ctf,38.5,59,57.5);
+ return pdf;
+}
+async function downloadBirdBadge(bird,button){
+ if(button.disabled)return;
+ if(!globalThis.jspdf)return toast('PDF indisponível nesta instalação.');
+ button.disabled=true;
+ try{
+  const pdf=await birdBadgePDF(bird,globalThis.jspdf.jsPDF,db.settings);
+  download(pdf.output('blob'),'cracha-'+slugOfCage(birdName(bird))+'.pdf');
+ }catch(error){
+  console.warn('Não foi possível gerar o crachá',error);
+  toast('Não foi possível gerar o crachá. Tente novamente.');
+ }finally{
+  button.disabled=false;
+ }
+}
 function birdTimelineMarkup(entries){
  return entries.length?`<ul class="mini-list">${entries.map(r=>`<li><span><strong>${fmtDate(r.date)} · ${esc(r.title)}</strong><br>
   ${esc(r.detail)}</span></li>`).join('')}</ul>`:'<p class="empty">Nenhum evento datado no histórico.</p>';
@@ -4416,6 +4499,7 @@ function openBirdProfile(birdId,tab='data',focusTab=false){
  modal('Ficha da ave',`<div class="bird-profile-heading">${birdPhotoImg(bird,'profile-species-photo')}<div>
   <h4>${esc(birdName(bird))}</h4><p>${esc([birdSpeciesLabel(bird),bird.scientific].filter(Boolean).join(' · '))}</p></div></div>
   <div class="actions"><button class="btn small secondary" data-bird-pdf="${esc(birdId)}">Baixar ficha PDF</button>
+  <button class="btn small secondary" type="button" data-bird-badge="${esc(birdId)}">Baixar crachá para gaiola</button>
   ${unit?`<button class="btn small secondary" data-cage-sheet="${esc(unit.id)}">Etiqueta da gaiola</button>`:''}</div>
   <div class="toolbar" role="group" aria-label="Seções da ficha da ave">${birdProfileTabs.map(([key,label])=>
     `<button class="btn small ${key===tab?'':'secondary'}" type="button" data-profile-bird="${esc(birdId)}"
@@ -4575,6 +4659,10 @@ document.addEventListener('click',event=>{
   document.querySelector(`[data-plantel-filter="${plantelFilter}"]`)?.focus();
  }
  if(data.profileBird)openBirdProfile(data.profileBird,data.profileSection||'data',Boolean(data.profileSection));
+ if(data.birdBadge){
+  const bird=findBird(data.birdBadge);
+  if(bird)void downloadBirdBadge(bird,button);
+ }
  if(data.birdPdf||data.pedigreePdf){
   const bird=data.pedigreePdf?findAncestor(data.pedigreePdf):findBird(data.birdPdf);
   if(bird)birdProfilePDF(bird,!!data.pedigreePdf);
