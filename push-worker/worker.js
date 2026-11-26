@@ -41,14 +41,15 @@ async function sendScheduled(env,date){
    env.DB.prepare(`SELECT collection,record_id,value FROM sync_records
     WHERE owner_id=? AND value IS NOT NULL AND (collection IN ('nests','eggs','chicks','documents','tournaments')
     OR (collection='tasks' AND json_extract(value,'$.date') BETWEEN date(?,'-1 day') AND date(?,'+1 day'))
-    OR (collection='settings' AND record_id='timezone'))`).bind(owner,date.toISOString(),date.toISOString()),
+    OR (collection='health' AND json_extract(value,'$.endDate') BETWEEN date(?,'-1 day') AND date(?,'+2 day'))
+    OR (collection='settings' AND record_id='timezone'))`).bind(owner,date.toISOString(),date.toISOString(),date.toISOString(),date.toISOString()),
    env.DB.prepare('SELECT * FROM push_subscriptions WHERE owner_id=?').bind(owner),
    env.DB.prepare('SELECT device_id,reminder_key FROM push_deliveries WHERE owner_id=? AND created_at>=?')
     .bind(owner,date.getTime()-86400000)
   ]);
   const revision=head.results[0]?.revision;
   if(!revision)continue;
-  const data={nests:[],eggs:[],chicks:[],documents:[],tournaments:[],tasks:[]};
+  const data={nests:[],eggs:[],chicks:[],documents:[],tournaments:[],tasks:[],health:[]};
   let timezone;
   for(const row of records.results){
    const value=JSON.parse(row.value);

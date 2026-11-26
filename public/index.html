@@ -802,7 +802,7 @@ const configs={
  eggs:{title:'Ovos',subtitle:'Registro individual de ovos.',fields:[['name','Identificação','text',true],['nest','Ninhada','nest',true],['date','Postura','date'],['status','Situação','choices',['REGISTRADO','FÉRTIL','INFÉRTIL','ECLODIDO','NÃO ECLODIDO','DESCONHECIDO']],['notes','Observações','textarea']],cols:[['Ovo','name'],['Ninhada','nest'],['Postura','date'],['Situação','status']]},
  chicks:{title:'Filhotes',subtitle:'Registros provisórios sem regularização oficial automática.',fields:[['name','Identificação provisória','text',true],['egg','Ovo de origem','egg'],['couple','Casal','couple'],['date','Nascimento','date'],['ring','Anilha','text'],['status','Situação','text'],['notes','Histórico','textarea']],cols:[['Identificação','name'],['Ovo','egg'],['Nascimento','date'],['Anilha','ring']]},
  tasks:{title:'Rotinas de manejo',subtitle:'Tarefas programadas, pendentes e concluídas.',fields:[['name','Atividade','text',true],['bird','Ave relacionada','bird'],['facility','Instalação','facility'],['frequency','Frequência','choices',['ÚNICA','DIÁRIA','SEMANAL','QUINZENAL','MENSAL','OUTRA']],['owner','Responsável','text'],['date','Data prevista','date',true],['done','Data de conclusão','date'],['status','Situação','choices',['PENDENTE','EM ANDAMENTO','CONCLUÍDA']],['notes','Observações','textarea']],cols:[['Atividade','name'],['Ave','bird'],['Prevista','date'],['Situação','status']]},
- health:{title:'Histórico de saúde',subtitle:'Observações e tratamentos efetivamente prescritos.',fields:[['bird','Ave','bird',true],['date','Data','date',true],['type','Tipo','choices',['SINAL OBSERVADO','CONSULTA VETERINÁRIA','EXAME','DIAGNÓSTICO VETERINÁRIO','TRATAMENTO PRESCRITO','PROCEDIMENTO','QUARENTENA','OUTRO']],['description','Descrição','textarea',true],['vet','Profissional responsável','text'],['alert','Alerta ativo?','choices',['NÃO','SIM']],['notes','Observações','textarea']],cols:[['Ave','bird'],['Data','date'],['Tipo','type'],['Alerta','alert']]},
+ health:{title:'Histórico de saúde',subtitle:'Observações e tratamentos efetivamente prescritos.',fields:[['bird','Ave','bird',true],['date','Data de início','date',true],['endDate','Término previsto (opcional)','date'],['completedDate','Conclusão efetiva (opcional)','date'],['type','Tipo','choices',['SINAL OBSERVADO','CONSULTA VETERINÁRIA','EXAME','DIAGNÓSTICO VETERINÁRIO','TRATAMENTO PRESCRITO','PROCEDIMENTO','QUARENTENA','OUTRO']],['description','Descrição','textarea',true],['vet','Profissional responsável','text'],['alert','Alerta ativo?','choices',['NÃO','SIM']],['notes','Observações','textarea']],cols:[['Ave','bird'],['Início','date'],['Término previsto','endDate'],['Conclusão efetiva','completedDate'],['Tipo','type'],['Alerta','alert']]},
  trips:{title:'Campeadas',subtitle:'Saídas registradas com prioridade ao bem-estar e às regras aplicáveis.',fields:[['bird','Aves','birdsMulti',true],['date','Data','date',true],['start','Horário de saída','time'],['end','Horário de retorno','time'],['place','Local','text'],['gps','GPS (opcional; inserção manual)','text'],['notes','Observações','textarea']],cols:[['Aves','bird'],['Data','date'],['Saída','start'],['Retorno','end'],['Local','place']]},
  events:{title:'Agenda',subtitle:'Compromissos, tarefas e lembretes registrados.',fields:[['title','Compromisso','text',true],['date','Data','date',true],['time','Horário','time'],['type','Tipo','choices',['MANEJO','SAÚDE','REPRODUÇÃO','CAMPEADA','LEMBRETE','OUTRO']],['bird','Ave','bird'],['notes','Observações','textarea']],cols:[['Compromisso','title'],['Data','date'],['Horário','time'],['Tipo','type']]},
  stock:{title:'Produtos em estoque',subtitle:'Controle de saldos e aquisições.',fields:[
@@ -2059,6 +2059,7 @@ function lineage(type,r,seen=new Set()){
 function separationDays(r){if(!r.date||!r.separatedAt)return null;return Math.round((Date.parse(r.separatedAt+'T00:00:00Z')-Date.parse(r.date+'T00:00:00Z'))/86400000)}
 function lineageText(ctx){const b=x=>x?birdName(x)+' · '+(x.ring||'SEM ANILHA')+' [ID: '+x.id+']':'NÃO INFORMADO';return `Macho: ${b(ctx.male)}\nFêmea: ${b(ctx.female)}\nTemporada: ${ctx.season?.name||'NÃO INFORMADA'}\nTentativa: ${ctx.attempt?.start||ctx.attempt?.id||'NÃO INFORMADA'}\nNinhada: ${ctx.nest?.name||'NÃO INFORMADA'}\nOvo: ${ctx.egg?.name||'NÃO INFORMADO'}`}
 function cellValue(type,r,key){
+ if(type==='health'&&['endDate','completedDate'].includes(key))return esc(fmtDate(r[key]));
  if(type==='facilities'&&key==='facilityStatus'){
   const occupants=cageTransfers(r);
   const state=r.cageSaleId?'Entregue em venda':cageUnavailable(r)?'Fora do estoque':occupants.length?'Ocupada':'Disponível para uso';
@@ -2208,6 +2209,15 @@ function readValues(form,type){const fd=new FormData(form),values={};for(const [
  return values;
 }
 function validateIntegrated(type,r,old,pendingParents=[]){
+ if(type==='health'&&r.endDate){
+  if(!validFinanceDate(r.endDate))return 'INFORME UMA DATA DE TÉRMINO VÁLIDA.';
+  if(r.endDate<r.date)return 'O TÉRMINO PREVISTO NÃO PODE ANTECEDER A DATA DE INÍCIO.';
+ }
+ if(type==='health'&&r.completedDate){
+  if(!validFinanceDate(r.completedDate))return 'INFORME UMA DATA DE CONCLUSÃO VÁLIDA.';
+  if(r.completedDate<r.date)return 'A CONCLUSÃO EFETIVA NÃO PODE ANTECEDER A DATA DE INÍCIO.';
+  if(r.completedDate>today())return 'A CONCLUSÃO EFETIVA NÃO PODE SER UMA DATA FUTURA.';
+ }
  const fields=type==='birds'?[]:configs[type].fields;
  for(const [key,label,kind,required]of fields){if(required===true&&(!r[key]||(kind==='birdsMulti'&&!birdIds(r[key]).length))&&!(type==='stock'&&key==='quantity'&&r.quantity===0)&&!(type==='seasons'&&old&&!old.couple&&key==='couple'))return 'PREENCHA: '+label.toUpperCase()}
  for(const [key,col]of Object.entries(referenceCollections)){if(!r[key])continue;for(const ref of Array.isArray(r[key])?r[key]:[r[key]]){if(!(key==='father'||key==='mother'?findAncestor(ref,pendingParents):getRecord(col,ref)))return 'VÍNCULO NÃO LOCALIZADO: '+key.toUpperCase()+'. REVISE A SELEÇÃO.'}}
@@ -2232,7 +2242,7 @@ document.addEventListener('input',e=>{if(!e.target.matches('[data-br-date]'))ret
 // Importação assistida, séries anuais e preferências de lembrete.
 const intervals=Object.fromEntries(activityChoices.map((n,i)=>[n,[7,3,7,7,2,3][i]]));
 configs.tasks.fields=configs.tasks.fields.filter(f=>!['facility','frequency','done'].includes(f[0])).map(f=>f[0]==='status'?['status','Situação','choices',['PENDENTE','CONCLUÍDA','CANCELADA']]:f);
-const healthTypes=['Pré-Reprodução: Fert-Vit (Vitamina E + Aminoácidos)','Postura e Choco: Cálcio + Vitamina D3','Criação de Filhotes: Polivitamínico + Aminoácidos','Muda de Penas: Suplemento para Muda','Descanso / Manutenção: Sem suplementação automática'];
+const healthTypes=['Pré-Reprodução: Fert-Vit (Vitamina E + Aminoácidos)','Postura e Choco: Cálcio + Vitamina D3','Criação de Filhotes: Polivitamínico + Aminoácidos','Muda de Penas: Suplemento para Muda','Descanso / Manutenção: Sem suplementação automática','OUTROS'];
 const expenseTypes=['GAIOLAS','AVES','ALIMENTAÇÃO — SEMENTES','COCHOS','BEBEDOUROS','POLEIROS','MEDICAMENTOS E SUPLEMENTOS','INSTALAÇÕES','OUTROS'];
 configs.health.fields=configs.health.fields.map(f=>f[0]==='bird'?['bird','Aves','birdsMulti',true]:f[0]==='type'?['type','Tipo','choices',healthTypes]:f);
 configs.expenses.fields=configs.expenses.fields.map(f=>f[0]==='category'?['category','Categoria','choices',expenseTypes]:f);
@@ -3594,6 +3604,14 @@ function agendaNotices(data=db){
    add('tournament',tournament.name,tournament.date,[tournament.time,tournament.location].filter(Boolean).join(' · '),tournament.id);
   }
  }
+ for(const record of data.health||[]){
+  if(record.completedDate||!validFinanceDate(record.date)||!validFinanceDate(record.endDate)||
+   record.endDate<record.date||record.endDate<today())continue;
+  const reminderDate=record.date===record.endDate?record.endDate:addCalendarDays(record.endDate,-1);
+  const names=birdIds(record.bird).map(ref=>birdName(findBird(ref))).join(', ');
+  add('health','Término previsto de saúde',reminderDate,
+   [names,record.type,'Término: '+fmtDate(record.endDate)].filter(Boolean).join(' · '),record.id,record.endDate);
+ }
  return notices.sort((a,b)=>a.date.localeCompare(b.date));
 }
 function agendaList(items,{dashboard=false}={}){
@@ -3797,7 +3815,10 @@ function birdTimelineEntries(bird){
  const entries=[
   ...(validFinanceDate(bird.birthDate)?[{date:bird.birthDate,title:'Nascimento',detail:''}]:[]),
   ...(validFinanceDate(bird.acquisitionDate)?[{date:bird.acquisitionDate,title:'Aquisição',detail:''}]:[]),
-  ...relatedRows('feedings','Alimentação'),...relatedRows('tasks','Manejo'),...relatedRows('health','Saúde'),
+  ...relatedRows('feedings','Alimentação'),...relatedRows('tasks','Manejo'),...db.health.filter(r=>birdIds(r.bird).some(id=>sameId(id,birdId)))
+   .map(r=>({date:r.date,title:'Saúde',detail:[r.description||r.notes,
+    validFinanceDate(r.endDate)?'Término previsto: '+fmtDate(r.endDate):'',
+    validFinanceDate(r.completedDate)?'Conclusão efetiva: '+fmtDate(r.completedDate):''].filter(Boolean).join(' · ')})),
   ...relatedRows('trips','Campeada'),...relatedRows('events','Agenda'),...relatedRows('documents','Documentação'),
   ...relatedRows('transfers','Ocupação'),
   ...db.tournaments.flatMap(row=>tournamentPeople(row).filter(entry=>sameId(entry.birdId,birdId))
@@ -4090,6 +4111,7 @@ function operationalNoticeTitle(item){
  return 'Anilhamento · período aberto';
 }
 function operationalNoticeAction(item){
+ if(item.type==='health')return `<button type="button" class="btn small secondary" data-edit="health" data-id="${esc(item.source)}">Abrir registro</button>`;
  if(item.type==='tournament')return tournamentButton('open','Abrir torneio',{id:item.source});
  if(item.chick)return `<button type="button" class="btn small" data-ring-reminder="${esc(item.chick)}">Registrar anilha</button>`;
  if(item.expected&&item.source)return `<button type="button" class="btn small secondary" data-open-nest="${esc(item.source)}">Ver ovos</button>`;

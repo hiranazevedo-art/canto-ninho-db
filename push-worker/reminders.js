@@ -48,6 +48,11 @@ export function remindersForDay(data,day){
  for(const tournament of data.tournaments){
   if(tournament.status==='AGENDADO')add(tournament.date,'tournament',tournament.id,'Torneio agendado');
  }
+ for(const record of data.health||[]){
+  if(record.completedDate||!validDate(record.date)||!validDate(record.endDate)||record.endDate<record.date)continue;
+  const reminderDate=record.date===record.endDate?record.endDate:daysFrom(record.endDate,-1);
+  add(reminderDate,'health',record.id,'Término previsto de saúde',record.endDate);
+ }
  const pending=(data.tasks||[]).filter(task=>task?.date===day&&
   !['CONCLUÍDA','CANCELADA'].includes(task.status)&&
   (task.status||!task.done&&!task.completedAt)).length;
