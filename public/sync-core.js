@@ -171,12 +171,63 @@
       }
     }
     for(const issue of integrityIssues(remote,result)){
-      if(!['egg-outcome','feeding-period'].includes(issue.reason))continue;
+      if(!['egg-outcome','feeding-period','cage-overlap'].includes(issue.reason))continue;
       const change=localKeys.get(key(issue));
       if(change&&!conflicts.some(existing=>key(existing)===key(change)))
         conflicts.push({...change,label:issue.label});
     }
     return { changes, result, conflicts };
+  }
+
+  const cageKinds = [
+      ['INDIVIDUAL', /\bindividua(?:l|is)\b/], ['TRANSPORTE', /\btransporte\b/],
+      ['VOADEIRA', /\bvoadeiras?\b/], ['CAMPEADA', /\bcampeadas?\b/],
+      ['REPRODUÇÃO', /\breproducao\b/], ['VIVEIRO', /\bviveiros?\b/]
+  ];
+  function cageKind(unit, productName, useDeclared = true) {
+    if (String(unit?.type || '').trim().toUpperCase() !== 'GAIOLA') return '';
+    if (useDeclared && (unit.cageType === 'OUTRO' || cageKinds.some(([key]) => key === unit.cageType))) {
+      return unit.cageType;
+    }
+    const infer = value => {
+      const name = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      return cageKinds.find(([, pattern]) => pattern.test(name))?.[0];
+    };
+    return infer(productName) || infer(unit.name) || 'OUTRO';
+  }
+
+  function transferOverlaps(a, b) {
+    return (!a.end || !a.start || a.start < a.end) &&
+      (!b.end || !b.start || b.start < b.end) &&
+      (!a.end || !b.start || b.start < a.end) &&
+      (!b.end || !a.start || a.start < b.end);
+  }
+
+  function cageConflicts(data) {
+    const normalizeId = value => String(value || '').toLowerCase();
+    const stock = new Map((data.stock || []).map(row => [normalizeId(row.id), row.name]));
+    const single = new Set((data.facilities || [])
+      .filter(unit => cageKind(unit, stock.get(normalizeId(unit.cageStockId))) === 'INDIVIDUAL')
+      .map(unit => normalizeId(unit.id)));
+    const grouped = new Map();
+    for (const row of data.transfers || []) {
+      const unit = normalizeId(row.facility);
+      if (!single.has(unit)) continue;
+      if (!grouped.has(unit)) grouped.set(unit, []);
+      grouped.get(unit).push(row);
+    }
+    const conflicts = new Map();
+    for (const [unit, rows] of grouped) {
+      rows.sort((a, b) => String(a.start || '').localeCompare(String(b.start || '')));
+      for (let i = 0; i < rows.length; i++) {
+        for (let j = i + 1; j < rows.length; j++) {
+          const a = rows[i], b = rows[j];
+          if (a.end && b.start && b.start >= a.end) break;
+          if (transferOverlaps(a, b)) conflicts.set(JSON.stringify([unit, ...[a.id, b.id].sort()]), [a, b]);
+        }
+      }
+    }
+    return conflicts;
   }
 
   function integrityIssues(previous, next) {
@@ -244,11 +295,17 @@
       }
       if(!latest||row.end>latest.end)latestEndByBird.set(bird,row);
     }
+    const priorOccupations = cageConflicts(previous || {});
+    for (const [key, rows] of cageConflicts(next)) {
+      if (priorOccupations.has(key)) continue;
+      for (const row of rows) issues.push({collection:'transfers',id:row.id,reason:'cage-overlap',
+        label:'Esta gaiola individual já tem uma ocupação no período informado.'});
+    }
     return issues;
   }
 
   const reviewFields = {
-    birds: ['name', 'notes', 'condition', 'photo'],
+    birds: ['name', 'notes', 'condition'],
     pedigreeBirds: ['name', 'breeder'],
     food: ['name', 'notes', 'composition'],
     tasks: ['notes'], health: ['notes', 'description'], events: ['notes', 'title'],
@@ -256,5 +313,35 @@
   };
 
 
-  globalThis.CantoSync = { same, differences, validChanges, apply, merge, collections, integrityIssues };
+  function reviewConflicts(base, local, remote) {
+    const conflicts = merge(base, local, remote).conflicts;
+    return conflicts.map(({collection,id,label}) => {
+      const fields = Object.hasOwn(reviewFields, collection) ? reviewFields[collection] : null;
+      if (!fields) return null;
+      const rows = [base, local, remote].map(data => recordMap(data[collection]).get(id));
+      if (rows.some(row => !row)) return null;
+      const [before, here, there] = rows;
+      const changed = [...new Set(rows.flatMap(Object.keys))].filter(key =>
+        key !== 'updatedAt' && (!same(before[key],here[key]) || !same(before[key],there[key])));
+      if (!changed.length || changed.some(key => !fields.includes(key))) return null;
+      if (same(before,here) || same(before,there)) return null;
+      return {collection,id,label,fields:changed,before,here,there};
+    });
+  }
+
+  function resolveConflicts(base, local, remote, choices) {
+    const review = reviewConflicts(base, local, remote);
+    if (!review.length || review.length !== choices.length || review.some((row,index) =>
+      !row || !['local','remote'].includes(choices[index]))) return null;
+    const reverted = apply(local, review.map(({collection,id,before}) => ({collection,id,value:before})));
+    const merged = merge(base,reverted,remote);
+    if (merged.conflicts.length) return null;
+    const selected = review.flatMap(({collection,id,here},index) =>
+      choices[index] === 'local' ? [{collection,id,value:here}] : []);
+    const result = apply(merged.result,selected);
+    return integrityIssues(remote,result).length ? null : result;
+  }
+
+  globalThis.CantoSync = { same, differences, validChanges, apply, merge, collections, integrityIssues,
+    cageKind, transferOverlaps, reviewConflicts, resolveConflicts };
 })();

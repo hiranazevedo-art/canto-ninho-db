@@ -1,6 +1,6 @@
-const CACHE='canto-ninho-v34-tipos-de-gaiola';
+const CACHE='canto-ninho-v35-melhorias-auditoria';
 const ASSETS=['./','./index.html','./icon-ninho-192.png','./icon-ninho-512.png','./manifest.webmanifest',
- './images/caboclinho.png','./images/azulao.png','./sync-core.js?v=16','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
+ './images/caboclinho.png','./images/azulao.png','./sync-core.js?v=17','./vendor/qrcode-generator.js','./vendor/jspdf.umd.min.js','./vendor/jsQR.js'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });

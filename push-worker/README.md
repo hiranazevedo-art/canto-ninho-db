@@ -39,10 +39,12 @@ indisponível. Para ativar o Web Push, configure o Worker e a conexão abaixo.
 ## Funcionamento
 
 O Worker lê ovoscopia, véspera de eclosão, abertura da janela de anilhamento,
-vencimento de documento e torneios agendados do D1 a partir das 6h no fuso do
+vencimento de documento, torneios agendados, manejo e término previsto de saúde
+do D1 a partir das 6h no fuso do
 criadouro. Edições ou cancelamentos precisam estar sincronizados antes do
-envio. Cada lembrete tem uma tentativa de envio por aparelho, identificada no
-D1. O horário depende do cron e a entrega depende do serviço do aparelho.
+envio. Cada lembrete é registrado por aparelho no D1. Uma resposta temporária explícita
+(HTTP 429 ou 5xx) permite uma nova tentativa em execução posterior do cron.
+O horário depende do cron e a entrega depende do serviço do aparelho.
 Uma falha de entrega ambígua fica nos logs para evitar duplicação automática.
 Uma notificação já entregue permanece sujeita às ações do aparelho.
 O texto na tela bloqueada é genérico e o toque destaca o item na Agenda.

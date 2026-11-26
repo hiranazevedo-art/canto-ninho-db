@@ -58,6 +58,11 @@ async function main() {
  sqlite.prepare('INSERT INTO accounts(id,password_salt,password_hash) VALUES (?,?,?)').run('owner', salt, legacyHash);
  const legacyRows = { ...legacyData, ...Object.fromEntries(globalThis.CantoSync.collections.map(name =>
   [name, legacyData[name] || []])) };
+ legacyRows.facilities=[
+  {id:'carrier-one',name:'GAIOLA DE TRANSPORTE 1',type:'GAIOLA'},
+  {id:'individual-ten',name:'GAIOLA INDIVIDUAL 10',type:'GAIOLA'},
+  {id:'individual-two',name:'GAIOLA INDIVIDUAL 2',type:'GAIOLA'}
+ ];
  sqlite.prepare('INSERT INTO snapshots(owner_id,revision,payload) VALUES (?,?,?)').run('owner', 7, JSON.stringify(legacyRows));
  sqlite.exec(source('migrations/004_pilot_invites.sql'));
  sqlite.exec(source('migrations/004_pilot_invites.sql'));
@@ -145,6 +150,81 @@ async function main() {
   };
   await login();
   assert.equal((await api('data', null, 'owner')).data.data.birds[0].name, legacyData.birds[0].name);
+  for (const width of [360,390,1280]) {
+   await page.setViewportSize({width,height:820});
+   const target=page.locator('#navigation [data-page="facilities"]');
+   if(width<761)await page.locator('#menuBtn').click();
+   await target.click();
+   const group=page.getByRole('table',{name:'Gaiolas individuais'});
+   assert.deepEqual(await group.locator('tbody td:first-child').allTextContents(),
+    ['GAIOLA INDIVIDUAL 2','GAIOLA INDIVIDUAL 10']);
+   const layout=await group.evaluate(el=>({
+    row:getComputedStyle(el.tBodies[0].rows[0]).display,
+    fits:el.parentElement.scrollWidth<=el.parentElement.clientWidth+1
+   }));
+   assert.deepEqual(layout,{row:width<761?'grid':'table-row',fits:true});
+   await page.getByRole('searchbox',{name:'Buscar por instalação ou ave'}).fill('TRANSPORTE');
+   assert.equal(await group.count(),0);
+   await page.getByRole('searchbox',{name:'Buscar por instalação ou ave'}).fill('');
+  }
+  const overlapping=await page.evaluate(async()=>{
+   const headers={'x-canto-account':'owner','content-type':'application/json'};
+   const {revision}=await (await fetch('/api/data',{headers})).json();
+   const changes=['first','second'].map(id=>({collection:'transfers',id,
+    value:{id,bird:'ave-legada',facility:'individual-two',start:'2026-11-01',end:'2026-11-02'}}));
+   const response=await fetch('/api/data',{method:'PATCH',headers,
+    body:JSON.stringify({revision,operationId:'overlap-test',changes})});
+   return {status:response.status,data:await response.json()};
+  });
+  assert.equal(overlapping.status,422);
+  assert.match(overlapping.data.error,/ocupação/);
+  assert.equal((await api('data',null,'owner')).data.data.transfers.length,0);
+  const navigateAgenda=tab=>tab.locator('#navigation [data-page="events"]').click();
+  const saveEvent=async(tab,title,eventId)=>{
+   const button=eventId?`[data-edit="events"][data-id="${eventId}"]`:'[data-action="new:events"]';
+   await tab.locator(button).click();
+   await tab.locator('#recordForm [name=title]').fill(title);
+   if(!eventId)await tab.locator('#recordForm [name=date]').fill(taskDay);
+   await tab.locator('#recordForm [type=submit]').click();
+   await tab.locator('#recordForm').waitFor({state:'detached'});
+  };
+  await navigateAgenda(page);
+  await saveEvent(page,'COMPROMISSO ORIGINAL');
+  await appReady(page);
+  const eventId=(await api('data',null,'owner')).data.data.events[0].id;
+  const otherContext=await browser.newContext();
+  try {
+   const other=await otherContext.newPage();
+   other.on('pageerror',error=>pageErrors.push(error.message));
+   other.on('dialog',dialog=>dialog.accept());
+   await other.goto(origin);
+   await login('',other);
+   await navigateAgenda(other);
+   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
+   await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
+   await context.setOffline(true);
+   await page.reload();
+   await page.locator('.app').waitFor({state:'visible'});
+   await navigateAgenda(page);
+   await saveEvent(page,'COMPROMISSO LOCAL',eventId);
+   await saveEvent(page,'OUTRO COMPROMISSO LOCAL');
+   await saveEvent(other,'COMPROMISSO NUVEM',eventId);
+   await appReady(other);
+   await context.setOffline(false);
+   await page.locator('#cloudButton[data-status=conflict]').waitFor();
+   await page.locator('#cloudButton').click();
+   await page.getByRole('button',{name:'Revisar fichas em conflito'}).click();
+   await page.getByText('COMPROMISSO LOCAL',{exact:false}).last().waitFor();
+   await page.getByText('COMPROMISSO NUVEM',{exact:false}).last().waitFor();
+   await page.getByRole('radio',{name:'Neste aparelho'}).check();
+   await page.getByRole('button',{name:'Aplicar escolhas'}).click();
+   await appReady(page);
+   const result=(await api('data',null,'owner')).data.data.events;
+   assert.deepEqual(result.map(event=>event.title).sort(),['COMPROMISSO LOCAL','OUTRO COMPROMISSO LOCAL']);
+  } finally {
+   await context.setOffline(false);
+   await otherContext.close();
+  }
   await page.locator('#cloudButton').click();
   await page.locator('#cloudInvites').click();
   async function createInvite(login) {

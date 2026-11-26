@@ -19,7 +19,7 @@ async function deliver(env,device,message){
   await env.DB.prepare('DELETE FROM push_subscriptions WHERE owner_id=? AND device_id=? AND endpoint=?')
    .bind(device.owner_id,device.device_id,endpoint).run();
  }
- return response.ok;
+ return response.status;
 }
 async function sendTest(env,request){
  const {owner,device}=await request.json();
@@ -30,8 +30,8 @@ async function sendTest(env,request){
   WHERE owner_id=? AND device_id=? AND last_test_at<=? RETURNING *`)
   .bind(now,owner,device,now-60000).first();
  if(!target)return json({error:'Ative as notificações ou aguarde um minuto antes de testar novamente.'},409);
- const sent=await deliver(env,target,{title:'Canto & Ninho',body:'Notificação de teste',tag:'teste',hash:'lembrete=teste'});
- return sent?json({sent:true}):json({error:'O serviço do aparelho recusou a notificação.'},502);
+ const status=await deliver(env,target,{title:'Canto & Ninho',body:'Notificação de teste',tag:'teste',hash:'lembrete=teste'});
+ return status>=200&&status<300?json({sent:true}):json({error:'O serviço do aparelho recusou a notificação.'},502);
 }
 async function sendScheduled(env,date){
  const owners=await env.DB.prepare('SELECT DISTINCT owner_id FROM push_subscriptions').all();
@@ -73,9 +73,18 @@ async function sendScheduled(env,date){
     WHERE s.owner_id=? AND s.device_id=? AND h.revision=?`)
     .bind(reminder.key,date.getTime(),owner,device.device_id,revision).run();
    if(!claim.meta.changes)continue;
-   // Keep the claim even after an uncertain response to avoid duplicate notifications.
-   try{if(!await deliver(env,device,{body:'Você tem um lembrete. Consulte a Agenda.',tag:'agenda',hash:'lembrete=agenda'}))console.warn('Lembrete recusado pelo serviço push.');}
-   catch(error){console.warn('Falha em envio de lembrete',error?.name);}
+   try{
+    const status=await deliver(env,device,{body:'Você tem um lembrete. Consulte a Agenda.',tag:'agenda',hash:'lembrete=agenda'});
+    if(status===429||status>=500){
+     // Retry on a later scheduled run after an explicit temporary failure.
+     await env.DB.prepare(`DELETE FROM push_deliveries WHERE owner_id=? AND device_id=? AND reminder_key=? AND created_at=?`)
+      .bind(owner,device.device_id,reminder.key,date.getTime()).run();
+    }
+    if(status<200||status>=300)console.warn('Lembrete recusado pelo serviço push.',status);
+   }catch(error){
+    // A transport error leaves delivery uncertain. Retain the claim to avoid duplicates.
+    console.warn('Falha em envio de lembrete',error?.name);
+   }
   }
  }
  await env.DB.prepare('DELETE FROM push_deliveries WHERE created_at<?').bind(date.getTime()-30*86400000).run();
