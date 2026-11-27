@@ -190,3 +190,25 @@ test('a exclusão é bloqueada se outro aparelho criar um vínculo com o casal',
   ...local, chicks: [{ ...remote.chicks[0], notes: 'Anotação em ficha legada' }]
  }).length, 0);
 });
+
+test('a reprodução protege toda a cadeia de vínculos e recusa backup incompleto', async () => {
+ const {app,sync}=await loadApp();
+ const base=app.defaults();
+ Object.assign(base,{
+  couples:[{id:'casal'}],seasons:[{id:'temporada',couple:'CASAL'}],
+  attempts:[{id:'tentativa',season:'temporada'}],nests:[{id:'ninhada',attempt:'tentativa'}],
+  eggs:[{id:'ovo',nest:'ninhada'}],chicks:[{id:'filhote',egg:'ovo'}],
+  events:[{id:'lembrete',sourceChick:'filhote'}]
+ });
+ assert.equal(sync.reproductionIssues(null,base).length,0);
+ assert.equal(app.validateBackupObject(base).chicks[0].id,'filhote');
+ const broken={...base,seasons:[]};
+ assert.match(sync.integrityIssues(base,broken)[0].label,/tentativa.*temporada ausente/);
+ assert.throws(()=>app.validateBackupObject(broken),/temporada ausente/);
+ assert.equal(sync.integrityIssues(broken,{...broken,attempts:[{...broken.attempts[0],notes:'legado'}]}).length,0);
+ const emptySeason={...base,attempts:[],nests:[],eggs:[],chicks:[],events:[]};
+ const local={...emptySeason,seasons:[]};
+ const remote={...emptySeason,attempts:[{id:'tentativa',season:'TEMPORADA'}]};
+ assert.ok(sync.merge(emptySeason,local,remote).conflicts.some(row=>row.collection==='seasons'));
+ assert.ok(sync.merge(emptySeason,remote,local).conflicts.some(row=>row.collection==='attempts'));
+});

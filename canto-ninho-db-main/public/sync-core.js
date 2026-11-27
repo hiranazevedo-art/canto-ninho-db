@@ -158,33 +158,42 @@
     return 'Exclusão bloqueada. Confira os registros vinculados: ' + summary.join(', ') + '.';
   }
 
-  function coupleIssues(previous, next) {
-    if (!previous) return [];
-    const ids = data => new Set((data.couples || []).map(row => row.id.toLowerCase()));
-    const retained = ids(next);
-    const current = recordMap(next.couples);
-    const removed = (previous.couples || []).filter(row => !current.has(row.id));
+  const reproductionTargets = {
+    couples: 'casal', seasons: 'temporada', attempts: 'tentativa',
+    nests: 'ninhada', eggs: 'ovo', chicks: 'filhote'
+  };
+
+  function reproductionIssues(previous, next) {
+    const old = previous || {};
+    const key = (collection, row) => collection + ':' + String(row.id).toLowerCase();
+    const targets = data => new Set(Object.keys(reproductionTargets)
+      .flatMap(collection => (data[collection] || []).map(row => key(collection, row))));
+    const before = targets(old), after = targets(next);
+    const retained = recordMap(next.couples);
     const issues = [];
-    const issue = (id, label) => ({ collection: 'couples', id, label, reason: 'couple-link' });
+    const removed = (old.couples || []).filter(row => !retained.has(row.id));
     if (removed.length) {
-      const before = dependencyIndex(previous), after = dependencyIndex(next);
+      const oldIndex = dependencyIndex(old);
       for (const couple of removed) {
-        // A remoção simultânea dos dependentes não autoriza apagar o histórico.
-        const label = coupleDependencyMessage(coupleDependents(previous, couple.id, before)) ||
-          coupleDependencyMessage(coupleDependents(next, couple.id, after));
-        if (label) issues.push(issue(couple.id, label));
+        // A remoção simultânea dos dependentes não autoriza apagar o histórico do casal.
+        const label = coupleDependencyMessage(coupleDependents(old, couple.id, oldIndex));
+        if (label) issues.push({ collection: 'couples', id: couple.id, label, reason: 'couple-link' });
       }
     }
-    // Preserva vínculos legados incompletos e impede criar novas referências a um casal ausente.
     for (const collection of collections) {
       if (collection === 'audit') continue;
-      const before = recordMap(previous[collection]);
+      const rows = recordMap(old[collection]);
       for (const row of next[collection] || []) {
-        const absent = [row.couple].flat().filter(id => id && !retained.has(String(id).toLowerCase()));
-        const existing = new Set([before.get(row.id)?.couple].flat().map(id => String(id).toLowerCase()));
-        if (absent.some(id => !existing.has(String(id).toLowerCase()))) {
-          issues.push({ collection, id: row.id, reason: 'couple-link',
-            label: 'O registro faz referência a um casal ausente. Confira a Reprodução.' });
+        const formerRefs = new Set(references(collection, rows.get(row.id)).map(ref => ref.toLowerCase()));
+        for (const target of new Set(references(collection, row).map(ref => ref.toLowerCase()))) {
+          const targetCollection = target.split(':', 1)[0];
+          if (!Object.hasOwn(reproductionTargets, targetCollection) || after.has(target)) continue;
+          // Vínculos legados já incompletos podem ser mantidos enquanto forem revisados.
+          if (!before.has(target) && formerRefs.has(target)) continue;
+          const label = 'O registro ' + (row.name || row.title || row.ring || row.id) +
+            ' faz referência a ' + reproductionTargets[targetCollection] + ' ausente. Confira a Reprodução.';
+          issues.push({ collection, id: row.id, target, label,
+            reason: targetCollection === 'couples' ? 'couple-link' : 'reproduction-link' });
         }
       }
     }
@@ -251,8 +260,9 @@
       }
     }
     for(const issue of integrityIssues(remote,result)){
-      if(!['egg-outcome','feeding-period','cage-overlap','couple-link'].includes(issue.reason))continue;
-      const change=localKeys.get(key(issue));
+      if(!['egg-outcome','feeding-period','cage-overlap','couple-link','reproduction-link'].includes(issue.reason))continue;
+      const change=localKeys.get(key(issue)) || (issue.target &&
+        localChanges.find(edit => edit.value === null && key(edit).toLowerCase() === issue.target));
       if(change&&!conflicts.some(existing=>key(existing)===key(change)))
         conflicts.push({...change,label:issue.label});
     }
@@ -337,7 +347,7 @@
       return result;
     }
     const old = indexes(previous || {}), updated = indexes(next);
-    const issues = coupleIssues(previous, next);
+    const issues = reproductionIssues(previous, next);
     for (const [key, group] of updated) {
       if (group.size < 2 || [...group.keys()].every(id => old.get(key)?.has(id))) continue;
       const kind = key.split(':', 1)[0];
@@ -423,5 +433,5 @@
   }
 
   globalThis.CantoSync = { same, differences, validChanges, apply, merge, collections, integrityIssues,
-    cageKind, transferOverlaps, reviewConflicts, resolveConflicts, coupleDependents, coupleDependencyMessage };
+    cageKind, transferOverlaps, reviewConflicts, resolveConflicts, coupleDependents, coupleDependencyMessage, reproductionIssues };
 })();

@@ -540,6 +540,12 @@ async function main() {
   }
   const restored = { ...snapshot.data, couples: snapshot.data.couples.filter(row => row.id !== 'linked-pair') };
   assert.equal((await write('PUT', { mode: 'restore', revision: snapshot.revision, data: restored })).status, 422);
+  for (const [collection,id] of [['seasons','season'],['attempts','attempt'],['nests','nest'],['eggs','egg']]) {
+   const rejected=await write('PATCH',{revision:snapshot.revision,operationId:'remove-'+collection,
+    changes:[change(collection,id,null)]});
+   assert.equal(rejected.status,422);
+   assert.equal(rejected.data.reason,'reproduction-link');
+  }
   assert.deepEqual(await readPilot(), snapshot);
 
   await page.setViewportSize({ width: 390, height: 820 });
@@ -612,6 +618,61 @@ async function main() {
   await page.locator('#navigation [data-page="reports"]').click();
   const reportRow = page.getByRole('row').filter({ has: page.getByRole('cell', { name: 'Casais', exact: true }) });
   assert.deepEqual(await reportRow.getByRole('cell').allTextContents(), ['Casais', '1']);
+  const unlinked=await readPilot();
+  assert.equal((await write('PATCH',{revision:unlinked.revision,operationId:'race-seed',
+   changes:[change('couples','race-pair',pair)]})).status,200);
+  const common=await readPilot();
+  const removal=[change('couples','race-pair',null)];
+  const addition=[change('seasons','race-season',{couple:'RACE-PAIR',name:'TEMPORADA CONCORRENTE',start:taskDay})];
+  const [addResult,deleteResult]=await Promise.all([
+   write('PATCH',{revision:common.revision,operationId:'race-add',changes:addition}),
+   write('PATCH',{revision:common.revision,operationId:'race-remove',changes:removal})
+  ]);
+  assert.deepEqual([addResult.status,deleteResult.status].sort(),[200,409]);
+  const winner=await readPilot();
+  const retry=await write('PATCH',{revision:winner.revision,operationId:'race-retry',
+   changes:addResult.status===200?removal:addition});
+  assert.equal(retry.status,422);
+  assert.equal(retry.data.reason,'couple-link');
+  assert.deepEqual(await readPilot(),winner);
+
+  await page.reload();
+  await appReady(page);
+  const exported=page.waitForEvent('download');
+  await page.locator('#backupTop').click();
+  const bytes=readFileSync(await (await exported).path());
+  const backup=JSON.parse(bytes);
+  for(const collection of ['couples','seasons','attempts','nests','eggs','chicks','events']){
+   assert.deepEqual(backup[collection],winner.data[collection]);
+  }
+  const file=(name,buffer)=>({name,mimeType:'application/json',buffer});
+  const bad={...backup,seasons:backup.seasons.filter(row=>row.id!=='season')};
+  const rejectedFile=page.waitForEvent('dialog',{predicate:dialog=>dialog.type()==='alert'&&dialog.message().includes('temporada ausente')});
+  await page.locator('#backupImportGlobal').setInputFiles(file('invalido.json',Buffer.from(JSON.stringify(bad))));
+  await rejectedFile;
+  assert.equal(await page.locator('#backupApplyLocal').count(),0);
+  assert.deepEqual(await readPilot(),winner);
+
+  await page.locator('#backupImportGlobal').setInputFiles(file('valido.json',bytes));
+  await page.locator('#backupApplyCloud').click();
+  await page.locator('#backupApplyCloud').waitFor({state:'detached'});
+  await appReady(page);
+  const recovered=await readPilot();
+  assert.equal(recovered.revision,winner.revision+1);
+  assert.deepEqual(recovered.data.couples,backup.couples);
+  assert.deepEqual(recovered.data.nests,backup.nests);
+  assert.deepEqual(recovered.data.chicks,backup.chicks);
+
+  await page.locator('#backupImportGlobal').setInputFiles(file('valido-local.json',bytes));
+  await page.locator('#backupApplyLocal').click();
+  await page.locator('#backupApplyLocal').waitFor({state:'detached'});
+  await page.reload();
+  await page.getByRole('button',{name:/Backup restaurado/}).waitFor();
+  await page.locator('#navigation [data-page="reproduction"]').click();
+  await openPair('linked-pair');
+  await detail.getByText('NINHADA TESTE',{exact:false}).first().waitFor();
+  assert.deepEqual(await readPilot(),recovered);
+  console.log('PASS: exclusão, cancelamento, encerramento, concorrência, exportação e restauração local e na nuvem de teste.');
   console.log('PASS: banner em 360/390/1280 px, cancelamento, exclusão, proteção de vínculos e encerramento sincronizados.');
   assert.deepEqual(pageErrors, []);
   console.log('PASS: migração aditiva, convites, sincronização, troca de conta e notificações simuladas.');

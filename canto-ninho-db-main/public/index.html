@@ -314,7 +314,7 @@ Limite do arquivo recebido: armazenamento local, sem API, servidor ou sincroniza
  .facility-group .facility-actions,.facility-group .facility-actions .actions{justify-content:flex-start}
  .facility-group .btn{min-height:40px}
 }
-</style></head><body><div class="app" style="display:none"><aside class="sidebar" id="sidebar"><div class="logo"><img class="menu-logo" src="./icon-ninho-192.png" width="192" height="192" alt=""><strong>Canto &amp; Ninho</strong><button type="button" class="btn secondary mobile-close" id="menuClose" aria-label="Fechar menu">×</button></div><div class="nav-title">GESTÃO DO CRIADOURO</div><nav id="navigation" aria-label="Módulos"></nav><div class="side-foot">🌿 Seus dados são armazenados neste dispositivo. Faça backups regularmente.<br><br>Protótipo local, sem conexão a órgãos oficiais.</div></aside><button type="button" class="menu-backdrop" id="menuBackdrop" tabindex="-1" aria-label="Fechar menu" hidden></button><main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button><div><div class="eyebrow">PAINEL DE GERENCIAMENTO</div><h1 id="pageTitle" tabindex="-1">Início</h1></div></div><div class="topright"><button class="btn secondary small cloud-status" id="cloudButton" type="button" aria-label="Estado dos dados: Verificando nuvem">Verificando nuvem…</button><button class="btn secondary small" id="backupTop">↓ Backup</button></div></header><div id="content" class="content"></div></main><nav id="mobileNav" class="mobile-nav" aria-label="Atalhos principais"><button type="button" data-page="home"><span aria-hidden="true">⌂</span>Início</button><button type="button" data-page="birds"><span aria-hidden="true">♣</span>Plantel</button><button type="button" data-page="reproduction"><span aria-hidden="true">♡</span>Reprodução</button><button type="button" data-page="events"><span aria-hidden="true">▦</span>Agenda</button><button type="button" id="mobileMore" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span>Mais</button></nav></div><div id="modalRoot"></div><div id="toastRoot"></div><div id="welcomeRoot"></div><script src="./sync-core.js?v=18"></script><script src="./vendor/qrcode-generator.js"></script><script src="./vendor/jspdf.umd.min.js"></script><script src="./vendor/jsQR.js"></script><script>
+</style></head><body><div class="app" style="display:none"><aside class="sidebar" id="sidebar"><div class="logo"><img class="menu-logo" src="./icon-ninho-192.png" width="192" height="192" alt=""><strong>Canto &amp; Ninho</strong><button type="button" class="btn secondary mobile-close" id="menuClose" aria-label="Fechar menu">×</button></div><div class="nav-title">GESTÃO DO CRIADOURO</div><nav id="navigation" aria-label="Módulos"></nav><div class="side-foot">🌿 Seus dados são armazenados neste dispositivo. Faça backups regularmente.<br><br>Protótipo local, sem conexão a órgãos oficiais.</div></aside><button type="button" class="menu-backdrop" id="menuBackdrop" tabindex="-1" aria-label="Fechar menu" hidden></button><main class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button><div><div class="eyebrow">PAINEL DE GERENCIAMENTO</div><h1 id="pageTitle" tabindex="-1">Início</h1></div></div><div class="topright"><button class="btn secondary small cloud-status" id="cloudButton" type="button" aria-label="Estado dos dados: Verificando nuvem">Verificando nuvem…</button><button class="btn secondary small" id="backupTop">↓ Backup</button></div></header><div id="content" class="content"></div></main><nav id="mobileNav" class="mobile-nav" aria-label="Atalhos principais"><button type="button" data-page="home"><span aria-hidden="true">⌂</span>Início</button><button type="button" data-page="birds"><span aria-hidden="true">♣</span>Plantel</button><button type="button" data-page="reproduction"><span aria-hidden="true">♡</span>Reprodução</button><button type="button" data-page="events"><span aria-hidden="true">▦</span>Agenda</button><button type="button" id="mobileMore" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span>Mais</button></nav></div><div id="modalRoot"></div><div id="toastRoot"></div><div id="welcomeRoot"></div><script src="./sync-core.js?v=19"></script><script src="./vendor/qrcode-generator.js"></script><script src="./vendor/jspdf.umd.min.js"></script><script src="./vendor/jsQR.js"></script><script>
 'use strict';
 (async function(){
 const ACCOUNT_MARKER='canto_active_account';
@@ -2216,6 +2216,11 @@ document.addEventListener('click',event=>{
 });
 function deleteRecord(type,recordId){const obj=db[type].find(x=>x.id===recordId);if(!obj)return;
 if(type==='couples')return openCoupleChange(obj);
+if(reproTabs[type]){
+ const next={...db,[type]:db[type].filter(record=>record.id!==recordId)};
+ const issue=syncCore.reproductionIssues(db,next)[0];
+ if(issue)return toast(issue.label);
+}
 if((type==='birds'&&db.chicks.some(c=>sameId(c.plantelBirdId,recordId)))||
  (type==='chicks'&&obj.plantelBirdId))return toast('A ficha tem vínculo entre Reprodução e Plantel. Preserve o histórico.');
 if((type==='stock'&&cageUnits(recordId).length)||(type==='facilities'&&obj.cageStockId))return toast('Esta ficha tem vínculo entre Estoque e Instalações. Corrija a entrada pelo Estoque.');
@@ -3504,7 +3509,7 @@ async function cloudUpload(){
   cloudState.pending=true;
   markCloudMeta(cloudState.revision,true);
   if(error.status===409)cloudConflict();
-  else if(error.status===422&&error.reason==='couple-link')cloudConflict([{collection:'couples',label:error.message}]);
+  else if(error.status===422&&['couple-link','reproduction-link'].includes(error.reason))cloudConflict([{collection:error.reason==='couple-link'?'couples':'reproduction',label:error.message}]);
   else if(error.status===401)cloudNeedsLogin('Sessão expirada · alterações neste aparelho');
   else if(error.status===413){cloudState.ready=false;cloudStatus('Salvo neste aparelho · limite da nuvem atingido')}
   else{
@@ -3733,7 +3738,11 @@ function validateBackupObject(obj){
  if(obj.audit!==undefined&&!Array.isArray(obj.audit))throw Error('Histórico de alterações inválido.');
  if(obj.settings.speciesSelected!==undefined&&!Array.isArray(obj.settings.speciesSelected))throw Error('Lista de espécies inválida.');
  if(obj.settings.speciesCustom!==undefined&&!Array.isArray(obj.settings.speciesCustom))throw Error('Catálogo personalizado inválido.');
- const base=defaultDB();return {...base,...obj,settings:{...base.settings,...obj.settings}};
+ const base=defaultDB();
+ const candidate={...base,...obj,settings:{...base.settings,...obj.settings}};
+ const issue=syncCore.reproductionIssues(null,candidate)[0];
+ if(issue)throw Error(issue.label);
+ return candidate;
 }
 function backupSummary(data){const counts=collections.map(c=>({label:moduleNames[c],count:data[c].length}));return {total:counts.reduce((a,v)=>a+v.count,0),counts};}
 function safetyDownload(data,kind){const file='canto-ninho-'+kind+'-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';download(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),file)}
@@ -3768,6 +3777,8 @@ async function importBackup(toCloud){if(!backupCandidate)return;const incoming=b
  let cloudExpected=null, cloudBefore=null;
  if(toCloud){
   try{const remote=await cloudAPI('/api/data');cloudExpected=remote.revision;cloudBefore=remote.data;
+   const issue=syncCore.reproductionIssues(remote.data,incoming)[0];
+   if(issue){alert('Backup não importado: '+issue.label);return}
    if(remote.data){safetyDownload(remote.data,'nuvem-antes-da-importacao');if(!confirm('ATENÇÃO: já existem dados na nuvem. Um backup da nuvem foi disponibilizado para download. Confirma SUBSTITUIR os dados da nuvem pelo arquivo importado?'))return;}
    else if(!confirm('A nuvem está vazia. Enviar o backup importado para iniciar seus dados compartilhados?'))return;
   }catch(e){alert('Não foi possível verificar a nuvem. Importação cancelada: '+e.message);return}
@@ -3803,7 +3814,7 @@ async function importBackup(toCloud){if(!backupCandidate)return;const incoming=b
       markCloudMeta(remoteResult.revision,true);cloudSchedule();
      }
     }
-    catch(e){cloudState.revision=null;cloudState.ready=false;cloudState.pending=false;markCloudMeta(cloudExpected,true);cloudState.conflict= e.status===409;cloudStatus('Backup apenas local · nuvem não alterada',e.status===409?'conflict':'');alert('O arquivo foi importado apenas neste dispositivo. A nuvem NÃO foi alterada: '+e.message+'\nFaça uma nova cópia local antes de tentar novamente.');}
+    catch(e){cloudState.revision=null;cloudState.ready=false;cloudState.pending=false;markCloudMeta(cloudExpected,true,true);cloudState.conflict= e.status===409;cloudStatus('Backup apenas local · nuvem não alterada',e.status===409?'conflict':'');alert('O arquivo foi importado apenas neste dispositivo. A nuvem NÃO foi alterada: '+e.message+'\nFaça uma nova cópia local antes de tentar novamente.');}
   }else{
     cloudState.revision=null;cloudState.ready=false;cloudState.pending=true;cloudState.conflict=false;
     cloudStatus('Backup restaurado · salvo neste aparelho');
