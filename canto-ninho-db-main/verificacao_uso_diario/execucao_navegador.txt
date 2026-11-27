@@ -1,0 +1,85 @@
+Chromium 158.0.8127.0
+Desktop | 1440×900 CSS px
+Desktop | OK | home
+Desktop | OK | birds
+Desktop | OK | tree
+Desktop | OK | reproduction
+Desktop | OK | tasks
+Desktop | OK | feedings
+Desktop | OK | health
+Desktop | OK | events
+Desktop | OK | stock
+Desktop | OK | expenses
+Desktop | OK | revenues
+Desktop | OK | reports
+Desktop | OK | facilities
+Desktop | OK | trips
+Desktop | OK | tournaments
+Desktop | OK | documents
+Desktop | OK | knowledge
+Desktop | OK | settings
+Desktop | largura excedida [] | alvos <44px [] | sem rótulo []
+Desktop | OK | largura, rótulos dos campos e alvos de toque
+Desktop | contraste mínimo por tema | current 9.41:1, sage 8.16:1, ocean 7.96:1, plum 7.86:1, petroleum 7.93:1, forest 7.88:1, terracotta 6.19:1, wine 8.51:1, mustard 6.92:1, slate 7.84:1
+Desktop | OK | dez temas, persistência e contraste do texto principal
+Desktop | OK | foco, Tab, Shift+Tab e Escape
+Desktop | OK | Saúde: registrar, rejeitar período inválido, concluir e consultar
+Desktop | OK | Estoque: compra decimal, consumo, saldo insuficiente e estorno
+Desktop | OK | Pedigree: selecionar ave e baixar PDF com pais e anilha
+Desktop | OK | sem exceções de JavaScript
+Celular | 390×844 CSS px
+Celular | OK | home
+Celular | OK | birds
+Celular | OK | tree
+Celular | OK | reproduction
+Celular | OK | tasks
+Celular | OK | feedings
+Celular | OK | health
+Celular | OK | events
+Celular | OK | stock
+Celular | OK | expenses
+Celular | OK | revenues
+Celular | OK | reports
+Celular | OK | facilities
+Celular | OK | trips
+Celular | OK | tournaments
+Celular | OK | documents
+Celular | OK | knowledge
+Celular | OK | settings
+Celular | largura excedida [] | alvos <44px [] | sem rótulo []
+Celular | OK | largura, rótulos dos campos e alvos de toque
+Celular | contraste mínimo por tema | current 9.41:1, sage 8.16:1, ocean 7.96:1, plum 7.86:1, petroleum 7.93:1, forest 7.88:1, terracotta 6.19:1, wine 8.51:1, mustard 6.92:1, slate 7.84:1
+Celular | OK | dez temas, persistência e contraste do texto principal
+Celular | OK | foco, Tab, Shift+Tab e Escape
+Celular | OK | Saúde: registrar, rejeitar período inválido, concluir e consultar
+Celular | OK | Estoque: compra decimal, consumo, saldo insuficiente e estorno
+Celular | OK | Pedigree: selecionar ave e baixar PDF com pais e anilha
+Celular | OK | sem exceções de JavaScript
+Celular estreito | 320×740 CSS px
+Celular estreito | OK | home
+Celular estreito | OK | birds
+Celular estreito | OK | tree
+Celular estreito | OK | reproduction
+Celular estreito | OK | tasks
+Celular estreito | OK | feedings
+Celular estreito | OK | health
+Celular estreito | OK | events
+Celular estreito | OK | stock
+Celular estreito | OK | expenses
+Celular estreito | OK | revenues
+Celular estreito | OK | reports
+Celular estreito | OK | facilities
+Celular estreito | OK | trips
+Celular estreito | OK | tournaments
+Celular estreito | OK | documents
+Celular estreito | OK | knowledge
+Celular estreito | OK | settings
+Celular estreito | largura excedida [] | alvos <44px [] | sem rótulo []
+Celular estreito | OK | largura, rótulos dos campos e alvos de toque
+Celular estreito | contraste mínimo por tema | current 9.41:1, sage 8.16:1, ocean 7.96:1, plum 7.86:1, petroleum 7.93:1, forest 7.88:1, terracotta 6.19:1, wine 8.51:1, mustard 6.92:1, slate 7.84:1
+Celular estreito | OK | dez temas, persistência e contraste do texto principal
+Celular estreito | OK | foco, Tab, Shift+Tab e Escape
+Celular estreito | OK | Saúde: registrar, rejeitar período inválido, concluir e consultar
+Celular estreito | OK | Estoque: compra decimal, consumo, saldo insuficiente e estorno
+Celular estreito | OK | Pedigree: selecionar ave e baixar PDF com pais e anilha
+Celular estreito | OK | sem exceções de JavaScript

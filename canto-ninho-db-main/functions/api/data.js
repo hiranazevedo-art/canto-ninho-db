@@ -135,18 +135,12 @@ async function writeDelta(db,owner,req){
   return replay?responseForReplay(replay):conflict(head.revision);
  }
  const protectedCollections=['birds','chicks','pedigreeBirds','eggs','feedingPreferences','facilities','stock','transfers'];
- const guarded=changes.some(change=>protectedCollections.includes(change.collection));
- const reproductiveCollections=['couples','seasons','attempts','nests','eggs','chicks','events'];
- const reproductionChanged=changes.some(change=>reproductiveCollections.includes(change.collection)||change.value?.couple);
- if(guarded||reproductionChanged){
-  const original=await fullData(db,owner);
-  if(original.revision!==revision){
-   const replay=await operation();
-   return replay?responseForReplay(replay):conflict(original.revision);
-  }
-  const issue=integrityIssues(original.data,apply(original.data,changes))
-   .find(item=>guarded||['couple-link','reproduction-link'].includes(item.reason));
-  if(issue)return json({error:issue.label,reason:issue.reason},422);
+ if(changes.some(change=>protectedCollections.includes(change.collection))){
+  const oldRecords=await db.prepare(`SELECT collection,record_id,value FROM sync_records
+   WHERE owner_id=? AND collection IN ('birds','chicks','pedigreeBirds','eggs','feedingPreferences','facilities','stock','transfers') AND value IS NOT NULL`).bind(owner).all();
+  const original=unpack(oldRecords.results);
+  const issues=integrityIssues(original,apply(original,changes));
+  if(issues.length)return json({error:issues[0].label},422);
  }
  const results=await db.batch([
   appendOperation(db,owner,revision,operationId,digest,payload),
@@ -180,10 +174,10 @@ async function replaceData(db,owner,req){
   const original=await fullData(db,owner);
   if(original.revision!==revision)return conflict(original.revision);
   const issues=integrityIssues(original.data,data);
-  if(issues.length)return json({error:issues[0].label,reason:issues[0].reason},422);
+  if(issues.length)return json({error:issues[0].label},422);
  }else{
-  const issue=integrityIssues(null,data).find(issue=>['egg-outcome','feeding-period','couple-link','reproduction-link'].includes(issue.reason));
-  if(issue)return json({error:issue.label,reason:issue.reason},422);
+  const issue=integrityIssues(null,data).find(issue=>['egg-outcome','feeding-period'].includes(issue.reason));
+  if(issue)return json({error:issue.label},422);
  }
  const [, , , updated]=await db.batch([
   appendOperation(db,owner,revision,crypto.randomUUID(),'replacement',null),

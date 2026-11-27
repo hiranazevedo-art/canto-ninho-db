@@ -1,0 +1,15 @@
+name = "canto-ninho-push"
+main = "worker.js"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+preview_urls = false
+
+keep_vars = true
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "canto-ninho-db"
+database_id = "4e537724-e241-42b2-bfb8-373146c08a4d"

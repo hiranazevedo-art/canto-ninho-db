@@ -100,7 +100,6 @@
   function references(collection, row) {
     if (!row || !object(row)) return [];
     const fields = Object.entries(links[collection] || {});
-    if (row.couple && !links[collection]?.couple && collection !== 'audit') fields.push(['couple', 'couples']);
     if (collection === 'birds' || collection === 'pedigreeBirds') {
       for (const key of ['father', 'mother']) {
         fields.push([key, String(row[key] || '').startsWith('ancestral_') ? 'pedigreeBirds' : 'birds']);
@@ -112,92 +111,6 @@
     }
     return fields.flatMap(([key, target]) => [row[key]].flat().filter(Boolean)
       .map(id => target + ':' + id));
-  }
-
-  function dependencyIndex(data) {
-    const index = new Map();
-    for (const collection of collections) {
-      for (const row of data[collection] || []) {
-        for (const ref of new Set(references(collection, row).map(ref => ref.toLowerCase()))) {
-          if (!index.has(ref)) index.set(ref, []);
-          index.get(ref).push({ collection, row });
-        }
-      }
-    }
-    return index;
-  }
-
-  function coupleDependents(data, id, index = dependencyIndex(data)) {
-    const pending = ['couples:' + id.toLowerCase()];
-    const visited = new Set(pending);
-    const dependents = [];
-    for (const parent of pending) {
-      for (const entry of index.get(parent) || []) {
-        const key = entry.collection + ':' + entry.row.id.toLowerCase();
-        if (visited.has(key)) continue;
-        visited.add(key);
-        pending.push(key);
-        dependents.push(entry);
-      }
-    }
-    return dependents;
-  }
-
-  function coupleDependencyMessage(dependents) {
-    if (!dependents.length) return '';
-    const labels = { seasons: 'temporadas', attempts: 'tentativas', nests: 'ninhadas',
-      eggs: 'ovos', chicks: 'filhotes', birds: 'fichas do Plantel', events: 'eventos da Agenda' };
-    const groups = new Map();
-    for (const { collection, row } of dependents) {
-      const label = labels[collection] || 'outros registros vinculados';
-      if (!groups.has(label)) groups.set(label, []);
-      groups.get(label).push(row.name || row.title || row.ring || row.start || row.date || row.id);
-    }
-    const summary = [...groups].map(([label, names]) =>
-      names.length + ' ' + label + ' (' + names.slice(0, 3).join(', ') + (names.length > 3 ? ', …' : '') + ')');
-    return 'Exclusão bloqueada. Confira os registros vinculados: ' + summary.join(', ') + '.';
-  }
-
-  const reproductionTargets = {
-    couples: 'casal', seasons: 'temporada', attempts: 'tentativa',
-    nests: 'ninhada', eggs: 'ovo', chicks: 'filhote'
-  };
-
-  function reproductionIssues(previous, next) {
-    const old = previous || {};
-    const key = (collection, row) => collection + ':' + String(row.id).toLowerCase();
-    const targets = data => new Set(Object.keys(reproductionTargets)
-      .flatMap(collection => (data[collection] || []).map(row => key(collection, row))));
-    const before = targets(old), after = targets(next);
-    const retained = recordMap(next.couples);
-    const issues = [];
-    const removed = (old.couples || []).filter(row => !retained.has(row.id));
-    if (removed.length) {
-      const oldIndex = dependencyIndex(old);
-      for (const couple of removed) {
-        // A remoção simultânea dos dependentes não autoriza apagar o histórico do casal.
-        const label = coupleDependencyMessage(coupleDependents(old, couple.id, oldIndex));
-        if (label) issues.push({ collection: 'couples', id: couple.id, label, reason: 'couple-link' });
-      }
-    }
-    for (const collection of collections) {
-      if (collection === 'audit') continue;
-      const rows = recordMap(old[collection]);
-      for (const row of next[collection] || []) {
-        const formerRefs = new Set(references(collection, rows.get(row.id)).map(ref => ref.toLowerCase()));
-        for (const target of new Set(references(collection, row).map(ref => ref.toLowerCase()))) {
-          const targetCollection = target.split(':', 1)[0];
-          if (!Object.hasOwn(reproductionTargets, targetCollection) || after.has(target)) continue;
-          // Vínculos legados já incompletos podem ser mantidos enquanto forem revisados.
-          if (!before.has(target) && formerRefs.has(target)) continue;
-          const label = 'O registro ' + (row.name || row.title || row.ring || row.id) +
-            ' faz referência a ' + reproductionTargets[targetCollection] + ' ausente. Confira a Reprodução.';
-          issues.push({ collection, id: row.id, target, label,
-            reason: targetCollection === 'couples' ? 'couple-link' : 'reproduction-link' });
-        }
-      }
-    }
-    return issues;
   }
 
   function merge(base, local, remote) {
@@ -236,9 +149,7 @@
         strongDependencies.includes(change.collection) && remoteEdits.has(ref) &&
         !same(localKeys.get(ref)?.value, remoteEdits.get(ref).value));
       const dependentWhileDeleting = change.value === null && organization.has(id) && !localDeletes.has(key(organization.get(id)));
-      if (change.collection === 'couples' && change.value === null && dependentWhileDeleting) {
-        conflicts.push({ ...change, label: coupleDependencyMessage(coupleDependents(remote, change.id)) });
-      } else if (other || dependsOnEdit || dependentWhileDeleting || sharedPhysicalAsset) {
+      if (other || dependsOnEdit || dependentWhileDeleting || sharedPhysicalAsset) {
         conflicts.push({ ...change, label: (change.value || previous)?.name ||
           (change.value || previous)?.ring || (change.value || previous)?.title || change.id });
       } else {
@@ -260,9 +171,8 @@
       }
     }
     for(const issue of integrityIssues(remote,result)){
-      if(!['egg-outcome','feeding-period','cage-overlap','couple-link','reproduction-link'].includes(issue.reason))continue;
-      const change=localKeys.get(key(issue)) || (issue.target &&
-        localChanges.find(edit => edit.value === null && key(edit).toLowerCase() === issue.target));
+      if(!['egg-outcome','feeding-period','cage-overlap'].includes(issue.reason))continue;
+      const change=localKeys.get(key(issue));
       if(change&&!conflicts.some(existing=>key(existing)===key(change)))
         conflicts.push({...change,label:issue.label});
     }
@@ -347,7 +257,7 @@
       return result;
     }
     const old = indexes(previous || {}), updated = indexes(next);
-    const issues = reproductionIssues(previous, next);
+    const issues = [];
     for (const [key, group] of updated) {
       if (group.size < 2 || [...group.keys()].every(id => old.get(key)?.has(id))) continue;
       const kind = key.split(':', 1)[0];
@@ -433,5 +343,5 @@
   }
 
   globalThis.CantoSync = { same, differences, validChanges, apply, merge, collections, integrityIssues,
-    cageKind, transferOverlaps, reviewConflicts, resolveConflicts, coupleDependents, coupleDependencyMessage, reproductionIssues };
+    cageKind, transferOverlaps, reviewConflicts, resolveConflicts };
 })();

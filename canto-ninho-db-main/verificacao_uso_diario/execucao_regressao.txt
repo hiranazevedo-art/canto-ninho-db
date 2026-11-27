@@ -1,0 +1,15 @@
+✔ a gaiola individual bloqueia sobreposição no cadastro, na mesclagem e no servidor (34.526739ms)
+✔ a Agenda e os históricos exibem datas em ordem e o backup inválido é recusado (7.122735ms)
+✔ a escolha por ficha preserva alterações independentes e recusa mudanças estruturais (12.670376ms)
+✔ compra registrada, ocupação, venda e devolução preservam estoque e financeiro (10.956303ms)
+✔ o agendador tenta novamente após 503 e preserva a marca depois do sucesso (3.73535ms)
+PASS: migração aditiva, convites, sincronização, troca de conta e notificações simuladas.
+✔ tests/pilot.test.cjs (15640.403281ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15652.350869
